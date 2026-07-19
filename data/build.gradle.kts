@@ -14,6 +14,14 @@ android {
     namespace = "com.iris.irisshell.data"
 }
 
+room {
+    // Phase 6 schema export target — :data/schemas directory is created now
+    // so the Room Gradle plugin accepts the configuration even though no
+    // entities exist yet. Once CommandDnaDao / SessionDao / etc. land, this
+    // path starts emitting *.json schema snapshots per database version.
+    schemaDirectory("$projectDir/schemas")
+}
+
 dependencies {
     api(project(":domain"))
     implementation(project(":core"))
