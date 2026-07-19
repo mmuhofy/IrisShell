@@ -9,6 +9,9 @@
   Each phase will add or relax permissions as needed (foreground service for
   persistent terminal sessions, biometric for SSH key vault, notifications for
   command finished events, etc.).
+
+  No Application / Activity classes are declared at this commit - those are
+  introduced in Phase 1 alongside the first real UI surface.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
@@ -31,25 +34,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.IrisShell"
-        tools:targetApi="36">
-
-        <!-- MainActivity placeholder — MainActivity class to be added in Phase 1 §"Terminal Engine". -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <!-- Empty Application class placeholder so AGP does not warn on first build.
-             Replaced by `@HiltAndroidApp` once Application.kt is added. -->
-        <meta-data
-            android:name="com.iris.irisshell.IrisApplication"
-            android:value="placeholder" />
-
-    </application>
+        tools:targetApi="36" />
 
 </manifest>
