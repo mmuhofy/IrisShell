@@ -1,4 +1,4 @@
-name: Build
+name: Build Debug
 
 on:
   push:
@@ -7,12 +7,12 @@ on:
     branches: [main]
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-debug-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Debug + Release APK
+  debug:
+    name: Debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -31,21 +31,13 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
-      - name: Assemble debug + release
-        run: ./gradlew assembleDebug assembleRelease --no-daemon --stacktrace
+      - name: Assemble debug
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: irisshell-debug-apk
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: Upload release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: irisshell-release-apk
-          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 14

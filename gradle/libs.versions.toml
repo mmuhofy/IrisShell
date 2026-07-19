@@ -14,8 +14,8 @@
 [versions]
 # Build tools
 agp = "8.13.0"
-kotlin = "2.3.20"
-ksp = "2.3.20-2.0.3"
+kotlin = "2.2.0"
+ksp = "2.2.0-2.0.2"
 
 # AndroidX core
 androidxCore = "1.17.0"
