@@ -14,7 +14,7 @@ internal object IrisBuildConfig {
     const val APPLICATION_ID = "com.iris.irisshell"
     const val MIN_SDK = 26
     const val TARGET_SDK = 28
-    const val COMPILE_SDK = 28
+    const val COMPILE_SDK = 30
     val JAVA_VERSION = JavaVersion.VERSION_17
     const val KOTLIN_JVM_TARGET = "17"
 }
