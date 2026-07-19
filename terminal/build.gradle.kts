@@ -14,7 +14,7 @@ android {
     namespace = "com.iris.irisshell.terminal"
 
     defaultConfig {
-        minSdk = IrisBuildConfig.MIN_SDK // 26
+        minSdk = 26
         // Required for native arm64 binary support.
         // Prebuilt JNI artifact only contains
         // arm64-v8a (real Android devices = 99% arm64; x86_64 emulator supported by ABI rounding).
