@@ -24,11 +24,9 @@ class AndroidRoomConventionPlugin : Plugin<Project> {
                 add("ksp", libs().findLibrary("room.compiler").get())
                 add("testImplementation", libs().findLibrary("room.testing").get())
             }
-
-            // Room schema export — useful for migrations going forward.
-            extensions.configure<com.android.build.api.dsl.LibraryExtension>("android") {
-                // Schema location is set per-module viaRoom's block (see `room { schemaDirectory(...) }`).
-            }
+            // Schema export location is configured in :data module's
+            // android { room { schemaDirectory(...) } } block once entities
+            // are added (Phase 6 — Command DNA).
         }
     }
 }
