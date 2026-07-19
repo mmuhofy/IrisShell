@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  App theme — placeholder.
+  
+  The real theme (Iris dark, gold accent #E8C547, JetBrains Mono terminal
+  font) will be defined in :design-system per MEMORYBANK.md §124-163.
+  At project-setup the application theme simply inherits Material3.
+-->
+<resources>
+    <style name="Theme.IrisShell" parent="android:Theme.Material.NoActionBar" />
+</resources>

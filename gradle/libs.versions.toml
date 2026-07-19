@@ -1,0 +1,200 @@
+# Iris Shell — Version Catalog
+# Single source of truth for all dependency versions.
+#
+# Memory Bank stack reference (§3):
+#   - Kotlin 2.3.20
+#   - Compose BOM 2026.04.01
+#   - Hilt 2.57
+#   - Room 2.8.4
+#   - SSHJ 0.38.x
+#   - Min SDK 26 / Target SDK 36 / Compile SDK 36
+#
+# NOTE: KSP version MUST match Kotlin 2.3.20 — use KSP 2.3.20-x.x.x.
+
+[versions]
+# Build tools
+agp = "8.13.0"
+kotlin = "2.3.20"
+ksp = "2.3.20-2.0.3"
+
+# AndroidX core
+androidxCore = "1.17.0"
+androidxAppCompat = "1.7.0"
+androidxActivity = "1.11.0"
+androidxLifecycle = "2.9.4"
+androidxCoreSplashscreen = "1.0.1"
+androidxDataStore = "1.1.7"
+androidxSecurityCrypto = "1.1.0-alpha06"
+androidxBiometric = "1.2.0-alpha05"
+androidxWorkManager = "2.11.2"
+androidxNavigation = "2.9.5"
+
+# Compose
+composeBom = "2026.04.01"
+composeMaterial3 = "1.4.0-alpha02"
+composeMaterialIcons = "1.7.8"
+
+# DI
+hilt = "2.57"
+hiltNavigationCompose = "1.3.0"
+hiltWork = "1.2.0"
+
+# Coroutines
+coroutines = "1.10.2"
+
+# Serialization
+kotlinxSerialization = "1.7.3"
+
+# Room
+room = "2.8.4"
+
+# Networking
+okhttp = "4.12.0"
+
+# SSH
+sshj = "0.39.0"
+
+# Diff utilities
+diffUtils = "4.12"
+
+# Image loading
+coil = "3.0.4"
+
+# Animation
+lottie = "6.6.0"
+
+# LLM providers — Phase 6
+googleGenai = "0.6.1"
+
+# Logging
+timber = "5.0.1"
+
+# Tests
+junit = "4.13.2"
+androidxTestExtJunit = "1.2.1"
+androidxTestEspresso = "3.6.1"
+androidxTestCore = "1.6.1"
+androidxTestRunner = "1.6.2"
+coroutinesTest = "1.10.2"
+mockk = "1.13.14"
+turbine = "1.2.0"
+robolectric = "4.14.1"
+
+# Lint
+ktlint = "1.5.0"
+spotless = "7.0.2"
+detekt = "1.23.7"
+
+[libraries]
+# AndroidX core
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidxAppCompat" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivity" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidxLifecycle" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "androidxCoreSplashscreen" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "androidxDataStore" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "androidxSecurityCrypto" }
+androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "androidxBiometric" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "androidxWorkManager" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigation" }
+
+# Compose (BOM-managed)
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "composeMaterialIcons" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
+
+# Hilt
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
+hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltWork" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
+
+# Coroutines
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# Room
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+
+# Networking
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-sse = { group = "com.squareup.okhttp3", name = "okhttp-sse", version.ref = "okhttp" }
+okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+
+# SSH
+sshj = { group = "com.hierynomus", name = "sshj", version.ref = "sshj" }
+
+# Diff
+diff-utils = { group = "io.github.java-diff-utils", name = "java-diff-utils", version.ref = "diffUtils" }
+
+# Image
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+
+# Animation
+lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
+
+# LLM (Phase 6)
+google-genai = { group = "com.google.genai", name = "google-genai", version.ref = "googleGenai" }
+
+# Logging
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# Tests
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidxTestEspresso" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+
+# Build classpath (for build-logic)
+android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-compose-compiler-gradle-plugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
+ksp-gradle-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+kotlin-serialization-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+room = { id = "androidx.room", version.ref = "room" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+
+# Convention plugins — exposed by build-logic
+iris-android-application = { id = "iris.android.application", version = "unspecified" }
+iris-android-library = { id = "iris.android.library", version = "unspecified" }
+iris-android-compose = { id = "iris.android.compose", version = "unspecified" }
+iris-android-hilt = { id = "iris.android.hilt", version = "unspecified" }
+iris-android-room = { id = "iris.android.room", version = "unspecified" }
+iris-kotlin-library = { id = "iris.kotlin.library", version = "unspecified" }
+iris-kotlin-serialization = { id = "iris.kotlin.serialization", version = "unspecified" }

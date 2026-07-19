@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Minimal library manifest — :ssh.
+  BiometricPrompt is invoked from the UI layer (:app / :ui); here only Key
+  Vault storage and SSHJ transport are present.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />

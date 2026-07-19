@@ -1,0 +1,69 @@
+package iris
+
+import com.android.build.api.dsl.LibraryExtension
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.kotlin.dsl.configure
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+
+/**
+ * Convention plugin applied to every Android *library* module
+ * (`core`, `data`, `agent`, `terminal`, `ssh`, `ui`, `design-system`).
+ *
+ * Sets up:
+ *  - AGP `com.android.library`
+ *  - Kotlin Android
+ *  - Java 17 toolchain + Kotlin jvmTarget 17
+ *  - Common Android SDK levels (minSdk 26, compileSdk 36)
+ *  - Test fixtures support for modular testing
+ */
+class AndroidLibraryConventionPlugin : Plugin<Project> {
+    override fun apply(target: Project) {
+        with(target) {
+            with(pluginManager) {
+                apply("com.android.library")
+                apply("org.jetbrains.kotlin.android")
+            }
+
+            tasks.withType(KotlinJvmCompile::class.java).configureEach {
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.fromVersion(IrisBuildConfig.KOTLIN_JVM_TARGET))
+                    allWarningsAsErrors.set(false)
+                }
+            }
+
+            extensions.configure<LibraryExtension> {
+                compileSdk = IrisBuildConfig.COMPILE_SDK
+
+                defaultConfig {
+                    minSdk = IrisBuildConfig.MIN_SDK
+                    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+                    consumerProguardFiles("consumer-rules.pro")
+                }
+
+                compileOptions {
+                    sourceCompatibility = IrisBuildConfig.JAVA_VERSION
+                    targetCompatibility = IrisBuildConfig.JAVA_VERSION
+                }
+
+                buildTypes {
+                    getByName("debug") {
+                        isMinifyEnabled = false
+                    }
+                    getByName("release") {
+                        isMinifyEnabled = true
+                        proguardFiles(
+                            getDefaultProguardFile("proguard-android-optimize.txt"),
+                            "proguard-rules.pro",
+                        )
+                    }
+                }
+
+                testOptions {
+                    unitTests.isReturnDefaultValues = true
+                }
+            }
+        }
+    }
+}

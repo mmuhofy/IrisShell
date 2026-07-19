@@ -1,0 +1,81 @@
+// ROOT build.gradle.kts
+//
+// app/ — Android entry point.
+// Per AGENT.md §109: Hilt, Navigation, MainActivity live here.
+// Per AGENT.md §112-135: app may depend on ui, data, agent, terminal, ssh,
+//                        but never contains business logic itself.
+
+plugins {
+    alias(libs.plugins.iris.android.application)
+    alias(libs.plugins.iris.android.compose)
+    alias(libs.plugins.iris.android.hilt)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+android {
+    namespace = "com.iris.irisshell"
+
+    defaultConfig {
+        applicationId = "com.iris.irisshell"
+        // Version code / name sourced from IrisBuildConfig (convention plugin).
+        targetSdk = 36
+
+        // AndroidJUnitRunner is configured by the convention plugin.
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Comprehensiveness for native libs included from terminal module.
+            pickFirsts += setOf("lib/**/libtermux.so")
+        }
+    }
+}
+
+dependencies {
+    // Module dependencies — see AGENT.md data flow diagram (§149-163).
+    implementation(project(":core"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":agent"))
+    implementation(project(":terminal"))
+    implementation(project(":ssh"))
+    implementation(project(":ui"))
+    implementation(project(":design-system"))
+
+    // AndroidX entry-point
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+
+    // WorkManager — cron / agent watch scheduled background work.
+    implementation(libs.androidx.work.runtime.ktx)
+
+    // Splash screen + exported launcher theme (Material You launch).
+    debugImplementation(libs.compose.ui.tooling)
+
+    // Unit / instrumented tests
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.mockk)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.turbine)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
+}

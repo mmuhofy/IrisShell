@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Minimal library manifest — :data.
+  Room + DataStore + Security Crypto + OkHttp + SSH live here; no permission
+  is declared at module level — the :app module owns the merged manifest.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
