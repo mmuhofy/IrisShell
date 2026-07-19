@@ -32,7 +32,7 @@ class KotlinLibraryConventionPlugin : Plugin<Project> {
 
             tasks.withType(KotlinJvmCompile::class.java).configureEach {
                 compilerOptions {
-                    jvmTarget.set(JvmTarget.fromVersion(IrisBuildConfig.KOTLIN_JVM_TARGET))
+                    jvmTarget.set(JvmTarget.JVM_17)
                     allWarningsAsErrors.set(false)
                 }
             }
