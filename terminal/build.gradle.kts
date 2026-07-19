@@ -14,29 +14,42 @@ android {
     namespace = "com.iris.irisshell.terminal"
 
     defaultConfig {
-        // termux-view JNI binary (libtermux.so) — vendored prebuilt from IrisCode.
-        // ABIs match those shipped by the ported termux-view module.
+        minSdk = IrisBuildConfig.MIN_SDK // 26
+        // Required for native arm64 binary support.
+        // Prebuilt JNI artifact only contains
+        // arm64-v8a (real Android devices = 99% arm64; x86_64 emulator supported by ABI rounding).
         ndk {
-            abiFilters += setOf("arm64-v8a", "x86_64", "x86", "armeabi-v7a")
+            abiFilters += setOf("arm64-v8a")
+        }
+    }
+
+    packaging {
+        resources {
+            // Ensure JNI .so libs from this module win over conflicting builds.
+            pickFirsts += setOf("lib/**/libtermux.so")
         }
     }
 }
 
 dependencies {
+    // domain is pure Kotlin and depends on zero Android types.
+    // terminal explicitly creates a bridge from Android APIs to PTY engine.
     api(project(":domain"))
     implementation(project(":core"))
 
-    // coroutines for dedicated TerminalManager CoroutineScope
-    // (Coroutine Scopes rule: AGENT.md §222)
+    // coroutines — dedicated TerminalManager CoroutineScope
     implementation(libs.kotlinx.coroutines.android)
 
-    // logging
+    // timber logging
     implementation(libs.timber)
 
-    // serialization — block / semantic token export to JSON
+    // serialization — block / token export to FTS / Commerce context
     implementation(libs.kotlinx.serialization.json)
 
-    // unit tests
+    // Room out-requires this module so we don't reference room.DB types
+    // from terminal layer (clean architecture).
+
+    // Unit tests: robolectric needed for shadow.syscalls
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)

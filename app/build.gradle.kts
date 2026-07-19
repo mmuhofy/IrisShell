@@ -17,8 +17,8 @@ android {
 
     defaultConfig {
         applicationId = "com.iris.irisshell"
-        // Version code / name sourced from IrisBuildConfig (convention plugin).
-        targetSdk = 36
+        // Version code / name sourced from build config injected by convention plugin.
+        targetSdk = 28
 
         // AndroidJUnitRunner is configured by the convention plugin.
     }
