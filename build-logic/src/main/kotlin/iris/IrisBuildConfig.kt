@@ -18,7 +18,6 @@ internal object IrisBuildConfig {
     val JAVA_VERSION = JavaVersion.VERSION_17
     const val KOTLIN_JVM_TARGET = "17"
 }
-}
 
 internal fun org.gradle.api.Project.libs(): org.gradle.api.artifacts.VersionCatalog =
     extensions.getByType<VersionCatalogsExtension>().named("libs")
