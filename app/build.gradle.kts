@@ -62,6 +62,10 @@ dependencies {
     // Splash screen + exported launcher theme (Material You launch).
     debugImplementation(libs.compose.ui.tooling)
 
+    // Material icons — used by the keyboard handle / send button. We add the
+    // extended set only on :app; the :ui module keeps a leaner dependency.
+    implementation(libs.compose.material.icons.extended)
+
     // Unit / instrumented tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
