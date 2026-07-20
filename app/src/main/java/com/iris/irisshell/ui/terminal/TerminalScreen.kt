@@ -3,9 +3,7 @@ package com.iris.irisshell.ui.terminal
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -13,10 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -30,22 +25,27 @@ import com.iris.irisshell.terminal.UbuntuSetupState
 import com.termux.view.TerminalView
 
 /**
- * Phase 1 Terminal screen — ported from mmuhofy/IrisCode
+ * Phase 1 Terminal screen - ported from mmuhofy/IrisCode
  *   app/src/main/kotlin/com/iris/iriscode/ui/terminal/TerminalScreen.kt
  *
- * Adapted for Iris Shell — com.iris.irisshell.
+ * Adapted for Iris Shell - com.iris.irisshell.
  *
- * The full IrisCode surface (tab bar + search overlay + fullscreen pill + font
- * scale slider, etc.) is intentionally simplified for the first commit: the
- * goal of Phase 1 is to confirm that the PRoot/Ubuntu bootstrap, Race-Loss
- * resolution, and PTY session all render output in Compose. Cosmetic UI lands
- * in Phase 2 (UI & Session System).
+ * Classical termux-style terminal - the bionic PTY is hosted in a flat
+ * Compose AndroidView with no extra input bar. The user types via the
+ * system soft keyboard or a hardware keyboard; the termux view routes
+ * keys through its native IME bridge to the underlying bash.
  *
  * Behaviour preserved:
  *  - Setup-progress card while UbuntuBootstrap is installing / extract / etc.
  *  - AndroidView hosting the termux TerminalView
  *  - attachSession called when a session exists
  *  - Setup failure surfaces a retry button
+ *
+ * Removed in this commit:
+ *  - The earlier Compose-based "input bar" caused crashes because it
+ *    bypassed the termux IME bridge. Termux's TerminalView already has
+ *    its own keyboard handler - duplicating Compose keys was redundant
+ *    and broke the drawable resolution when select-text highlights fired.
  */
 @Composable
 fun TerminalScreen(
@@ -53,7 +53,6 @@ fun TerminalScreen(
     ubuntuSetupState: UbuntuSetupState,
     onRetry: () -> Unit,
 ) {
-    var inputBarVisible by remember { mutableStateOf(true) }
     when (ubuntuSetupState) {
         UbuntuSetupState.Idle,
         UbuntuSetupState.Extracting,
@@ -64,25 +63,7 @@ fun TerminalScreen(
             SetupProgress(state = ubuntuSetupState)
         }
         UbuntuSetupState.Ready -> {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    TerminalViewHost(terminalManager = terminalManager)
-                }
-                TerminalInputBar(
-                    visible = inputBarVisible,
-                    onSubmit = { command ->
-                        // Forward the user's command payload terminated by newline so
-                        // the shell reads it as an Enter press. Termux's
-                        // `TerminalSession.write(byte[], offset, count)` accepts raw
-                        // bytes; we use the UTF-8 view of the string.
-                        terminalManager.currentSession?.apply {
-                            val payload = (command + "\n").encodeToByteArray()
-                            write(payload, 0, payload.size)
-                        }
-                    },
-                    onToggleVisibility = { inputBarVisible = !inputBarVisible },
-                )
-            }
+            TerminalViewHost(terminalManager = terminalManager)
         }
         is UbuntuSetupState.Failed -> {
             SetupFailure(
@@ -165,10 +146,9 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         }
     }
 
-    // The termux view does not expose explicit onResume/onPause callbacks —
-    // the OS-level focus / attachment contract is sufficient for Phase 1.
-    // We follow the lifecycle anyway so future enhancements (e.g. suspend
-    // animation, release bitmaps) have a clean hook here.
+    // Hook the activity lifecycle to the termux view. The view does not
+    // expose explicit onResume/onPause; this observer is a forward-compatible
+    // hook for Phase 2 (animation suspend, bitmap release, etc.).
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, _ -> }
         lifecycleOwner.lifecycle.addObserver(observer)

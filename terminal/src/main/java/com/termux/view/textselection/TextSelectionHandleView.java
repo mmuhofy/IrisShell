@@ -92,20 +92,20 @@ public class TextSelectionHandleView extends View {
         switch (orientation) {
             case LEFT: {
                 mHandleDrawable = mHandleLeftDrawable;
-                handleWidth = mHandleDrawable.getIntrinsicWidth();
+                handleWidth = mHandleDrawable != null ? mHandleDrawable.getIntrinsicWidth() : 0;
                 mHotspotX = (handleWidth * 3) / (float) 4;
                 break;
             }
 
             case RIGHT: {
                 mHandleDrawable = mHandleRightDrawable;
-                handleWidth = mHandleDrawable.getIntrinsicWidth();
+                handleWidth = mHandleDrawable != null ? mHandleDrawable.getIntrinsicWidth() : 0;
                 mHotspotX = handleWidth / (float) 4;
                 break;
             }
         }
 
-        mHandleHeight = mHandleDrawable.getIntrinsicHeight();
+        mHandleHeight = mHandleDrawable != null ? mHandleDrawable.getIntrinsicHeight() : 0;
 
         mHandleWidth = handleWidth;
         mTouchOffsetY = -mHandleHeight * 0.3f;
@@ -279,6 +279,7 @@ public class TextSelectionHandleView extends View {
 
     @Override
     public void onDraw(Canvas c) {
+        if (mHandleDrawable == null) return;
         final int width = mHandleDrawable.getIntrinsicWidth();
         int height = mHandleDrawable.getIntrinsicHeight();
         mHandleDrawable.setBounds(0, 0, width, height);
@@ -323,8 +324,9 @@ public class TextSelectionHandleView extends View {
 
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(mHandleDrawable.getIntrinsicWidth(),
-            mHandleDrawable.getIntrinsicHeight());
+        final int width = mHandleDrawable != null ? mHandleDrawable.getIntrinsicWidth() : 0;
+        final int height = mHandleDrawable != null ? mHandleDrawable.getIntrinsicHeight() : 0;
+        setMeasuredDimension(width, height);
     }
 
     public int getHandleHeight() {
