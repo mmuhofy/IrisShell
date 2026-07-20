@@ -10,13 +10,6 @@ plugins {
     alias(libs.plugins.iris.kotlin.serialization)
 }
 
-apply<JavaPlugin>()
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
 android {
     namespace = "com.iris.irisshell.terminal"
 
@@ -36,6 +29,15 @@ android {
             pickFirsts += setOf("lib/**/libtermux.so")
         }
     }
+}
+
+// Force AGP to schedule compileDebugJavaWithJavac task before compileDebugKotlin.
+// Without this dependency, AGP skips javac entirely for this module because the
+// variant builder doesn't detect any Java sources detected at the kotlin-compile
+// variant level. We force the dependency so that the termux view + emulator Java
+// sources are compiled and reachable from Kotlin's classpath.
+tasks.matching { it.name == "compileDebugKotlin" || it.name == "compileReleaseKotlin" }.configureEach {
+    dependsOn("compileDebugJavaWithJavac", "compileReleaseJavaWithJavac")
 }
 
 dependencies {
