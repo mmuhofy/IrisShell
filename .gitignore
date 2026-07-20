@@ -73,6 +73,7 @@ fastlane/readme.md
 # with the same key. Otherwise CI-built APKs cannot be installed over locally-
 # built APKs without uninstalling first. Release keystores are NEVER tracked.
 !app/keystore/debug.keystore
+!keystore/debug.keystore
 !keystore.properties
 
 
