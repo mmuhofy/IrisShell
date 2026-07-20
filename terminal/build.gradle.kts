@@ -7,6 +7,7 @@
 
 plugins {
     alias(libs.plugins.iris.android.library)
+    alias(libs.plugins.iris.android.compose)
     alias(libs.plugins.iris.kotlin.serialization)
 }
 
