@@ -9,16 +9,17 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.UbuntuSetupState
 import com.termux.view.TerminalView
@@ -125,8 +126,10 @@ private fun SetupFailure(error: String, onRetry: () -> Unit) {
 
 @Composable
 private fun TerminalViewHost(terminalManager: TerminalManager) {
-    val focusRequester = remember { FocusRequester() }
-    val terminalViewRef = remember { androidx.compose.runtime.mutableStateOf<TerminalView?>(null) }
+    val terminalViewRef = remember {
+        androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     // Ensure at least one tab when the screen enters the Ready state.
     LaunchedEffect(Unit) {
@@ -135,14 +138,17 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         }
     }
 
-    // Make sure the Compose host pauses / resumes the underlying terminal view,
-    // mirroring Activity lifecycle → TerminalView.onResume()/onPause(). The
-    // termux view itself does not auto-handle this from AndroidView.
-    LifecycleEventEffect(event = androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-        terminalViewRef.value?.onResume()
-    }
-    LifecycleEventEffect(event = androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
-        terminalViewRef.value?.onPause()
+    // Mirror Activity onResume/onPause to the termux TerminalView.
+    DisposableEffect(lifecycleOwner, terminalViewRef.value) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> terminalViewRef.value?.onResume()
+                Lifecycle.Event.ON_PAUSE -> terminalViewRef.value?.onPause()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     AndroidView(
@@ -163,10 +169,7 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         },
         update = { view ->
             terminalManager.currentSession?.let { session ->
-                @Suppress("SENSELESS_COMPARISON")
-                if (true) {
-                    view.attachSession(session)
-                }
+                view.attachSession(session)
             }
             terminalManager.registerTerminalView(view, view.context)
             terminalViewRef.value = view
