@@ -22,15 +22,18 @@ class TerminalManager(
     val tabNames: List<String> get() = _tabNames
 
     private val _activeTabIndex = MutableStateFlow(0)
-    val activeTabIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
-    private var currentActiveTabIndex: Int
-        get() = _activeTabIndex.value
-        set(value) { _activeTabIndex.value = value }
+    val tabActiveIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
+
+    /**
+     * Synchronous snapshot of the active tab index, intended for UI scaffolds
+     * (e.g. the topbar's "1 / N" indicator) that do not need a Flow<T>.
+     */
+    fun getActiveTabIndexSnapshot(): Int = _activeTabIndex.value
 
     val tabCount: Int get() = _sessions.size
 
     val currentSession: TerminalSession?
-        get() = _sessions.getOrNull(currentActiveTabIndex)
+        get() = _sessions.getOrNull(_activeTabIndex.value)
 
     val sessionClient: TerminalSessionClientImpl = TerminalSessionClientImpl()
 
@@ -66,7 +69,7 @@ class TerminalManager(
         val session = createNewSession()
         _sessions.add(session)
         _tabNames.add("")
-        currentActiveTabIndex = _sessions.size - 1
+        _activeTabIndex.value = _sessions.size - 1
         terminalViewRef?.attachSession(session)
         return session
     }
@@ -84,12 +87,12 @@ class TerminalManager(
         val name = _tabNames.removeAt(from)
         _sessions.add(to, session)
         _tabNames.add(to, name)
-        if (currentActiveTabIndex == from) {
-            currentActiveTabIndex = to
+        if (_activeTabIndex.value == from) {
+            _activeTabIndex.value = to
         } else {
             val moved = if (from < to) -1 else 1
-            if (currentActiveTabIndex in (minOf(from, to) + 1) until maxOf(from, to) + 1) {
-                currentActiveTabIndex += moved
+            if (_activeTabIndex.value in (minOf(from, to) + 1) until maxOf(from, to) + 1) {
+                _activeTabIndex.value += moved
             }
         }
     }
@@ -100,16 +103,16 @@ class TerminalManager(
         _sessions.removeAt(index)
         _tabNames.removeAt(index)
         when {
-            index < currentActiveTabIndex -> currentActiveTabIndex--
-            index == currentActiveTabIndex && currentActiveTabIndex >= _sessions.size ->
-                currentActiveTabIndex = (_sessions.size - 1).coerceAtLeast(0)
+            index < _activeTabIndex.value -> _activeTabIndex.value--
+            index == _activeTabIndex.value && _activeTabIndex.value >= _sessions.size ->
+                _activeTabIndex.value = (_sessions.size - 1).coerceAtLeast(0)
         }
         currentSession?.let { terminalViewRef?.attachSession(it) }
     }
 
     fun switchTab(index: Int) {
-        if (index < 0 || index >= _sessions.size || index == currentActiveTabIndex) return
-        currentActiveTabIndex = index
+        if (index < 0 || index >= _sessions.size || index == _activeTabIndex.value) return
+        _activeTabIndex.value = index
         currentSession?.let { terminalViewRef?.attachSession(it) }
     }
 
@@ -117,7 +120,7 @@ class TerminalManager(
         if (_sessions.isEmpty()) {
             return addTab()
         }
-        return _sessions[currentActiveTabIndex]
+        return _sessions[_activeTabIndex.value]
     }
 
     private fun createNewSession(): TerminalSession {
@@ -192,9 +195,9 @@ class TerminalManager(
             _sessions.removeAt(idx)
             _tabNames.removeAt(idx)
             when {
-                idx < currentActiveTabIndex -> currentActiveTabIndex--
-                idx == currentActiveTabIndex && currentActiveTabIndex >= _sessions.size ->
-                    currentActiveTabIndex = (_sessions.size - 1).coerceAtLeast(0)
+                idx < _activeTabIndex.value -> _activeTabIndex.value--
+                idx == _activeTabIndex.value && _activeTabIndex.value >= _sessions.size ->
+                    _activeTabIndex.value = (_sessions.size - 1).coerceAtLeast(0)
             }
             terminalViewRef?.let { view ->
                 currentSession?.let { view.attachSession(it) }

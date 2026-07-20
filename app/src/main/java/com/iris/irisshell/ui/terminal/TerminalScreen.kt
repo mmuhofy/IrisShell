@@ -11,7 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -22,6 +25,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
+import com.iris.irisshell.ui.topbar.TerminalTopBar
 import com.termux.view.TerminalView
 
 /**
@@ -30,22 +34,10 @@ import com.termux.view.TerminalView
  *
  * Adapted for Iris Shell - com.iris.irisshell.
  *
- * Classical termux-style terminal - the bionic PTY is hosted in a flat
- * Compose AndroidView with no extra input bar. The user types via the
- * system soft keyboard or a hardware keyboard; the termux view routes
- * keys through its native IME bridge to the underlying bash.
- *
- * Behaviour preserved:
- *  - Setup-progress card while UbuntuBootstrap is installing / extract / etc.
- *  - AndroidView hosting the termux TerminalView
- *  - attachSession called when a session exists
- *  - Setup failure surfaces a retry button
- *
- * Removed in this commit:
- *  - The earlier Compose-based "input bar" caused crashes because it
- *    bypassed the termux IME bridge. Termux's TerminalView already has
- *    its own keyboard handler - duplicating Compose keys was redundant
- *    and broke the drawable resolution when select-text highlights fired.
+ * Phase 2 visual: when the terminal is in Ready state we mount the modern
+ * topbar above the Termux view so the user can see branding, the active
+ * tab, and quick actions (Refresh / Fullscreen / Close). Fullscreen mode
+ * hides the topbar to give the terminal the whole screen.
  */
 @Composable
 fun TerminalScreen(
@@ -53,6 +45,8 @@ fun TerminalScreen(
     ubuntuSetupState: UbuntuSetupState,
     onRetry: () -> Unit,
 ) {
+    var fullscreen by remember { mutableStateOf(false) }
+
     when (ubuntuSetupState) {
         UbuntuSetupState.Idle,
         UbuntuSetupState.Extracting,
@@ -63,12 +57,68 @@ fun TerminalScreen(
             SetupProgress(state = ubuntuSetupState)
         }
         UbuntuSetupState.Ready -> {
-            TerminalViewHost(terminalManager = terminalManager)
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (!fullscreen) {
+                    TerminalTopBar(
+                        activeTabIndexFlow = terminalManager.tabActiveIndex,
+                        tabCount = terminalManager.tabCount,
+                        isFullscreen = false,
+                        onRefresh = {
+                            // Phase 1: drop the active PTY and create a fresh one.
+                            terminalManager.currentSession?.finishIfRunning()
+                            terminalManager.addTab()
+                        },
+                        onToggleFullscreen = { fullscreen = true },
+                        onClose = {
+                            terminalManager.currentSession?.finishIfRunning()
+                        },
+                    )
+                }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    TerminalViewHost(terminalManager = terminalManager)
+                    if (fullscreen) {
+                        // Tap the screen to exit fullscreen — a thin overlay
+                        // captures the gesture and triggers collapse.
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp),
+                            contentAlignment = Alignment.TopStart,
+                        ) {
+                            CompactFullscreenExit {
+                                fullscreen = false
+                            }
+                        }
+                    }
+                }
+            }
         }
         is UbuntuSetupState.Failed -> {
             SetupFailure(
                 error = ubuntuSetupState.error,
                 onRetry = onRetry,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactFullscreenExit(onExitFullscreen: () -> Unit) {
+    androidx.compose.material3.Surface(
+        color = com.iris.irisshell.ui.theme.IrisSurface.copy(alpha = 0.85f),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+    ) {
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .androidx.compose.foundation.clickable(
+                    onClick = onExitFullscreen,
+                ),
+        ) {
+            Text(
+                text = "Tap to exit fullscreen",
+                color = com.iris.irisshell.ui.theme.IrisTextSecondary,
+                style = MaterialTheme.typography.labelMedium,
             )
         }
     }
@@ -135,20 +185,14 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
     }
     val lifecycleOwner = LocalLifecycleOwner.current
-    // The view client is captured once so its strong reference keeps the
-    // TerminalViewClientImpl alive for the lifetime of the host composable.
     val viewClient = remember { TerminalViewClientImpl() }
 
-    // Ensure at least one tab when the screen enters the Ready state.
     LaunchedEffect(Unit) {
         if (terminalManager.tabCount == 0) {
             terminalManager.addTab()
         }
     }
 
-    // Hook the activity lifecycle to the termux view. The view does not
-    // expose explicit onResume/onPause; this observer is a forward-compatible
-    // hook for Phase 2 (animation suspend, bitmap release, etc.).
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, _ -> }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -156,8 +200,7 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
     }
 
     AndroidView(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
             TerminalView(ctx, null).apply {
                 setTextSize(12)
