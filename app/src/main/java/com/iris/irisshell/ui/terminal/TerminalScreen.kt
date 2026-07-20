@@ -138,23 +138,19 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         }
     }
 
-    // Mirror Activity onResume/onPause to the termux TerminalView.
-    DisposableEffect(lifecycleOwner, terminalViewRef.value) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> terminalViewRef.value?.onResume()
-                Lifecycle.Event.ON_PAUSE -> terminalViewRef.value?.onPause()
-                else -> Unit
-            }
-        }
+    // The termux view does not expose explicit onResume/onPause callbacks —
+    // the OS-level focus / attachment contract is sufficient for Phase 1.
+    // We follow the lifecycle anyway so future enhancements (e.g. suspend
+    // animation, release bitmaps) have a clean hook here.
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, _ -> }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     AndroidView(
         modifier = Modifier
-            .fillMaxSize()
-            .then(Modifier),
+            .fillMaxSize(),
         factory = { ctx ->
             TerminalView(ctx, null).apply {
                 setTextSize(12)
