@@ -7,18 +7,12 @@
 
 plugins {
     alias(libs.plugins.iris.android.library)
-    alias(libs.plugins.iris.android.compose)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.iris.kotlin.serialization)
 }
 
 android {
     namespace = "com.iris.irisshell.terminal"
-
-    sourceSets {
-        getByName("main") {
-            java.srcDirs("src/main/java", "src/main/kotlin")
-        }
-    }
 
     defaultConfig {
         minSdk = 26
