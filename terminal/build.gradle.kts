@@ -7,8 +7,14 @@
 
 plugins {
     alias(libs.plugins.iris.android.library)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.iris.kotlin.serialization)
+}
+
+apply<JavaPlugin>()
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 android {

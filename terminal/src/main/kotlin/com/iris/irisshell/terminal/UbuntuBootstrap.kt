@@ -1,8 +1,5 @@
 package com.iris.irisshell.terminal
 
-// Ported from: mmuhofy/IrisCode — app/src/main/kotlin/com/iris/iriscode/terminal/UbuntuBootstrap.kt
-// Adapted for Iris Shell — com.iris.irisshell
-
 import android.content.Context
 import android.system.Os
 import android.util.Log
@@ -116,9 +113,9 @@ class UbuntuBootstrap(private val context: Context) {
         File(rootfsDir, "etc/resolv.conf").writeText(
             "nameserver 8.8.8.8\nnameserver 8.8.4.4\n"
         )
-        File(rootfsDir, "etc/hostname").writeText("iriscode-ubuntu\n")
+        File(rootfsDir, "etc/hostname").writeText("iris-shell\n")
         File(rootfsDir, "etc/hosts").writeText(
-            "127.0.0.1 localhost iriscode-ubuntu\n::1 localhost ip6-localhost ip6-loopback\n"
+            "127.0.0.1 localhost iris-shell\n::1 localhost ip6-localhost ip6-loopback\n"
         )
         File(rootfsDir, "etc/apt/sources.list.d/ubuntu.sources").delete()
         File(rootfsDir, "etc/apt/sources.list").writeText(
@@ -185,8 +182,8 @@ class UbuntuBootstrap(private val context: Context) {
             alias du='du -h'
 
             # Prompt
-            PROMPT='%F{yellow}%n@iris%f:%F{yellow}%~%f$ '
-            RPROMPT='%F{yellow}%(?..✗ %?)%f'
+            PROMPT='%F{yellow}%n@iris-shell%f:%F{blue}%~%f$ '
+            RPROMPT='%F{cyan}%(?..✗ %?)%f'
             """.trimIndent() + "\n"
         )
     }

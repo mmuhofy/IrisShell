@@ -1,12 +1,10 @@
 package com.iris.irisshell.terminal
 
-// Ported from: mmuhofy/IrisCode — app/src/main/kotlin/com/iris/iriscode/terminal/TerminalManager.kt
-// Adapted for Iris Shell — com.iris.irisshell
-
 import android.app.Application
 import android.content.Context
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import com.iris.irisshell.domain.agent.ToolResult
 import com.termux.terminal.TerminalSession
 import com.termux.view.TerminalView
@@ -19,18 +17,23 @@ class TerminalManager(
     private val ubuntuBootstrap: UbuntuBootstrap,
     application: Application
 ) {
-    private val _sessions = mutableStateListOf<TerminalSession>()
-    private val _tabNames = mutableStateListOf<String>()
-    private val _activeTabIndex = mutableStateOf(0)
-    var activeTabIndex: Int
+    private val _sessions: MutableList<TerminalSession> = mutableListOf()
+    val sessions: List<TerminalSession> get() = _sessions.toList()
+
+    private val _tabNames: MutableList<String> = mutableListOf()
+    val tabNames: List<String> get() = _tabNames.toList()
+
+    private val _activeTabIndex = MutableStateFlow(0)
+    val activeTabIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
+    private var currentActiveTabIndex: Int
         get() = _activeTabIndex.value
-        private set(value) { _activeTabIndex.value = value }
+        set(value) { _activeTabIndex.value = value }
 
     val tabCount: Int get() = _sessions.size
     val tabNames: List<String> get() = _tabNames
 
     val currentSession: TerminalSession?
-        get() = _sessions.getOrNull(activeTabIndex)
+        get() = _sessions.getOrNull(currentActiveTabIndex)
 
     val sessionClient: TerminalSessionClientImpl = TerminalSessionClientImpl()
 
@@ -66,7 +69,7 @@ class TerminalManager(
         val session = createNewSession()
         _sessions.add(session)
         _tabNames.add("")
-        activeTabIndex = _sessions.size - 1
+        currentActiveTabIndex = _sessions.size - 1
         terminalViewRef?.attachSession(session)
         return session
     }
@@ -84,12 +87,12 @@ class TerminalManager(
         val name = _tabNames.removeAt(from)
         _sessions.add(to, session)
         _tabNames.add(to, name)
-        if (activeTabIndex == from) {
-            activeTabIndex = to
+        if (currentActiveTabIndex == from) {
+            currentActiveTabIndex = to
         } else {
             val moved = if (from < to) -1 else 1
-            if (activeTabIndex in (minOf(from, to) + 1) until maxOf(from, to) + 1) {
-                activeTabIndex += moved
+            if (currentActiveTabIndex in (minOf(from, to) + 1) until maxOf(from, to) + 1) {
+                currentActiveTabIndex += moved
             }
         }
     }
@@ -100,16 +103,16 @@ class TerminalManager(
         _sessions.removeAt(index)
         _tabNames.removeAt(index)
         when {
-            index < activeTabIndex -> activeTabIndex--
-            index == activeTabIndex && activeTabIndex >= _sessions.size ->
-                activeTabIndex = (_sessions.size - 1).coerceAtLeast(0)
+            index < currentActiveTabIndex -> currentActiveTabIndex--
+            index == currentActiveTabIndex && currentActiveTabIndex >= _sessions.size ->
+                currentActiveTabIndex = (_sessions.size - 1).coerceAtLeast(0)
         }
         currentSession?.let { terminalViewRef?.attachSession(it) }
     }
 
     fun switchTab(index: Int) {
-        if (index < 0 || index >= _sessions.size || index == activeTabIndex) return
-        activeTabIndex = index
+        if (index < 0 || index >= _sessions.size || index == currentActiveTabIndex) return
+        currentActiveTabIndex = index
         currentSession?.let { terminalViewRef?.attachSession(it) }
     }
 
@@ -117,7 +120,7 @@ class TerminalManager(
         if (_sessions.isEmpty()) {
             return addTab()
         }
-        return _sessions[activeTabIndex]
+        return _sessions[currentActiveTabIndex]
     }
 
     private fun createNewSession(): TerminalSession {
@@ -125,7 +128,7 @@ class TerminalManager(
             ensureShellRc()
 
             val guestWd = if (projectPath != null) {
-                "/sdcard/IrisCode/${File(projectPath!!).name}"
+                "/sdcard/com.iris.irisshell/${File(projectPath!!).name}"
             } else null
 
             val cmd = prootRunner.build(guestWd, shell = shellPath)
@@ -170,7 +173,7 @@ class TerminalManager(
                 alias ..='cd ..'
                 alias grep='grep --color=auto'
 
-                PROMPT='%n@iris:$ '
+                PROMPT='%F{yellow}%n@iris-shell%f:%F{blue}%~%f$ '
 
                 if [[ -z "${d}IRIS_WELCOME_SHOWN" ]]; then
                     export IRIS_WELCOME_SHOWN=1
@@ -192,9 +195,9 @@ class TerminalManager(
             _sessions.removeAt(idx)
             _tabNames.removeAt(idx)
             when {
-                idx < activeTabIndex -> activeTabIndex--
-                idx == activeTabIndex && activeTabIndex >= _sessions.size ->
-                    activeTabIndex = (_sessions.size - 1).coerceAtLeast(0)
+                idx < currentActiveTabIndex -> currentActiveTabIndex--
+                idx == currentActiveTabIndex && currentActiveTabIndex >= _sessions.size ->
+                    currentActiveTabIndex = (_sessions.size - 1).coerceAtLeast(0)
             }
             terminalViewRef?.let { view ->
                 currentSession?.let { view.attachSession(it) }

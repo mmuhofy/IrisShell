@@ -1,8 +1,5 @@
 package com.iris.irisshell.terminal
 
-// Ported from: mmuhofy/IrisCode — app/src/main/kotlin/com/iris/iriscode/terminal/ProotRunner.kt
-// Adapted for Iris Shell — com.iris.irisshell
-
 import java.io.File
 
 // Inspired by: github.com/rk134/ReTerminal (MkSession.kt, init-host.sh)
