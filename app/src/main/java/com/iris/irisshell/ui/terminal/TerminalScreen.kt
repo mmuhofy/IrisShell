@@ -3,7 +3,9 @@ package com.iris.irisshell.ui.terminal
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -11,14 +13,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.UbuntuSetupState
@@ -48,6 +52,7 @@ fun TerminalScreen(
     ubuntuSetupState: UbuntuSetupState,
     onRetry: () -> Unit,
 ) {
+    var inputBarVisible by remember { mutableStateOf(true) }
     when (ubuntuSetupState) {
         UbuntuSetupState.Idle,
         UbuntuSetupState.Extracting,
@@ -58,7 +63,25 @@ fun TerminalScreen(
             SetupProgress(state = ubuntuSetupState)
         }
         UbuntuSetupState.Ready -> {
-            TerminalViewHost(terminalManager = terminalManager)
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    TerminalViewHost(terminalManager = terminalManager)
+                }
+                TerminalInputBar(
+                    visible = inputBarVisible,
+                    onSubmit = { command ->
+                        // Forward the user's command payload terminated by newline so
+                        // the shell reads it as an Enter press. Termux's
+                        // `TerminalSession.write(byte[], offset, count)` accepts raw
+                        // bytes; we use the UTF-8 view of the string.
+                        terminalManager.currentSession?.apply {
+                            val payload = (command + "\n").encodeToByteArray()
+                            write(payload, 0, payload.size)
+                        }
+                    },
+                    onToggleVisibility = { inputBarVisible = !inputBarVisible },
+                )
+            }
         }
         is UbuntuSetupState.Failed -> {
             SetupFailure(
