@@ -15,7 +15,8 @@ import androidx.annotation.Nullable;
 
 import com.termux.terminal.TerminalBuffer;
 import com.termux.terminal.WcWidth;
-import com.termux.view.R;
+// R references removed for :terminal native compile: library R class is not
+// auto-generated. The :ui layer renders selection handles via Compose instead.
 import com.termux.view.TerminalView;
 
 public class TextSelectionCursorController implements CursorController {

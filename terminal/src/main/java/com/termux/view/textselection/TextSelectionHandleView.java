@@ -13,7 +13,6 @@ import android.view.ViewParent;
 import android.view.WindowManager;
 import android.widget.PopupWindow;
 
-import com.termux.view.R;
 import com.termux.view.TerminalView;
 import com.termux.view.support.PopupWindowCompatGingerbread;
 
@@ -59,8 +58,10 @@ public class TextSelectionHandleView extends View {
         mCursorController = cursorController;
         mInitialOrientation = initialOrientation;
 
-        mHandleLeftDrawable = getContext().getDrawable(R.drawable.text_select_handle_left_material);
-        mHandleRightDrawable = getContext().getDrawable(R.drawable.text_select_handle_right_material);
+        // R references removed for :terminal native compile (library R class not auto-generated).
+        // IrisShell renders text selection handles via :ui layer instead.
+        mHandleLeftDrawable = null;
+        mHandleRightDrawable = null;
 
         setOrientation(mInitialOrientation);
     }
