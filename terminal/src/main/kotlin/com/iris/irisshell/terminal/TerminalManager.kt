@@ -18,10 +18,8 @@ class TerminalManager(
     application: Application
 ) {
     private val _sessions: MutableList<TerminalSession> = mutableListOf()
-    val sessions: List<TerminalSession> get() = _sessions.toList()
-
     private val _tabNames: MutableList<String> = mutableListOf()
-    val tabNames: List<String> get() = _tabNames.toList()
+    val tabNames: List<String> get() = _tabNames
 
     private val _activeTabIndex = MutableStateFlow(0)
     val activeTabIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
@@ -30,7 +28,6 @@ class TerminalManager(
         set(value) { _activeTabIndex.value = value }
 
     val tabCount: Int get() = _sessions.size
-    val tabNames: List<String> get() = _tabNames
 
     val currentSession: TerminalSession?
         get() = _sessions.getOrNull(currentActiveTabIndex)

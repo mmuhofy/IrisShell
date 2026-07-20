@@ -1,14 +1,19 @@
 package com.iris.irisshell.terminal
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+// Ported from: mmuhofy/IrisCode — app/src/main/kotlin/com/iris/iriscode/terminal/ExtraKeyState.kt
+// Adapted for Iris Shell — com.iris.irisshell
+//
+// Originally used Compose runtime's mutableStateOf/getValue/setValue. Since this
+// module does NOT apply the Compose plugin (Compose belongs to :ui and :app per
+// AGENT.md §109, §139), we replace the observable properties with plain mutable
+// Kotlin properties. The :ui layer wraps these in Compose-backed state where
+// recomposition is needed.
 
 class ExtraKeyState {
-    var ctrlActive by mutableStateOf(false)
-    var ctrlLocked by mutableStateOf(false)
-    var altActive by mutableStateOf(false)
-    var altLocked by mutableStateOf(false)
+    var ctrlActive: Boolean = false
+    var ctrlLocked: Boolean = false
+    var altActive: Boolean = false
+    var altLocked: Boolean = false
 
     fun tapCtrl() {
         if (ctrlLocked) {

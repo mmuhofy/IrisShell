@@ -7,11 +7,22 @@
 
 plugins {
     alias(libs.plugins.iris.android.library)
+    alias(libs.plugins.iris.android.compose)
     alias(libs.plugins.iris.kotlin.serialization)
 }
 
 android {
     namespace = "com.iris.irisshell.terminal"
+    // The termux view + emulator Java sources ship as src/main/java/ alongside
+    // src/main/kotlin/ in this module. AGP must schedule compileDebugJavaWithJavac
+    // before compileDebugKotlin so the Java sources are reachable from Kotlin.
+    // We explicitly add both source dirs to be certain the variant builder picks
+    // them up.
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/java")
+        }
+    }
 
     defaultConfig {
         minSdk = 26
