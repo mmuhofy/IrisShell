@@ -31,15 +31,6 @@ android {
     }
 }
 
-// Force AGP to schedule compileDebugJavaWithJavac task before compileDebugKotlin.
-// Without this dependency, AGP skips javac entirely for this module because the
-// variant builder doesn't detect any Java sources detected at the kotlin-compile
-// variant level. We force the dependency so that the termux view + emulator Java
-// sources are compiled and reachable from Kotlin's classpath.
-tasks.matching { it.name == "compileDebugKotlin" || it.name == "compileReleaseKotlin" }.configureEach {
-    dependsOn("compileDebugJavaWithJavac", "compileReleaseJavaWithJavac")
-}
-
 dependencies {
     // domain is pure Kotlin and depends on zero Android types.
     // terminal explicitly creates a bridge from Android APIs to PTY engine.
