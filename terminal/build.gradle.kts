@@ -14,12 +14,6 @@ plugins {
 android {
     namespace = "com.iris.irisshell.terminal"
 
-    sourceSets {
-        getByName("main") {
-            java.srcDirs("src/main/java", "src/main/kotlin")
-        }
-    }
-
     defaultConfig {
         minSdk = 26
         // Required for native arm64 binary support.
