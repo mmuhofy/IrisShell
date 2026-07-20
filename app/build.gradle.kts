@@ -1,15 +1,27 @@
-// ROOT build.gradle.kts
-//
 // app/ — Android entry point.
 // Per AGENT.md §109: Hilt, Navigation, MainActivity live here.
 // Per AGENT.md §112-135: app may depend on ui, data, agent, terminal, ssh,
 //                        but never contains business logic itself.
+
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.iris.android.application)
     alias(libs.plugins.iris.android.compose)
     alias(libs.plugins.iris.android.hilt)
     alias(libs.plugins.kotlin.serialization)
+}
+
+// Load signing config from keystore.properties (root of repo) if it exists.
+// This file is gitignored for production; for IrisShell we keep a stable
+// debug signing key checked into git (see .gitignore and keystore.properties)
+// so that CI-built APKs and locally-built APKs share a signing identity and
+// can be installed over each other without uninstalling.
+val keystoreProperties = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) {
+        f.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -23,8 +35,36 @@ android {
         // AndroidJUnitRunner is configured by the convention plugin.
     }
 
+    signingConfigs {
+        // Common debug signing config used by both debug and release builds in
+        // Phase 1 — keeps a single signing identity across all installers.
+        if (keystoreProperties.isNotEmpty()) {
+            create("debug-keystore") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                enableV1Signing = true
+                enableV2Signing = true
+            }
+        }
+    }
+
     buildFeatures {
         buildConfig = true
+    }
+
+    buildTypes {
+        getByName("debug") {
+            if (keystoreProperties.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("debug-keystore")
+            }
+        }
+        getByName("release") {
+            if (keystoreProperties.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("debug-keystore")
+            }
+        }
     }
 
     packaging {
@@ -61,10 +101,6 @@ dependencies {
 
     // Splash screen + exported launcher theme (Material You launch).
     debugImplementation(libs.compose.ui.tooling)
-
-    // Material icons — used by the keyboard handle / send button. We add the
-    // extended set only on :app; the :ui module keeps a leaner dependency.
-    implementation(libs.compose.material.icons.extended)
 
     // Unit / instrumented tests
     testImplementation(libs.junit)
