@@ -14,6 +14,12 @@ plugins {
 android {
     namespace = "com.iris.irisshell.terminal"
 
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/java", "src/main/kotlin")
+        }
+    }
+
     defaultConfig {
         minSdk = 26
         // Required for native arm64 binary support.
@@ -46,6 +52,9 @@ dependencies {
 
     // serialization — block / token export to FTS / Commerce context
     implementation(libs.kotlinx.serialization.json)
+
+    // okhttp — UbuntuBootstrap.downloadRootfs() fetches the rootfs archive over HTTPS.
+    implementation(libs.okhttp)
 
     // Room out-requires this module so we don't reference room.DB types
     // from terminal layer (clean architecture).
