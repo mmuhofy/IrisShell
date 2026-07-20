@@ -154,6 +154,9 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
     }
     val lifecycleOwner = LocalLifecycleOwner.current
+    // The view client is captured once so its strong reference keeps the
+    // TerminalViewClientImpl alive for the lifetime of the host composable.
+    val viewClient = remember { TerminalViewClientImpl() }
 
     // Ensure at least one tab when the screen enters the Ready state.
     LaunchedEffect(Unit) {
@@ -176,9 +179,6 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         modifier = Modifier
             .fillMaxSize(),
         factory = { ctx ->
-            val viewClient = remember {
-                TerminalViewClientImpl()
-            }
             TerminalView(ctx, null).apply {
                 setTextSize(12)
                 isFocusable = true
