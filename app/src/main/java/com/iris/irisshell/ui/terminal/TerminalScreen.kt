@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.terminal.TerminalManager
+import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
 import com.termux.view.TerminalView
 
@@ -175,10 +176,14 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         modifier = Modifier
             .fillMaxSize(),
         factory = { ctx ->
+            val viewClient = remember {
+                TerminalViewClientImpl()
+            }
             TerminalView(ctx, null).apply {
                 setTextSize(12)
                 isFocusable = true
                 isFocusableInTouchMode = true
+                setTerminalViewClient(viewClient)
                 terminalManager.currentSession?.let { session ->
                     attachSession(session)
                 }
