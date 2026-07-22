@@ -22,7 +22,7 @@ class TerminalManager(
     val tabNames: List<String> get() = _tabNames
 
     private val _activeTabIndex = MutableStateFlow(0)
-    val tabActiveIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
+    val activeTabIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
 
     /**
      * Synchronous snapshot of the active tab index, intended for UI scaffolds

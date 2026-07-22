@@ -57,15 +57,16 @@ fun ChevronRight(
         val strokeWidth = 1.5.dp.toPx()
         val w = size.width
         val h = size.height
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w * 0.35f, h * 0.25f)
+            relativeLineTo(w * 0.30f, 0f)
+            relativeLineTo(-w * 0.15f, h * 0.25f)
+            relativeLineTo(w * 0.15f, 0f)
+            relativeLineTo(-w * 0.15f, -h * 0.25f)
+            relativeLineTo(-w * 0.30f, 0f)
+        }
         drawPath(
-            path = androidx.compose.ui.graphics.Path().apply {
-                moveTo(w * 0.35f, h * 0.25f)
-                lineBy(w * 0.30f, h * 0.25f)
-                lineBy(-w * 0.15f, h * 0.25f)
-                lineBy(w * 0.15f, 0f)
-                lineBy(-w * 0.15f, -h * 0.25f)
-                lineBy(-w * 0.30f, h * 0.25f)
-            },
+            path = path,
             color = color,
             style = Stroke(width = strokeWidth),
         )

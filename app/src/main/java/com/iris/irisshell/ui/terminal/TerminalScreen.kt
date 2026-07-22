@@ -1,5 +1,6 @@
 package com.iris.irisshell.ui.terminal
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -60,7 +61,7 @@ fun TerminalScreen(
             Column(modifier = Modifier.fillMaxSize()) {
                 if (!fullscreen) {
                     TerminalTopBar(
-                        activeTabIndexFlow = terminalManager.tabActiveIndex,
+                        activeTabIndexFlow = terminalManager.activeTabIndex,
                         tabCount = terminalManager.tabCount,
                         isFullscreen = false,
                         onRefresh = {
@@ -111,9 +112,7 @@ private fun CompactFullscreenExit(onExitFullscreen: () -> Unit) {
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 6.dp)
-                .androidx.compose.foundation.clickable(
-                    onClick = onExitFullscreen,
-                ),
+                .clickable(onClick = onExitFullscreen),
         ) {
             Text(
                 text = "Tap to exit fullscreen",
