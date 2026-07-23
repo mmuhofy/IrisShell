@@ -5,19 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,8 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.Text
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.iris.irisshell.ui.icons.GlyphClose
+import com.iris.irisshell.ui.icons.GlyphLock
+import com.iris.irisshell.ui.icons.GlyphRefresh
 import com.iris.irisshell.ui.icons.IrisShellMark
 import com.iris.irisshell.ui.theme.IrisOutline
 import com.iris.irisshell.ui.theme.IrisPrimary
@@ -39,7 +35,7 @@ import com.iris.irisshell.ui.theme.IrisTextSecondary
 /**
  * Iris Shell Terminal topbar — modern, fixed, 48dp tall.
  *
- * Layout (mobile-first, all icons vector via Canvas + Lucide):
+ * Layout (mobile-first, all icons are Canvas-native vectors):
  *   LEFT  — Iris monogram · "Iris Shell"
  *   MID   — Tab indicator: "1 / 3" with active gold dot
  *   RIGHT — Refresh · Fullscreen toggle · Close (≥48dp tap targets)
@@ -52,9 +48,10 @@ import com.iris.irisshell.ui.theme.IrisTextSecondary
  *  - Spacing: 4dp and 8dp incremental rhythm
  *  - Press feedback: clip(RoundedCornerShape(12dp)) + tinted background on tap
  *
- * The earlier setup bug (notification shade auto-pull) is preserved by keeping
- * the topbar inside the same WindowInsetsCompat hide zone so it does not
- * re-trigger the system bars on tap.
+ * Earlier this topbar used `androidx.compose.material.icons.filled.{Close,Lock,Refresh}`,
+ * which forces the whole `compose-material-icons-extended` icon table
+ * (~12MB) into the APK for three glyphs. We replaced each with a
+ * hand-built Canvas primitive (TopBarIcons.kt).
  */
 @Composable
 fun TerminalTopBar(
@@ -75,7 +72,6 @@ fun TerminalTopBar(
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // ─── LEFT: branding ───────────────────────────────────────────────────
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -90,7 +86,6 @@ fun TerminalTopBar(
             )
         }
 
-        // ─── CENTER: tab indicator ────────────────────────────────────────────
         Row(
             modifier = Modifier.weight(1f),
             horizontalArrangement = Arrangement.Center,
@@ -99,31 +94,31 @@ fun TerminalTopBar(
             TabIndicator(activeIndex = activeTabIndex, total = tabCount)
         }
 
-        // ─── RIGHT: action buttons ───────────────────────────────────────────
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TopBarIconButton(
-                imageVector = Icons.Filled.Refresh,
-                description = "Refresh terminal",
+                contentDescription = "Refresh terminal",
                 onClick = onRefresh,
-            )
+            ) { tint ->
+                GlyphRefresh(color = tint)
+            }
             TopBarIconButton(
-                imageVector = Icons.Filled.Lock,
-                description = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
+                contentDescription = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
                 tinted = isFullscreen,
                 onClick = onToggleFullscreen,
-            )
+            ) { tint ->
+                GlyphLock(color = tint)
+            }
             TopBarIconButton(
-                imageVector = Icons.Filled.Close,
-                description = "Close session",
+                contentDescription = "Close session",
                 onClick = onClose,
-            )
+            ) { tint ->
+                GlyphClose(color = tint)
+            }
         }
     }
-    // 1dp hairline separator — provides definition between the topbar surface
-    // and the terminal view below.
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -156,15 +151,19 @@ private fun TabIndicator(activeIndex: Int, total: Int) {
 }
 
 /**
- * Generic topbar icon button — 36dp visual circle on a 48dp tap surface,
- * tinted surface when `tinted` is true and on press.
+ * Generic topbar icon button — 48dp tap surface wrapping a 36dp visual
+ * target. Draws a 12dp-clipped tinted ellipse when [tinted] is true so the
+ * active fullscreen toggle reads at a glance.
+ *
+ * The icon slot is a normal @Composable lambda so callers can supply a
+ * Canvas-drawn element without dragging in a heavyweight ImageVector API.
  */
 @Composable
 private fun TopBarIconButton(
-    imageVector: androidx.compose.ui.graphics.vector.ImageVector,
-    description: String,
+    contentDescription: String,
     onClick: () -> Unit,
     tinted: Boolean = false,
+    icon: @Composable (Color) -> Unit,
 ) {
     val containerColor = if (tinted) {
         IrisSurfaceVariant
@@ -185,12 +184,7 @@ private fun TopBarIconButton(
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = imageVector,
-                contentDescription = description,
-                tint = iconColor,
-                modifier = Modifier.size(18.dp),
-            )
+            icon(iconColor)
         }
     }
 }
