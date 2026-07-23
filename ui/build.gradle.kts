@@ -37,12 +37,16 @@ dependencies {
     // Hilt + ViewModel integration
     implementation(libs.hilt.navigation.compose)
 
-    // Coil — image loading for theme store previews (MEMORYBANK.md §58)
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
+    // Coil — image loading for theme store previews (MEMORYBANK.md §58).
+    // OMITTED in Phase 1 (no theme store surface yet). Re-add when the
+    // ThemeStore screen lands in Phase 2.
+    // implementation(libs.coil.compose)
+    // implementation(libs.coil.network.okhttp)
 
-    // Lottie — onboarding animations (MEMORYBANK.md §59)
-    implementation(libs.lottie.compose)
+    // Lottie — onboarding animations (MEMORYBANK.md §59).
+    // OMITTED in Phase 1 (boot splash + simple Compose start screen cover
+    // the user; the onboarding wizard is Phase 2). Re-add when needed.
+    // implementation(libs.lottie.compose)
 
     // coroutines
     implementation(libs.kotlinx.coroutines.android)
