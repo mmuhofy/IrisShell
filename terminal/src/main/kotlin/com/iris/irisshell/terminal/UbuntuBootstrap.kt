@@ -28,22 +28,27 @@ class UbuntuBootstrap(private val context: Context) {
             && File(rootfsDir, "bin/zsh").canExecute()
             && File(rootfsDir, "etc/apt/sources.list").exists()
 
+    @Volatile private var lastFailedStep: String = "Unknown"
+
     suspend fun install(
         installPackages: Boolean = true,
         optimize: Boolean = true,
-        onState: (UbuntuSetupState) -> Unit
+        onState: (UbuntuSetupState) -> Unit,
+        onLog: (String) -> Unit = {},
     ) {
         if (isInstalled) {
+            onLog("✓ Bootstrap already installed — skipping.")
             onState(UbuntuSetupState.Ready)
             return
         }
-        runInstall(installPackages, optimize, onState)
+        runInstall(installPackages, optimize, onState, onLog)
     }
 
     private suspend fun runInstall(
         installPackages: Boolean,
         optimize: Boolean,
-        onState: (UbuntuSetupState) -> Unit
+        onState: (UbuntuSetupState) -> Unit,
+        onLog: (String) -> Unit,
     ) {
         try {
             withContext(Dispatchers.IO) {
@@ -52,6 +57,7 @@ class UbuntuBootstrap(private val context: Context) {
                 libDir.mkdirs()
                 tmpDir.mkdirs()
 
+                onLog("→ Extracting PRoot binary and Ubuntu rootfs…")
                 onState(UbuntuSetupState.Extracting)
 
                 // proot binary
@@ -62,6 +68,7 @@ class UbuntuBootstrap(private val context: Context) {
                     }
                 }
                 prootFile.setExecutable(true, false)
+                onLog("  · PRoot binary staged.")
 
                 // libtalloc.so.2
                 context.assets.open("libtalloc.so.2").use { input ->
@@ -70,41 +77,53 @@ class UbuntuBootstrap(private val context: Context) {
                         input.copyTo(out)
                     }
                 }
+                onLog("  · libtalloc.so.2 staged.")
 
                 // Ubuntu rootfs (try multiple asset names, fallback to download)
                 rootfsDir.mkdirs()
+                lastFailedStep = "Rootfs"
                 val rootfsStream = try {
                     context.assets.open("ubuntu_rootfs")
                 } catch (_: Exception) {
                     try {
                         context.assets.open("ubuntu-base.tar.gz")
                     } catch (_: Exception) {
-                        Log.w("UbuntuBootstrap", "Rootfs not in assets, downloading...")
+                        onLog("  · Rootfs not in assets — downloading from cdimage.ubuntu.com…")
                         downloadRootfs()
                     }
                 }
                 rootfsStream.use { input ->
+                    onLog("  · Extracting rootfs tarball…")
                     extractTarGz(GZIPInputStream(input), rootfsDir)
                 }
+                onLog("✓ Rootfs extracted.")
 
+                onLog("→ Configuring rootfs (apt sources, resolv.conf, shells)…")
                 onState(UbuntuSetupState.Configuring)
+                lastFailedStep = "Configure"
                 configureRootfs()
+                onLog("✓ Rootfs configured.")
 
                 if (installPackages) {
-                    installBasePackages(onState)
+                    installBasePackages(onState, onLog)
                 }
 
-                installOhMyZsh(onState)
+                installOhMyZsh(onState, onLog)
 
                 if (optimize) {
+                    onLog("→ Optimizing rootfs (apt clean, cache purge)…")
                     onState(UbuntuSetupState.Optimizing)
+                    lastFailedStep = "Optimize"
                     optimizeRootfs()
+                    onLog("✓ Rootfs optimized.")
                 }
 
+                onLog("✓ Bootstrap complete. Ready.")
                 onState(UbuntuSetupState.Ready)
             }
         } catch (e: Exception) {
             Log.e("UbuntuBootstrap", "Setup failed", e)
+            onLog("✗ FAILED at [$lastFailedStep]: ${e::class.simpleName}: ${e.message ?: "Unknown error"}")
             onState(UbuntuSetupState.Failed("${e::class.simpleName}: ${e.message ?: "Unknown error"}"))
         }
     }
@@ -190,52 +209,76 @@ class UbuntuBootstrap(private val context: Context) {
 
     // ─── Package installation ───────────────────────────────────────
 
-    private fun installBasePackages(onState: (UbuntuSetupState) -> Unit) {
+    private fun installBasePackages(
+        onState: (UbuntuSetupState) -> Unit,
+        onLog: (String) -> Unit,
+    ) {
+        lastFailedStep = "Packages"
+        onLog("→ Updating apt package lists…")
         onState(UbuntuSetupState.InstallingPackages("apt", "Updating package lists..."))
-        val updateExit = runInProot("apt-get update -qq 2>&1")
+        val updateExit = runInProot(
+            "apt-get update -qq 2>&1",
+            onLog = { onLog("    │ $it") },
+        )
         if (updateExit != 0) {
             throw RuntimeException("apt-get update failed (exit $updateExit)")
         }
+        onLog("✓ Apt lists updated.")
 
         val packages = listOf("zsh", "git", "curl", "ca-certificates", "nano", "vim", "tree")
+        onLog("→ Installing base packages: ${packages.joinToString(", ")}")
         onState(UbuntuSetupState.InstallingPackages("all", "Installing: ${packages.joinToString(", ")}..."))
         val installExit = runInProot(
-            "DEBIAN_FRONTEND=noninteractive apt-get install -y ${packages.joinToString(" ")} 2>&1"
+            "DEBIAN_FRONTEND=noninteractive apt-get install -y ${packages.joinToString(" ")} 2>&1",
+            onLog = { onLog("    │ $it") },
         )
         if (installExit != 0) {
             throw RuntimeException("Package installation failed (exit $installExit)")
         }
+        onLog("✓ Base packages installed.")
     }
 
     // ─── Oh My Zsh setup ────────────────────────────────────────────
 
-    private fun installOhMyZsh(onState: (UbuntuSetupState) -> Unit) {
+    private fun installOhMyZsh(
+        onState: (UbuntuSetupState) -> Unit,
+        onLog: (String) -> Unit,
+    ) {
+        lastFailedStep = "OhMyZsh"
+        onLog("→ Installing Oh My Zsh + plugins…")
         onState(UbuntuSetupState.InstallingOhMyZsh("Downloading Oh My Zsh..."))
         val omzDir = "/home/.oh-my-zsh"
         val omzExit = runInProot(
-            "git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git $omzDir 2>&1"
+            "git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git $omzDir 2>&1",
+            onLog = { onLog("    │ $it") },
         )
 
         if (omzExit != 0) {
             Log.w("UbuntuBootstrap", "Oh My Zsh install failed (exit $omzExit), using basic zsh config")
+            onLog("  ⚠ Oh My Zsh git clone failed — falling back to basic zsh config.")
             writeBasicZshrc()
             return
         }
 
+        onLog("  · Cloning zsh-autosuggestions…")
         onState(UbuntuSetupState.InstallingOhMyZsh("Installing plugins..."))
 
         // https://github.com/zsh-users/zsh-autosuggestions
         runInProot(
-            "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions $omzDir/custom/plugins/zsh-autosuggestions 2>&1"
+            "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions $omzDir/custom/plugins/zsh-autosuggestions 2>&1",
+            onLog = { onLog("    │ $it") },
         )
 
+        onLog("  · Cloning zsh-syntax-highlighting…")
         // https://github.com/zsh-users/zsh-syntax-highlighting
         runInProot(
-            "git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git $omzDir/custom/plugins/zsh-syntax-highlighting 2>&1"
+            "git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git $omzDir/custom/plugins/zsh-syntax-highlighting 2>&1",
+            onLog = { onLog("    │ $it") },
         )
 
         onState(UbuntuSetupState.InstallingOhMyZsh("Creating .zshrc..."))
         createZshConfig()
+        onLog("✓ Oh My Zsh ready.")
     }
 
     private fun createZshConfig() {
@@ -306,7 +349,10 @@ class UbuntuBootstrap(private val context: Context) {
     private val linkerPath: String
         get() = if (File("/system/bin/linker64").exists()) "/system/bin/linker64" else "/system/bin/linker"
 
-    private fun runInProot(command: String): Int {
+    private fun runInProot(
+        command: String,
+        onLog: (String) -> Unit = {},
+    ): Int {
         val prootExe = prootFile.absolutePath
         val rootfs = rootfsDir.absolutePath
         val lib = libDir.absolutePath
@@ -340,9 +386,12 @@ class UbuntuBootstrap(private val context: Context) {
         pb.redirectErrorStream(true)
 
         val process = pb.start()
-        // Consume output to prevent buffer deadlock
+        // Consume + forward output to prevent buffer deadlock and surface logs.
         val reader = BufferedReader(InputStreamReader(process.inputStream))
-        while (reader.readLine() != null) { }
+        var line: String?
+        while (reader.readLine().also { line = it } != null) {
+            onLog(line ?: "")
+        }
         return process.waitFor()
     }
 

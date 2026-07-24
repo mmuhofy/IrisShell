@@ -30,9 +30,11 @@ _Last updated: 2026-07-16_
 - [ ] Persistent session — Foreground Service, phantom killer proof
 
 ### Linux Environment
-- [ ] PRoot v5.2.0 static binary download
-- [ ] Ubuntu 24.04 rootfs download + extraction
-- [ ] Bootstrap progress UI — step-by-step stepper
+- [x] PRoot v5.2.0 static binary download
+- [x] Ubuntu 24.04 rootfs download + extraction
+- [x] Bootstrap progress UI — step-by-step stepper (5 rows + live log card)
+- [x] Onboarding wizard (Welcome / Architecture / Pick Shell / Ready) — DataStore firstLaunch flag
+- [x] Setup recovery UI — Retry / Re-download / Reset / Report
 - [ ] Zsh as default shell
 - [ ] Oh My Zsh + zsh-autosuggestions + zsh-syntax-highlighting
 - [ ] Package install: zsh, git, curl, nano, vim, tree

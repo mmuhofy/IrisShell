@@ -2,6 +2,7 @@ package com.iris.irisshell.di
 
 import android.app.Application
 import android.content.Context
+import com.iris.irisshell.terminal.BootstrapStatePort
 import com.iris.irisshell.terminal.ProotRunner
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalSessionClientImpl
@@ -44,5 +45,11 @@ object TerminalModule {
         ubuntuBootstrap = ubuntuBootstrap,
         application = application
     )
+
+    @Provides
+    @Singleton
+    fun provideBootstrapStatePort(
+        ubuntuBootstrap: UbuntuBootstrap
+    ): BootstrapStatePort = BootstrapStatePort(ubuntuBootstrap)
 }
 

@@ -66,6 +66,7 @@ Termux brought the terminal to Android in 2012. Iris Shell reinvents it for 2026
 
 ```
 ui/
+  setup/            → Onboarding + BootstrapStepper + SetupRecovery + LiveLogCard
   terminal/         → Terminal screen, session UI, block renderer
   sessions/         → Session list, preview, navigator
   ssh/              → SSH manager, constellation
@@ -75,7 +76,10 @@ ui/
   workspace/        → Project workspace, workflow management
 
 domain/
-  terminal/         → TerminalSession, Block, SemanticToken
+  terminal/         → TerminalSession, Block, SemanticToken,
+                      BootstrapStep, BootstrapProgress,
+                      ObserveBootstrapUseCase, TriggerBootstrapUseCase,
+                      ObserveFirstLaunchUseCase
   agent/            → AgentLoop, Tool interfaces, StreamEvent
   session/          → SessionEntity, CommandDNA, Replay
   ssh/              → SshHost, SshKey, SshConnection
@@ -738,7 +742,7 @@ data class SshHost(
 ### From Iris Code — Direct Port
 ```
 ✅ ProotRunner.kt
-✅ UbuntuBootstrap.kt
+✅ UbuntuBootstrap.kt (+ log emission + lastFailedStep tracking)
 ✅ TerminalManager.kt
 ✅ AgentLoop.kt
 ✅ MultiStepStreamer.kt
@@ -750,6 +754,29 @@ data class SshHost(
 ✅ Visual Identity (colors, typography)
 ✅ Settings / API Vault architecture
 ✅ Hilt module structure
+
+### Boot / Setup UX (this milestone)
+```
+✅ First-launch pipeline refactored to MVVM:
+   - domain/terminal/BootstrapStep, BootstrapProgress, BootstrapError
+   - domain/terminal/ObserveBootstrapUseCase, TriggerBootstrapUseCase, ObserveFirstLaunchUseCase
+   - data/terminal/BootstrapObserver, TriggerBootstrap, FirstLaunchRepositoryImpl
+   - data/di/BindingsModule, ApplicationScopeModule
+   - terminal/BootstrapStatePort (logs as SharedFlow + state as StateFlow)
+   - ui/setup/BootstrapViewModel, OnboardingViewModel
+✅ BootstrapStepperScreen — 5-row Material 3 stepper with pulse-halo,
+   determinate progress bar, ETA, animated current-message caption.
+✅ LiveLogCard — collapsed default chip, expandable to 320dp scrollable
+   drawer; auto-scrolls tail while bottom-pinned; 200-line ring buffer.
+✅ SetupRecoveryScreen — 4 recovery buttons (Retry / Re-download / Reset / Report).
+   Report path copies diagnostic bundle (error + last 50 logs + device info)
+   then opens GitHub issues/new.
+✅ OnboardingScreen — 4-page HorizontalPager (Welcome / Architecture /
+   Pick Shell / Ready). Persists firstLaunchCompleted in DataStore.
+✅ ui → terminal import seam removed; UI only consumes :domain types.
+   Sole remaining direct import: UbuntuSetupState.Ready passed to the legacy
+   TerminalScreen signature (tracked as follow-up).
+⏳ Follow-up: refactor TerminalScreen to consume a :domain state type.
 ```
 
 ### To Build from Scratch
@@ -784,7 +811,7 @@ data class SshHost(
 | 3 | Session Navigator trigger | Long swipe? Button? Bottom sheet? | TBD |
 | 4 | Ghost text confirmation | Pill tap vs sağa swipe | Pill leading candidate |
 | 5 | App icon & splash | Eye concept? Shell concept? | TBD |
-| 6 | Onboarding | How many steps? What to show? | TBD |
+| 6 | Onboarding | How many steps? What to show? | Resolved 2026-07-24: 4 pages — Welcome / Architecture / Pick Shell / Ready |
 | 7 | Terminal background | Solid / blur / glassmorphism depth | TBD |
 | 8 | General UI direction | Material You depth vs minimal | Partially decided: Material You + Unixporn + light glass |
 | 9 | Live Share relay | Self-hosted? Third-party? | v1.1 concern |
