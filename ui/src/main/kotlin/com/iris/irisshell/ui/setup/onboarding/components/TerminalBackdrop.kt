@@ -74,7 +74,7 @@ fun TerminalBackdrop(
                 .fillMaxSize()
                 .padding(horizontal = 24.dp, vertical = 80.dp),
         ) {
-            val rowHeightPx = ROW_HEIGHT_DP.toPx()
+            val rowHeightPx = ROW_HEIGHT_DP.dp.toPx()
 
             var cursorX = 0f
             var cursorY = 0f
@@ -104,7 +104,7 @@ fun TerminalBackdrop(
             drawRect(
                 color = SetupPalette.Text.copy(alpha = alpha),
                 topLeft = Offset(cursorX, cursorY),
-                size = Size(CURSOR_WIDTH_DP.toPx(), rowHeightPx),
+                size = Size(CURSOR_WIDTH_DP.dp.toPx(), rowHeightPx),
             )
         }
 
