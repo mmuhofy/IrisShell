@@ -41,7 +41,7 @@ import com.iris.irisshell.domain.terminal.StepState
 import com.iris.irisshell.ui.setup.components.LiveLogCard
 import com.iris.irisshell.ui.setup.components.SetupHeroMark
 import com.iris.irisshell.ui.setup.components.StepRow
-import com.iris.irisshell.ui.setup.components.label
+import com.iris.irisshell.ui.setup.label
 import com.iris.irisshell.ui.setup.theme.SetupPalette
 
 /**
@@ -91,7 +91,7 @@ fun BootstrapStepperScreen(
                 .padding(horizontal = 28.dp, vertical = 56.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            SetupHeroMark(sizeDp = 64)
+            SetupHeroMark(sizeDp = 64.dp)
             Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = "Iris Shell",
@@ -254,6 +254,6 @@ private fun Row(
 // Re-export for callers that want to use the WindowInsets scanner — kept
 // to satisfy parity with `Surface` usage in MainActivity.
 @Suppress("unused")
-internal val TopInset: WindowInsets = WindowInsets.statusBars
+internal val TopInsetRef: Boolean = true
 @Suppress("unused")
-internal val BottomInset: WindowInsets = WindowInsets.systemBars
+internal val BottomInsetRef: Boolean = true

@@ -6,10 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,7 +36,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -52,6 +47,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.domain.terminal.BootstrapError
 import com.iris.irisshell.domain.terminal.BootstrapProgress
 import com.iris.irisshell.domain.terminal.RecoveryAction
+import com.iris.irisshell.ui.setup.BootstrapViewModel
+import com.iris.irisshell.ui.setup.label
 import com.iris.irisshell.ui.setup.theme.SetupPalette
 
 /**

@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -117,18 +117,6 @@ fun StepRow(
             }
         }
     }
-}
-
-/** Convenience title formatter — turns an enum into a readable label. */
-internal fun BootstrapStep.label(): String = when (this) {
-    BootstrapStep.Idle -> "Preparing"
-    BootstrapStep.Extracting -> "Extracting rootfs"
-    BootstrapStep.Configuring -> "Configuring rootfs"
-    BootstrapStep.InstallingPackages -> "Installing packages"
-    BootstrapStep.InstallingOhMyZsh -> "Installing Oh My Zsh"
-    BootstrapStep.Optimizing -> "Optimizing"
-    BootstrapStep.Ready -> "Ready"
-    BootstrapStep.Failed -> "Failed"
 }
 
 /** Default no-op spacer for symmetry in stacks. */

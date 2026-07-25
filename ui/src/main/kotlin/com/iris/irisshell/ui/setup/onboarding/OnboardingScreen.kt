@@ -168,7 +168,7 @@ private fun OnboardingPageContent(page: OnboardingPage) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (page is OnboardingPage.Welcome) {
-            SetupHeroMark(sizeDp = 96)
+            SetupHeroMark(sizeDp = 96.dp)
             Spacer(modifier = Modifier.height(24.dp))
         }
         AnimatedContent(
