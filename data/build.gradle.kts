@@ -25,6 +25,9 @@ room {
 dependencies {
     api(project(":domain"))
     implementation(project(":core"))
+    // The bootstrap port lives in :terminal — :data consumes it through this seam
+    // so the UI never imports Android-specific types from :terminal.
+    implementation(project(":terminal"))
 
     // storage — DataStore
     implementation(libs.androidx.datastore.preferences)
