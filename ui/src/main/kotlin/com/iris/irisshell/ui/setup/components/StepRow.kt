@@ -121,6 +121,10 @@ fun StepRow(
 
 /** Default no-op spacer for symmetry in stacks. */
 @Suppress("unused")
-internal fun Dot(color: Color = SetupPalette.TextDisabled, size: androidx.compose.ui.unit.Dp = 4.dp) {
+@Composable
+internal fun Dot(
+    color: Color = SetupPalette.TextDisabled,
+    size: androidx.compose.ui.unit.Dp = 4.dp,
+) {
     Box(modifier = Modifier.size(size).background(color))
 }

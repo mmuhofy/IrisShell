@@ -10,12 +10,14 @@ import com.iris.irisshell.domain.terminal.StepState
 import com.iris.irisshell.terminal.BootstrapStatePort
 import com.iris.irisshell.terminal.UbuntuSetupState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -48,7 +50,7 @@ class BootstrapObserver @Inject constructor(
     }
 
     private fun CoroutineScope.launchCollect(port: BootstrapStatePort) {
-        launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             port.logs.collect { line ->
                 _ring.tryEmit(line)
             }
