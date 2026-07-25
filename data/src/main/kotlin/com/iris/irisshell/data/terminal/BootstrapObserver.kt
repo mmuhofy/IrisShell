@@ -48,7 +48,7 @@ class BootstrapObserver @Inject constructor(
     }
 
     private fun CoroutineScope.launchCollect(port: BootstrapStatePort) {
-        kotlinx.coroutines.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+        launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
             port.logs.collect { line ->
                 _ring.tryEmit(line)
             }
