@@ -73,6 +73,11 @@ export TMPDIR=/tmp
 alias ll='ls -la'
 alias la='ls -A'
 alias l='ls -CF'
+
+# Iris Shell bash fallback prompt — kept narrow by design.
+# If zsh is installed the user lands in zsh via /etc/passwd; this only fires
+# for `bash` invocations explicitly.
+PS1='\[\033[1;33m\]iris-shell\[\033[0m\]:\[\033[1;34m\]\w\[\033[0m\]\$ '
 BASHRC
 
 cat > /etc/skel/.bash_profile <<'BASHP'

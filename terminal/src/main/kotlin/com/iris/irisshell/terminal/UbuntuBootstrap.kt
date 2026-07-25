@@ -115,6 +115,7 @@ class UbuntuBootstrap(private val context: Context) {
                     onState(UbuntuSetupState.InstallingPackages("apt", "Installing packages..."))
                     lastFailedStep = "Packages"
                     runScriptInProot(SCRIPTS_PACKAGES, onLog = onLog)
+                    runScriptInProot(SCRIPTS_SET_DEFAULT_SHELL, onLog = onLog)
                     onLog("✓ Base packages installed.")
                 }
 
@@ -303,6 +304,7 @@ class UbuntuBootstrap(private val context: Context) {
         // Each is shipped in the APK and streamed to proot via stdin (`bash -s`).
         private const val SCRIPTS_CONFIGURE = "rootfs-configure.sh"
         private const val SCRIPTS_PACKAGES = "packages-install.sh"
+        private const val SCRIPTS_SET_DEFAULT_SHELL = "set-default-shell.sh"
         private const val SCRIPTS_OMZ = "omz-install.sh"
         private const val SCRIPTS_ZSHRC = "zshrc-write.sh"
         private const val SCRIPTS_OPTIMIZE = "rootfs-optimize.sh"

@@ -6,17 +6,22 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iris.irisshell.ui.setup.theme.SetupPalette
@@ -30,8 +35,10 @@ import com.iris.irisshell.ui.setup.theme.SetupPalette
  * bootstrapped. A Compose-canvas placeholder lets us sell the "show, don't
  * tell" experience without risking a half-mounted TermuxView.
  *
- * Optional lines are drawn over the same backdrop via [lines]; their y-offset
- * increases per line. The cursor blinks at the bottom.
+ * Rendering: a single Canvas draws every line at a fixed grid (col=COL_WIDTH,
+ * row=ROW_HEIGHT). The cursor is a small rect underneath the line indicated
+ * by [cursorPosition]. Blink alpha runs on a single infinite transition so
+ * recomposition never desyncs the blink phase.
  */
 @Composable
 fun TerminalBackdrop(
@@ -39,40 +46,14 @@ fun TerminalBackdrop(
     cursorPosition: CursorPos,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SetupPalette.Background)
-            .padding(horizontal = 28.dp, vertical = 80.dp),
-    ) {
-        if (lines.isNotEmpty()) {
-            lines.forEachIndexed { index, line ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = (index * 28).dp),
-                ) {
-                    androidx.compose.material3.Text(
-                        text = line,
-                        color = SetupPalette.Text,
-                        style = terminalTextStyle(fontSize = 14.sp),
-                        modifier = Modifier,
-                    )
-                }
-            }
-        }
-        CursorBlink(
-            line = cursorPosition.line,
-            column = cursorPosition.column,
-        )
-    }
-}
+    val measurer = rememberTextMeasurer()
+    val textStyle = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+    )
 
-data class CursorPos(val line: Int, val column: Int)
-
-@Composable
-private fun CursorBlink(line: Int, column: Int) {
-    val infinite = rememberInfiniteTransition(label = "cursor")
+    val infinite = rememberInfiniteTransition(label = "cursor-blink")
     val alpha by infinite.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -82,18 +63,73 @@ private fun CursorBlink(line: Int, column: Int) {
         ),
         label = "cursor-alpha",
     )
+
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(top = (line * 28).dp, start = (column * 9).dp),
+            .background(SetupPalette.Background),
     ) {
-        androidx.compose.foundation.layout.Box(
+        Canvas(
             modifier = Modifier
-                .size(10.dp)
-                .background(SetupPalette.Text.copy(alpha = alpha)),
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 80.dp),
+        ) {
+            val rowHeightPx = ROW_HEIGHT_DP.toPx()
+
+            var cursorX = 0f
+            var cursorY = 0f
+
+            lines.forEachIndexed { index, line ->
+                val y = (index * rowHeightPx)
+                if (line.isNotEmpty()) {
+                    val result = measurer.measure(
+                        text = line,
+                        style = textStyle,
+                        maxLines = 1,
+                    )
+                    drawText(
+                        textLayoutResult = result,
+                        topLeft = Offset(0f, y),
+                    )
+                    if (index == cursorPosition.line) {
+                        cursorX = result.size.width.toFloat()
+                        cursorY = y
+                    }
+                } else if (index == cursorPosition.line) {
+                    cursorX = 0f
+                    cursorY = y
+                }
+            }
+
+            drawRect(
+                color = SetupPalette.Text.copy(alpha = alpha),
+                topLeft = Offset(cursorX, cursorY),
+                size = Size(CURSOR_WIDTH_DP.toPx(), rowHeightPx),
+            )
+        }
+
+        Text(
+            text = "iris@shell:~",
+            style = textStyle.copy(color = SetupPalette.TextMuted),
+            modifier = Modifier
+                .padding(start = 24.dp, top = 28.dp),
         )
     }
 }
+
+/**
+ * Grid coordinates for the cursor — see TerminalBackdrop doc.
+ *
+ * `column` is a hint for callers that want to position before the end of
+ * the line. The Canvas uses the measured width of the line text to anchor
+ * the cursor; callers may set column >=0 so the cursor offsets that many
+ * cells from the line start.
+ */
+data class CursorPos(val line: Int, val column: Int = 0)
+
+internal const val COL_WIDTH_DP = 9
+internal const val ROW_HEIGHT_DP = 24
+internal const val CURSOR_WIDTH_DP = 10
 
 internal fun terminalTextStyle(fontSize: androidx.compose.ui.unit.TextUnit): TextStyle =
     TextStyle(
