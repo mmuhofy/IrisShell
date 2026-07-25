@@ -22,11 +22,17 @@ class UbuntuBootstrap(private val context: Context) {
     val rootfsDir: File get() = File(baseDir, "rootfs")
     private val tmpDir: File get() = File(baseDir, "tmp")
 
+    /** Marker file written by `rootfs-optimize.sh` once bootstrap completes. */
+    private val setupMarker: File
+        get() = File(rootfsDir, "var/lib/iris-shell/.setup_complete")
+
+    /** Rootfs identity check — used to early-exit when bootstrap is already done. */
     val isInstalled: Boolean
         get() = prootFile.canExecute()
             && File(libDir, "libtalloc.so.2").canRead()
             && File(rootfsDir, "bin/zsh").canExecute()
             && File(rootfsDir, "etc/apt/sources.list").exists()
+            && setupMarker.exists()
 
     @Volatile private var lastFailedStep: String = "Unknown"
 
@@ -101,20 +107,34 @@ class UbuntuBootstrap(private val context: Context) {
                 onLog("→ Configuring rootfs (apt sources, resolv.conf, shells)…")
                 onState(UbuntuSetupState.Configuring)
                 lastFailedStep = "Configure"
-                configureRootfs()
+                runScriptInProot(SCRIPTS_CONFIGURE, onLog = onLog)
                 onLog("✓ Rootfs configured.")
 
                 if (installPackages) {
-                    installBasePackages(onState, onLog)
+                    onLog("→ Installing base packages…")
+                    onState(UbuntuSetupState.InstallingPackages("apt", "Installing packages..."))
+                    lastFailedStep = "Packages"
+                    runScriptInProot(SCRIPTS_PACKAGES, onLog = onLog)
+                    onLog("✓ Base packages installed.")
                 }
 
-                installOhMyZsh(onState, onLog)
+                onLog("→ Installing Oh My Zsh + plugins…")
+                onState(UbuntuSetupState.InstallingOhMyZsh("Installing Oh My Zsh..."))
+                lastFailedStep = "OhMyZsh"
+                runScriptInProot(SCRIPTS_OMZ, onLog = onLog)
+                runScriptInProot(SCRIPTS_ZSHRC, onLog = onLog)
+                onLog("✓ Oh My Zsh ready.")
 
                 if (optimize) {
-                    onLog("→ Optimizing rootfs (apt clean, cache purge)…")
+                    onLog("→ Optimizing rootfs (deb cache purge, marker write)…")
                     onState(UbuntuSetupState.Optimizing)
                     lastFailedStep = "Optimize"
-                    optimizeRootfs()
+                    val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown"
+                    runScriptInProot(
+                        SCRIPTS_OPTIMIZE,
+                        onLog = onLog,
+                        envExtras = mapOf("ABI" to abi),
+                    )
                     onLog("✓ Rootfs optimized.")
                 }
 
@@ -128,221 +148,80 @@ class UbuntuBootstrap(private val context: Context) {
         }
     }
 
-    private fun configureRootfs() {
-        File(rootfsDir, "etc/resolv.conf").writeText(
-            "nameserver 8.8.8.8\nnameserver 8.8.4.4\n"
-        )
-        File(rootfsDir, "etc/hostname").writeText("iris-shell\n")
-        File(rootfsDir, "etc/hosts").writeText(
-            "127.0.0.1 localhost iris-shell\n::1 localhost ip6-localhost ip6-loopback\n"
-        )
-        File(rootfsDir, "etc/apt/sources.list.d/ubuntu.sources").delete()
-        File(rootfsDir, "etc/apt/sources.list").writeText(
-            """
-            deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
-            deb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
-            deb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse
-            """.trimIndent() + "\n"
-        )
-        File(rootfsDir, "home").mkdirs()
-        File(rootfsDir, "root").mkdirs()
-        File(rootfsDir, "tmp").mkdirs()
 
-        // Minimal .bashrc for script compatibility
-        File(rootfsDir, "home/.bashrc").writeText(
-            """
-            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-            export HOME=/home
-            export TERM=xterm-256color
-            export LANG=C.UTF-8
-            export TMPDIR=/tmp
-            alias ll='ls -la'
-            alias la='ls -A'
-            alias l='ls -CF'
-            """.trimIndent() + "\n"
-        )
+    // All installation / configuration logic is now in shell scripts under
+    // terminal/src/main/assets/shell-scripts/setup/. Kotlin only orchestrates
+    // the pipeline and forwards logs — see `runScriptInProot`.
 
-        // Minimal .bash_profile
-        File(rootfsDir, "home/.bash_profile").writeText(
-            """
-            if [ -f ~/.bashrc ]; then
-                . ~/.bashrc
-            fi
-            """.trimIndent() + "\n"
-        )
+    // ─── Proot script loading & execution ──────────────────────────
 
-        // Basic .zshrc template (will be overwritten by OMZ setup)
-        writeBasicZshrc()
+    private fun loadAssetScript(scriptName: String): String {
+        val path = "shell-scripts/setup/$scriptName"
+        return context.assets.open(path).bufferedReader().use { it.readText() }
     }
 
-    private fun writeBasicZshrc() {
-        File(rootfsDir, "home/.zshrc").writeText(
-            """
-            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-            export HOME=/home
-            export TERM=xterm-256color
-            export LANG=C.UTF-8
-            export TMPDIR=/tmp
-
-            # History
-            HISTSIZE=5000
-            HISTFILESIZE=10000
-            HISTTIMEFORMAT="%F %T "
-            setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE
-
-            # Aliases
-            alias ll='ls -la'
-            alias la='ls -A'
-            alias l='ls -CF'
-            alias ..='cd ..'
-            alias ...='cd ../..'
-            alias grep='grep --color=auto'
-            alias df='df -h'
-            alias du='du -h'
-
-            # Prompt
-            PROMPT='%F{yellow}%n@iris-shell%f:%F{blue}%~%f$ '
-            RPROMPT='%F{cyan}%(?..✗ %?)%f'
-            """.trimIndent() + "\n"
-        )
-    }
-
-    // ─── Package installation ───────────────────────────────────────
-
-    private fun installBasePackages(
-        onState: (UbuntuSetupState) -> Unit,
+    private fun pipeScriptInProot(
+        scriptBody: String,
         onLog: (String) -> Unit,
-    ) {
-        lastFailedStep = "Packages"
-        onLog("→ Updating apt package lists…")
-        onState(UbuntuSetupState.InstallingPackages("apt", "Updating package lists..."))
-        val updateExit = runInProot(
-            "apt-get update -qq 2>&1",
-            onLog = { onLog("    │ $it") },
-        )
-        if (updateExit != 0) {
-            throw RuntimeException("apt-get update failed (exit $updateExit)")
-        }
-        onLog("✓ Apt lists updated.")
+        envExtras: Map<String, String> = emptyMap(),
+    ): Int {
+        val prootExe = prootFile.absolutePath
+        val rootfs = rootfsDir.absolutePath
+        val lib = libDir.absolutePath
+        val tmp = tmpDir.absolutePath
 
-        val packages = listOf("zsh", "git", "curl", "ca-certificates", "nano", "vim", "tree")
-        onLog("→ Installing base packages: ${packages.joinToString(", ")}")
-        onState(UbuntuSetupState.InstallingPackages("all", "Installing: ${packages.joinToString(", ")}..."))
-        val installExit = runInProot(
-            "DEBIAN_FRONTEND=noninteractive apt-get install -y ${packages.joinToString(" ")} 2>&1",
-            onLog = { onLog("    │ $it") },
+        val argv = listOf(
+            linkerPath, prootExe,
+            "--kill-on-exit", "-0", "--link2symlink",
+            "-r", rootfs,
+            "-w", "/home",
+            "-b", "/dev", "-b", "/proc", "-b", "/sys",
+            "-b", "/system", "-b", "/data",
+            "-b", "${lib}:/hostlib",
+            "/bin/bash", "-s",
         )
-        if (installExit != 0) {
-            throw RuntimeException("Package installation failed (exit $installExit)")
+
+        val env = mapOf(
+            "PATH" to "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "HOME" to "/home",
+            "TERM" to "xterm-256color",
+            "LANG" to "C.UTF-8",
+            "TMPDIR" to "/tmp",
+            "LD_LIBRARY_PATH" to lib,
+            "PROOT_TMP_DIR" to tmp,
+        ) + envExtras
+
+        val pb = ProcessBuilder(*argv.toTypedArray())
+        pb.environment().clear()
+        pb.environment().putAll(env)
+        pb.directory(File(rootfs))
+        pb.redirectErrorStream(true)
+
+        val process = pb.start()
+
+        // Feed script body via stdin (bash -s reads the script from stdin).
+        process.outputStream.bufferedWriter().use { writer ->
+            writer.write(scriptBody)
+            writer.flush()
         }
-        onLog("✓ Base packages installed.")
+
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
+        var line: String?
+        while (reader.readLine().also { line = it } != null) {
+            onLog(line ?: "")
+        }
+        return process.waitFor()
     }
 
-    // ─── Oh My Zsh setup ────────────────────────────────────────────
-
-    private fun installOhMyZsh(
-        onState: (UbuntuSetupState) -> Unit,
+    private fun runScriptInProot(
+        scriptName: String,
         onLog: (String) -> Unit,
-    ) {
-        lastFailedStep = "OhMyZsh"
-        onLog("→ Installing Oh My Zsh + plugins…")
-        onState(UbuntuSetupState.InstallingOhMyZsh("Downloading Oh My Zsh..."))
-        val omzDir = "/home/.oh-my-zsh"
-        val omzExit = runInProot(
-            "git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git $omzDir 2>&1",
-            onLog = { onLog("    │ $it") },
-        )
-
-        if (omzExit != 0) {
-            Log.w("UbuntuBootstrap", "Oh My Zsh install failed (exit $omzExit), using basic zsh config")
-            onLog("  ⚠ Oh My Zsh git clone failed — falling back to basic zsh config.")
-            writeBasicZshrc()
-            return
-        }
-
-        onLog("  · Cloning zsh-autosuggestions…")
-        onState(UbuntuSetupState.InstallingOhMyZsh("Installing plugins..."))
-
-        // https://github.com/zsh-users/zsh-autosuggestions
-        runInProot(
-            "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions $omzDir/custom/plugins/zsh-autosuggestions 2>&1",
-            onLog = { onLog("    │ $it") },
-        )
-
-        onLog("  · Cloning zsh-syntax-highlighting…")
-        // https://github.com/zsh-users/zsh-syntax-highlighting
-        runInProot(
-            "git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git $omzDir/custom/plugins/zsh-syntax-highlighting 2>&1",
-            onLog = { onLog("    │ $it") },
-        )
-
-        onState(UbuntuSetupState.InstallingOhMyZsh("Creating .zshrc..."))
-        createZshConfig()
-        onLog("✓ Oh My Zsh ready.")
+        envExtras: Map<String, String> = emptyMap(),
+    ): Int {
+        val body = loadAssetScript(scriptName)
+        return pipeScriptInProot(body, onLog, envExtras)
     }
 
-    private fun createZshConfig() {
-        val d = "${'$'}"
-        File(rootfsDir, "home/.zshrc").writeText(
-            """
-            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-            export HOME=/home
-            export TERM=xterm-256color
-            export LANG=C.UTF-8
-            export TMPDIR=/tmp
-
-            # ─── Oh My Zsh ──────────────────────────────────────────
-            export ZSH="${d}HOME/.oh-my-zsh"
-            ZSH_THEME="agnoster"
-
-            # ─── Plugins ────────────────────────────────────────────
-            plugins=(
-                git
-                zsh-autosuggestions
-                zsh-syntax-highlighting
-                history
-                aliases
-            )
-
-            source ${d}ZSH/oh-my-zsh.sh
-
-            # ─── History ────────────────────────────────────────────
-            HISTSIZE=5000
-            HISTFILESIZE=10000
-            HISTTIMEFORMAT="%F %T "
-            setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE
-
-            # ─── Aliases ────────────────────────────────────────────
-            alias ll='ls -la'
-            alias la='ls -A'
-            alias l='ls -CF'
-            alias ..='cd ..'
-            alias ...='cd ../..'
-            alias grep='grep --color=auto'
-            alias df='df -h'
-            alias du='du -h'
-
-            # ─── Welcome ────────────────────────────────────────────
-            if [[ -z "${d}IRIS_WELCOME_SHOWN" ]]; then
-                export IRIS_WELCOME_SHOWN=1
-                echo ""
-                echo "  ╔══════════════════════════════════════════╗"
-                echo "  ║        Welcome to Iris Code v1.0         ║"
-                echo "  ║     Your AI-powered coding terminal      ║"
-                echo "  ╚══════════════════════════════════════════╝"
-                echo ""
-            fi
-            """.trimIndent() + "\n"
-        )
-    }
-
-    // ─── Rootfs optimization ───────────────────────────────────────
-
-    private fun optimizeRootfs() {
-        runInProot(
-            "apt-get clean -qq 2>&1 && rm -rf /var/lib/apt/lists/* && rm -rf /var/cache/apt/archives/*.deb && rm -rf /tmp/*"
-        )
-    }
 
     // ─── Proot command execution (for setup steps) ─────────────────
 
@@ -419,6 +298,14 @@ class UbuntuBootstrap(private val context: Context) {
             "x86_64" to "amd64",
             "x86" to "i386"
         )
+
+        // Asset script filenames under terminal/src/main/assets/shell-scripts/setup/.
+        // Each is shipped in the APK and streamed to proot via stdin (`bash -s`).
+        private const val SCRIPTS_CONFIGURE = "rootfs-configure.sh"
+        private const val SCRIPTS_PACKAGES = "packages-install.sh"
+        private const val SCRIPTS_OMZ = "omz-install.sh"
+        private const val SCRIPTS_ZSHRC = "zshrc-write.sh"
+        private const val SCRIPTS_OPTIMIZE = "rootfs-optimize.sh"
     }
 
     // ─── tar.gz extraction (no system binary dependency) ─────────────────────

@@ -33,7 +33,7 @@ _Last updated: 2026-07-16_
 - [x] PRoot v5.2.0 static binary download
 - [x] Ubuntu 24.04 rootfs download + extraction
 - [x] Bootstrap progress UI — step-by-step stepper (5 rows + live log card)
-- [x] Onboarding wizard (Welcome / Architecture / Pick Shell / Ready) — DataStore firstLaunch flag
+- [x] Onboarding wizard (3 sahne: Welcome / Architecture / Ready; Pager yok, Compose-canvas fake terminal backdrop, gerçek Termux-mount HAYIR) — DataStore firstLaunch flag
 - [x] Setup recovery UI — Retry / Re-download / Reset / Report
 - [ ] Zsh as default shell
 - [ ] Oh My Zsh + zsh-autosuggestions + zsh-syntax-highlighting

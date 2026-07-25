@@ -813,7 +813,7 @@ data class SshHost(
 | 5 | App icon & splash | Eye concept? Shell concept? | TBD |
 | 6 | Onboarding | How many steps? What to show? | Resolved 2026-07-24: 4 pages — Welcome / Architecture / Pick Shell / Ready |
 | 7 | Terminal background | Solid / blur / glassmorphism depth | TBD |
-| 8 | General UI direction | Material You depth vs minimal | Partially decided: Material You + Unixporn + light glass |
+| 8 | General UI direction | Material You depth vs minimal | Resolved 2026-07-25: deliberately avoids Material 3 expressive animations. M3 baseline, monospace prompt, dark gold-on-black, near-zero animation." |
 | 9 | Live Share relay | Self-hosted? Third-party? | v1.1 concern |
 | 10 | Workspace depth v1.0 | Full workflow builder or just project tagging? | TBD |
 
