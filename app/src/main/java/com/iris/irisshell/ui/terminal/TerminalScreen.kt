@@ -61,8 +61,7 @@ fun TerminalScreen(
             Column(modifier = Modifier.fillMaxSize()) {
                 if (!fullscreen) {
                     TerminalTopBar(
-                        activeTabIndexFlow = terminalManager.activeTabIndex,
-                        tabCount = terminalManager.tabCount,
+                        sessionTitle = "IrisShell",
                         isFullscreen = false,
                         onRefresh = {
                             // Phase 1: drop the active PTY and create a fresh one.
