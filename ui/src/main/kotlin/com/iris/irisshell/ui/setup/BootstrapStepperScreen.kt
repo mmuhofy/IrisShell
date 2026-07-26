@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import com.iris.irisshell.design.system.OutfitFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -97,7 +98,7 @@ fun BootstrapStepperScreen(
                 text = "Iris Shell",
                 color = SetupPalette.Text,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.4.sp,
@@ -108,7 +109,7 @@ fun BootstrapStepperScreen(
                 text = "Your phone is a Unix machine. Finally.",
                 color = SetupPalette.TextSecondary,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 13.sp,
                 ),
             )
@@ -174,7 +175,7 @@ private fun CurrentMessage(progress: BootstrapProgress) {
             text = msg,
             color = SetupPalette.Primary,
             style = TextStyle(
-                fontFamily = FontFamily.SansSerif,
+                fontFamily = OutfitFontFamily,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
             ),

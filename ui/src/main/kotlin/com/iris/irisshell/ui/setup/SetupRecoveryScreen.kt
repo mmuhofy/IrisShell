@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import com.iris.irisshell.design.system.OutfitFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -99,7 +100,7 @@ fun SetupRecoveryScreen(
                 text = "Last 50 log lines",
                 color = SetupPalette.TextMuted,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                 ),
@@ -134,7 +135,7 @@ private fun FailureBadge(message: String, detail: String) {
                 text = "!",
                 color = SetupPalette.Error,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                 ),
@@ -146,7 +147,7 @@ private fun FailureBadge(message: String, detail: String) {
                 text = message,
                 color = SetupPalette.Text,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
                 ),
@@ -156,7 +157,7 @@ private fun FailureBadge(message: String, detail: String) {
                 text = detail,
                 color = SetupPalette.TextSecondary,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                 ),
@@ -278,7 +279,7 @@ private fun PrimaryRecoveryButton(
                 text = label,
                 color = accent,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                 ),
@@ -288,7 +289,7 @@ private fun PrimaryRecoveryButton(
                 text = sublabel,
                 color = SetupPalette.TextMuted,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 11.sp,
                 ),
             )

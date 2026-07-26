@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import com.iris.irisshell.design.system.OutfitFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,7 +84,7 @@ fun OnboardingOverlay(
                 Text(
                     text = continueLabel,
                     style = TextStyle(
-                        fontFamily = FontFamily.SansSerif,
+                        fontFamily = OutfitFontFamily,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                     ),
@@ -126,7 +127,7 @@ fun SkipAnchor(
                     text = "Skip",
                     color = SetupPalette.TextMuted,
                     style = TextStyle(
-                        fontFamily = FontFamily.SansSerif,
+                        fontFamily = OutfitFontFamily,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                     ),

@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,22 +33,21 @@ import com.iris.irisshell.ui.theme.IrisText
 import com.iris.irisshell.ui.theme.IrisTextSecondary
 
 /**
- * Iris Shell Terminal topbar — shapes, container color and divider mirror
- * ReTerminal's [com.rk.terminal.ui.screens.terminal.TerminalTopBar], but with
- * Iris Shell's bolder left-aligned title and the "more vertical" affordance
- * routing terminal actions through a dropdown menu.
+ * Iris Shell Terminal topbar — shapes and container color mirror ReTerminal's
+ * [com.rk.terminal.ui.screens.terminal.TerminalTopBar], but with Iris Shell's
+ * bolder left-aligned title and the "more vertical" affordance routing
+ * terminal actions through a dropdown menu.
  *
  * Inspired by:
  *  - https://github.com/RohitKushvaha01/ReTerminal/blob/main/core/main/.../TerminalTopBar.kt
  *  - https://github.com/RohitKushvaha01/ReTerminal/blob/main/core/components/.../appbars/TopBar.kt
  *
  * Shape strategy:
- *  - Material 3 [TopAppBar] (same primitive ReTerminal uses) — translucent
- *    container color so the page surface shows through, exactly mirroring
- *    `Color.Transparent` in the reference.
- *  - We attach a 1dp [IrisOutline] bottom divider; ReTerminal does not, but
- *    Phase 2 visual tokens call for an explicit separation under the bar
- *    so terminal output bleeds don't drown the title.
+ *  - Material 3 [TopAppBar] (same primitive ReTerminal uses) with a filled
+ *    container color so the bar blends directly into the page surface — no
+ *    bottom divider, no extra padding wrappers. The reference uses
+ *    `Color.Transparent`; we use [IrisSurface] so the bar reads as one solid
+ *    band against [IrisBackground].
  *  - Title slot: a 2-line column — large session title + small subtitle —
  *    replicating ReTerminal's "ReTerminal" / "$id ($mode)" idiom with
  *    Iris Shell's branding.
@@ -69,49 +67,42 @@ fun TerminalTopBar(
     modifier: Modifier = Modifier,
 ) {
     val activeTabIndex by activeTabIndexFlow.collectAsState()
-    Column(modifier = modifier.fillMaxWidth()) {
-        TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = IrisSurface,
-                scrolledContainerColor = IrisSurface,
-                titleContentColor = IrisText,
-                actionIconContentColor = IrisTextSecondary,
-            ),
-            navigationIcon = {},
-            title = {
-                Column {
-                    Text(
-                        text = sessionTitle,
-                        color = IrisText,
-                        fontSize = 20.sp,
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                    if (tabCount > 0) {
-                        Text(
-                            text = "Session ${activeTabIndex + 1} of $tabCount",
-                            color = IrisTextSecondary,
-                            fontSize = 12.sp,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-            },
-            actions = {
-                MoreActionsMenu(
-                    isFullscreen = isFullscreen,
-                    onRefresh = onRefresh,
-                    onToggleFullscreen = onToggleFullscreen,
-                    onClose = onClose,
+    TopAppBar(
+        modifier = modifier.fillMaxWidth(),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = IrisSurface,
+            scrolledContainerColor = IrisSurface,
+            titleContentColor = IrisText,
+            actionIconContentColor = IrisTextSecondary,
+        ),
+        navigationIcon = {},
+        title = {
+            Column {
+                Text(
+                    text = sessionTitle,
+                    color = IrisText,
+                    fontSize = 20.sp,
+                    style = MaterialTheme.typography.titleLarge,
                 )
-            },
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(IrisOutline),
-        )
-    }
+                if (tabCount > 0) {
+                    Text(
+                        text = "Session ${activeTabIndex + 1} of $tabCount",
+                        color = IrisTextSecondary,
+                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        actions = {
+            MoreActionsMenu(
+                isFullscreen = isFullscreen,
+                onRefresh = onRefresh,
+                onToggleFullscreen = onToggleFullscreen,
+                onClose = onClose,
+            )
+        },
+    )
 }
 
 @Composable

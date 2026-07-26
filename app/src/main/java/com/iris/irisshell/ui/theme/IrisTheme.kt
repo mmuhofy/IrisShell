@@ -7,9 +7,9 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.iris.irisshell.design.system.OutfitFontFamily
 
 /**
  * Iris Shell design tokens.
@@ -23,6 +23,13 @@ import androidx.compose.ui.unit.sp
  *
  * Iris Shell is dark-only on v1.0 — OLED mode (full black #000000) is a Settings
  * toggle in Phase 1. The toggle lives in :data's Preferences.
+ *
+ * Typography is sourced from Outfit Regular (bundled TTF at
+ * `res/font/outfit_regular.ttf`). Originally lifted from
+ * `com.rk.terminal.ui.theme.OutfitFontFamily` in
+ * https://github.com/RohitKushvaha01/ReTerminal so the entire app — top bar,
+ * setup story, terminal chrome — shares the same letterforms as the host
+ * shell.
  */
 val IrisBackground: Color = Color(0xFF0C0C0C)
 val IrisSurface: Color = Color(0xFF141414)
@@ -55,25 +62,28 @@ private val IrisDarkColors = darkColorScheme(
     onError = IrisPrimary,
 )
 
+/**
+ * Full Material 3 typography table bound to Outfit. The shape mirrors the
+ * reference ReTerminal `Typography { ... }` block — same scale, weight
+ * assignments, and sizes — so any title/body/label token feels at home in
+ * a ReTerminal-style shell.
+ */
 private val IrisTypography = Typography(
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 22.sp,
-    ),
-    titleMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontSize = 14.sp,
-    ),
-    labelMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontSize = 12.sp,
-    ),
+    displayLarge = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 57.sp),
+    displayMedium = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 45.sp),
+    displaySmall = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 36.sp),
+    headlineLarge = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 32.sp),
+    headlineMedium = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 28.sp),
+    headlineSmall = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 24.sp),
+    titleLarge = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 22.sp),
+    titleMedium = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Medium, fontSize = 16.sp),
+    titleSmall = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Medium, fontSize = 14.sp),
+    bodyLarge = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 16.sp),
+    bodyMedium = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 14.sp),
+    bodySmall = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp),
+    labelLarge = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Medium, fontSize = 14.sp),
+    labelMedium = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp),
+    labelSmall = TextStyle(fontFamily = OutfitFontFamily, fontWeight = FontWeight.Medium, fontSize = 11.sp),
 )
 
 /**

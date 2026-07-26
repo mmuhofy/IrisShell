@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import com.iris.irisshell.design.system.OutfitFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -142,7 +143,7 @@ fun StepStateIcon(
                 text = "✓",
                 color = SetupPalette.Primary,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = (size.value * 0.55f).sp,
                 ),
@@ -152,7 +153,7 @@ fun StepStateIcon(
                 text = "!",
                 color = Color.White,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = (size.value * 0.55f).sp,
                 ),

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import com.iris.irisshell.design.system.OutfitFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -97,7 +98,7 @@ fun StepRow(
                     StepState.Failed -> SetupPalette.Error
                 },
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 15.sp,
                     fontWeight = when (state) {
                         StepState.Active -> FontWeight.SemiBold
@@ -110,7 +111,7 @@ fun StepRow(
                     text = subLine,
                     color = SetupPalette.TextSecondary,
                     style = TextStyle(
-                        fontFamily = FontFamily.SansSerif,
+                        fontFamily = OutfitFontFamily,
                         fontSize = 12.sp,
                     ),
                     maxLines = 2,
