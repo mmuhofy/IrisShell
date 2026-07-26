@@ -1,27 +1,28 @@
 package com.iris.irisshell.ui.topbar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iris.irisshell.ui.icons.MoreVertical
@@ -33,68 +34,84 @@ import com.iris.irisshell.ui.theme.IrisText
 import com.iris.irisshell.ui.theme.IrisTextSecondary
 
 /**
- * Iris Shell Terminal topbar — modern, fixed, 56dp tall.
+ * Iris Shell Terminal topbar — shapes, container color and divider mirror
+ * ReTerminal's [com.rk.terminal.ui.screens.terminal.TerminalTopBar], but with
+ * Iris Shell's bolder left-aligned title and the "more vertical" affordance
+ * routing terminal actions through a dropdown menu.
  *
- * Inspired by: github.com/RohitKushvaha01/ReTerminal — core/components/.../TopBar.kt
- * Adapted for Iris Shell — com.iris.irisshell.
+ * Inspired by:
+ *  - https://github.com/RohitKushvaha01/ReTerminal/blob/main/core/main/.../TerminalTopBar.kt
+ *  - https://github.com/RohitKushvaha01/ReTerminal/blob/main/core/components/.../appbars/TopBar.kt
  *
- * Layout (mobile-first):
- *   LEFT  — large "IrisShell" title (session name placeholder)
- *   RIGHT — single "more vertical" affordance; tapping it opens a
- *           [DropdownMenu] of terminal actions (Refresh · Fullscreen · Close).
- *
- * Design tokens (MEMORYBANK.md §5):
- *  - Background: IrisSurface (#141414) with IrisOutline (#1E1E1E) 1dp bottom border
- *  - Primary accent: IrisPrimary (#E8C547 warm gold)
- *  - Secondary text: IrisTextSecondary
- *  - Tap target: 48dp
- *
- * ICON STRATEGY
- * --------------
- * All glyphs are real Lucide vectors translated to Compose [ImageVector];
- * see [com.iris.irisshell.ui.icons.MoreVertical] (placeholders for future
- * Refresh / Fullscreen / Close are routed through the same Lucide file in
- * later PRs).
+ * Shape strategy:
+ *  - Material 3 [TopAppBar] (same primitive ReTerminal uses) — translucent
+ *    container color so the page surface shows through, exactly mirroring
+ *    `Color.Transparent` in the reference.
+ *  - We attach a 1dp [IrisOutline] bottom divider; ReTerminal does not, but
+ *    Phase 2 visual tokens call for an explicit separation under the bar
+ *    so terminal output bleeds don't drown the title.
+ *  - Title slot: a 2-line column — large session title + small subtitle —
+ *    replicating ReTerminal's "ReTerminal" / "$id ($mode)" idiom with
+ *    Iris Shell's branding.
+ *  - actions slot: a single [IconButton] -> [DropdownMenu] for session
+ *    operations. No back arrow on entry so the bar stays single-purpose.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TerminalTopBar(
     sessionTitle: String,
+    activeTabIndexFlow: kotlinx.coroutines.flow.StateFlow<Int>,
+    tabCount: Int,
+    isFullscreen: Boolean,
     onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onClose: () -> Unit,
-    isFullscreen: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .background(IrisSurface)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = sessionTitle,
-            color = IrisText,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = (-0.2).sp,
-            modifier = Modifier.weight(1f),
+    val activeTabIndex by activeTabIndexFlow.collectAsState()
+    Column(modifier = modifier.fillMaxWidth()) {
+        TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = IrisSurface,
+                scrolledContainerColor = IrisSurface,
+                titleContentColor = IrisText,
+                actionIconContentColor = IrisTextSecondary,
+            ),
+            navigationIcon = {},
+            title = {
+                Column {
+                    Text(
+                        text = sessionTitle,
+                        color = IrisText,
+                        fontSize = 20.sp,
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    if (tabCount > 0) {
+                        Text(
+                            text = "Session ${activeTabIndex + 1} of $tabCount",
+                            color = IrisTextSecondary,
+                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            },
+            actions = {
+                MoreActionsMenu(
+                    isFullscreen = isFullscreen,
+                    onRefresh = onRefresh,
+                    onToggleFullscreen = onToggleFullscreen,
+                    onClose = onClose,
+                )
+            },
         )
-
-        MoreActionsMenu(
-            isFullscreen = isFullscreen,
-            onRefresh = onRefresh,
-            onToggleFullscreen = onToggleFullscreen,
-            onClose = onClose,
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(IrisOutline),
         )
     }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(IrisOutline),
-    )
 }
 
 @Composable
@@ -110,13 +127,7 @@ private fun MoreActionsMenu(
         modifier = Modifier.size(48.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .clickable { expanded = true },
-            contentAlignment = Alignment.Center,
-        ) {
+        IconButton(onClick = { expanded = true }) {
             MoreVertical(
                 modifier = Modifier.size(22.dp),
                 tint = IrisTextSecondary,
@@ -164,6 +175,5 @@ private fun MenuLabel(text: String, destructive: Boolean = false) {
         text = text,
         color = if (destructive) IrisPrimary else IrisText,
         fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
     )
 }
