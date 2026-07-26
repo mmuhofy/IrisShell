@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  App theme — placeholder.
-  
-  The real theme (Iris dark, gold accent #E8C547, JetBrains Mono terminal
-  font) will be defined in :design-system per MEMORYBANK.md §124-163.
-  At project-setup the application theme simply inherits Material3.
+  App theme — Iris Shell, dark only (v1.0).
+  The Compose layer carries real palette + typography tokens (see
+  com.iris.irisshell.ui.theme.IrisTheme). This XML only handles the bits
+  Compose cannot paint from inside the activity: the system status bar and
+  navigation bar, and the launcher icon surface.
+
+  Status / navigation bar: matched to IrisSurface (#141414) so the chrome
+  blends into the app shell — same band, no gap, no system tint screaming
+  through. windowLightStatusBar=false keeps the foreground icons (clock,
+  battery, etc.) readable on the dark surface.
 -->
 <resources>
-    <style name="Theme.IrisShell" parent="android:Theme.Material.NoActionBar" />
+    <style name="Theme.IrisShell" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#FF141414</item>
+        <item name="android:navigationBarColor">#FF141414</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
 </resources>

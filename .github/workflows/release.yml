@@ -47,8 +47,8 @@ jobs:
       - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: irisshell-release-apk
-          path: app/build/outputs/apk/release/*.apk
+          name: irisshell-release-arm64-v8a-apk
+          path: app/build/outputs/apk/release/app-arm64-v8a-release.apk
           if-no-files-found: warn
           retention-days: 30
 
@@ -56,7 +56,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/*.apk
+          files: app/build/outputs/apk/release/app-arm64-v8a-release.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

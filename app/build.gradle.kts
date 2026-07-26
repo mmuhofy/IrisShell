@@ -86,25 +86,20 @@ android {
         }
     }
 
-    // Per-ABI APK splits — we explicitly opt out of the universal APK so each
-    // device downloads only the native architecture it actually needs. With
-    // `isUniversalApk = false` AGP produces one APK per ABI included in
-    // resets(); the `include(...)` set is the device-side coverage list.
+    // Per-ABI APK splits — we ship arm64-v8a only for v1.0 to keep CI artifact
+    // count and the APK download size tight. About 99%+ of today's Android
+    // devices are arm64 (Pixel / Samsung / OnePlus / Xiaomi / etc.); x86_64 and
+    // armeabi-v7a may be added later without changing the workflow — the
+    // `include(...)` set is the source of truth.
     //
-    // arm64-v8a : 99%+ of today’s Android phones (MEMORYBANK §5 target user)
-    // x86_64    : emulators + (rare) ChromeOS tablets
-    // armeabi-v7a : the leftover ~0.5% of older low-end devices
-    //
-    // Output artifacts produced by `assembleRelease`:
+    // Output artifact produced by `assembleRelease`:
     //   app-arm64-v8a-release-unsigned.apk
-    //   app-x86_64-release-unsigned.apk
-    //   app-armeabi-v7a-release-unsigned.apk
     // (No universal APK is created.)
     splits {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a", "x86_64", "armeabi-v7a")
+            include("arm64-v8a")
             isUniversalApk = false
         }
     }
