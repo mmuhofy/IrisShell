@@ -1,4 +1,4 @@
-package com.iris.irissshell.ui.terminal
+package com.iris.irisshell.ui.terminal
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -27,10 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleEventObserver
-import com.iris.irissshell.terminal.TerminalManager
-import com.iris.irissshell.terminal.TerminalViewClientImpl
-import com.iris.irissshell.terminal.UbuntuSetupState
-import com.iris.irissshell.ui.topbar.TerminalTopBar
+import com.iris.irisshell.terminal.TerminalManager
+import com.iris.irisshell.terminal.TerminalViewClientImpl
+import com.iris.irisshell.terminal.UbuntuSetupState
+import com.iris.irisshell.ui.topbar.TerminalTopBar
 import com.termux.view.TerminalView
 
 /**

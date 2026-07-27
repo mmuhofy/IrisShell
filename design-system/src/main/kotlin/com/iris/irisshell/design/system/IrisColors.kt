@@ -1,4 +1,4 @@
-package com.iris.irissshell.design.system
+package com.iris.irisshell.design.system
 
 import androidx.compose.ui.graphics.Color
 
