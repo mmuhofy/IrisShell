@@ -58,6 +58,12 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
-    testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
+}
+
+// Force :domain to compile before KSP runs in this module — VM constructors
+// annotated with @Inject reference use-case interfaces; we don't want KSP
+// to look them up before they're emitted.
+tasks.matching { it.name == "kspDebugKotlin" || it.name == "kspReleaseKotlin" }.configureEach {
+    dependsOn(":domain:compileKotlin", ":domain:compileReleaseKotlin")
 }

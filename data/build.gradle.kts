@@ -54,3 +54,10 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.room.testing)
 }
+
+// Force :domain to compile before KSP runs in this module so freshly added
+// interfaces (e.g. SetTerminalFontSizeUseCase) are on the classpath when the
+// @Binds processor inspects BindingsModule.
+tasks.matching { it.name == "kspDebugKotlin" || it.name == "kspReleaseKotlin" }.configureEach {
+    dependsOn(":domain:compileKotlin", ":domain:compileReleaseKotlin")
+}
