@@ -54,10 +54,6 @@ dependencies {
     // logging
     implementation(libs.timber)
 
-    // KSP processor (Hilt) needs to see domain types — make sure they're on
-    // the ksp classpath, not just the main one.
-    add("ksp", project(":domain"))
-
     // unit tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -65,9 +61,6 @@ dependencies {
     testImplementation(libs.robolectric)
 }
 
-// Force :domain to compile before KSP runs in this module — VM constructors
-// annotated with @Inject reference use-case interfaces; we don't want KSP
-// to look them up before they're emitted.
-tasks.matching { it.name == "kspDebugKotlin" || it.name == "kspReleaseKotlin" }.configureEach {
-    dependsOn(":domain:compileKotlin")
-}
+// (See note below: Hilt's KSP2 processor can't reliably resolve newly added
+// symbols across :domain jar boundaries in this project; Hilt is now driven
+// by kapt instead — see AndroidHiltConventionPlugin.)

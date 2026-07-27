@@ -46,11 +46,6 @@ dependencies {
     // logging
     implementation(libs.timber)
 
-    // KSP processors (Hilt, Room) need to see the domain interfaces we
-    // bind, not just the API surface. Putting :domain on the ksp configuration
-    // directly guarantees the symbol resolver finds them.
-    add("ksp", project(":domain"))
-
     // unit tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -60,9 +55,6 @@ dependencies {
     testImplementation(libs.room.testing)
 }
 
-// Force :domain to compile before KSP runs in this module so freshly added
-// interfaces (e.g. SetTerminalFontSizeUseCase) are on the classpath when the
-// @Binds processor inspects BindingsModule.
-tasks.matching { it.name == "kspDebugKotlin" || it.name == "kspReleaseKotlin" }.configureEach {
-    dependsOn(":domain:compileKotlin")
-}
+// (See note below: Hilt's KSP2 processor can't reliably resolve newly added
+// symbols across :domain jar boundaries in this project; Hilt is now driven
+// by kapt instead — see AndroidHiltConventionPlugin.)
