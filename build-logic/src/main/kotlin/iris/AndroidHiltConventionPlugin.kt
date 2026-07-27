@@ -12,30 +12,24 @@ import org.gradle.kotlin.dsl.dependencies
  * modules — so EVERY Android module that needs to participate in Hilt's
  * graph applies this plugin.
  *
- * Hilt is driven by **kapt** rather than KSP. Why: with Hilt's KSP2
- * processor we hit "BindingMethodProcessingStep was unable to process ...
- * because 'X' could not be resolved" errors whenever a new domain interface
- * (e.g. SetTerminalFontSizeUseCase) was introduced. Kapt's symbol resolver
- * sees the same JAR outputs but is less aggressive about caching them, so
- * freshly added types resolve reliably. Room stays on KSP because its KSP
- * processor is stable and produces cleaner code-gen than kapt.
+ * The `app` module additionally applies the top-level `com.google.dagger.hilt.android`
+ * plugin (handled by the `iris.android.hilt` plugin automatically — there is no
+ * need to apply it manually per-module because Hilt supports aggregation through KSP).
  */
 class AndroidHiltConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             with(pluginManager) {
-                apply("org.jetbrains.kotlin.kapt")
                 apply("com.google.devtools.ksp")
                 apply("com.google.dagger.hilt.android")
             }
 
             dependencies {
                 add("implementation", libs().findLibrary("hilt.android").get())
-                // Hilt's annotation processor — kapt path.
-                add("kapt", libs().findLibrary("hilt.compiler").get())
+                add("ksp", libs().findLibrary("hilt.compiler").get())
                 // Hilt + WorkManager integration (cron, agent watch)
                 add("implementation", libs().findLibrary("hilt.work").get())
-                add("kapt", libs().findLibrary("hilt.work.compiler").get())
+                add("ksp", libs().findLibrary("hilt.work.compiler").get())
                 add("implementation", libs().findLibrary("hilt.navigation.compose").get())
             }
         }
