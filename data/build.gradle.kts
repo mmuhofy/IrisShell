@@ -46,6 +46,11 @@ dependencies {
     // logging
     implementation(libs.timber)
 
+    // KSP processors (Hilt, Room) need to see the domain interfaces we
+    // bind, not just the API surface. Putting :domain on the ksp configuration
+    // directly guarantees the symbol resolver finds them.
+    add("ksp", project(":domain"))
+
     // unit tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

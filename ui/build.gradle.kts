@@ -54,6 +54,10 @@ dependencies {
     // logging
     implementation(libs.timber)
 
+    // KSP processor (Hilt) needs to see domain types — make sure they're on
+    // the ksp classpath, not just the main one.
+    add("ksp", project(":domain"))
+
     // unit tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
