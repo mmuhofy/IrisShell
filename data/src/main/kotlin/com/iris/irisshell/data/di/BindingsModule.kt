@@ -1,10 +1,12 @@
 package com.iris.irisshell.data.di
 
 import com.iris.irisshell.data.settings.FirstLaunchRepositoryImpl
+import com.iris.irissshell.data.settings.TerminalFontSizeRepositoryImpl
 import com.iris.irisshell.data.terminal.BootstrapObserver
 import com.iris.irisshell.data.terminal.TriggerBootstrap
 import com.iris.irisshell.domain.terminal.ObserveBootstrapUseCase
 import com.iris.irisshell.domain.terminal.ObserveFirstLaunchUseCase
+import com.iris.irissshell.domain.terminal.SetTerminalFontSizeUseCase
 import com.iris.irisshell.domain.terminal.TriggerBootstrapUseCase
 import dagger.Binds
 import dagger.Module
@@ -40,4 +42,10 @@ abstract class BindingsModule {
     abstract fun bindObserveFirstLaunch(
         impl: FirstLaunchRepositoryImpl,
     ): ObserveFirstLaunchUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindSetTerminalFontSize(
+        impl: TerminalFontSizeRepositoryImpl,
+    ): SetTerminalFontSizeUseCase
 }

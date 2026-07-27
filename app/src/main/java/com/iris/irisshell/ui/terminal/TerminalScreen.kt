@@ -1,6 +1,7 @@
-package com.iris.irisshell.ui.terminal
+package com.iris.irissshell.ui.terminal
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,42 +13,52 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleEventObserver
-import com.iris.irisshell.terminal.TerminalManager
-import com.iris.irisshell.terminal.TerminalViewClientImpl
-import com.iris.irisshell.terminal.UbuntuSetupState
-import com.iris.irisshell.ui.topbar.TerminalTopBar
+import com.iris.irissshell.terminal.TerminalManager
+import com.iris.irissshell.terminal.TerminalViewClientImpl
+import com.iris.irissshell.terminal.UbuntuSetupState
+import com.iris.irissshell.ui.topbar.TerminalTopBar
 import com.termux.view.TerminalView
 
 /**
- * Phase 1 Terminal screen - ported from mmuhofy/IrisCode
- *   app/src/main/kotlin/com/iris/iriscode/ui/terminal/TerminalScreen.kt
+ * Phase 1 Terminal screen.
  *
- * Adapted for Iris Shell - com.iris.irisshell.
+ * Inspired by mmuhofy/IrisCode — app/src/main/kotlin/.../TerminalScreen.kt
+ * Adapted for Iris Shell — com.iris.irisshell.
  *
- * Phase 2 visual: when the terminal is in Ready state we mount the modern
- * topbar above the Termux view so the user can see branding, the active
- * tab, and quick actions (Refresh / Fullscreen / Close). Fullscreen mode
- * hides the topbar to give the terminal the whole screen.
+ * Layout (when [ubuntuSetupState] == Ready):
+ *   ┌──────────────┐
+ *   │  TopBar      │   ← TerminalTopBar (MoreActionsMenu)
+ *   ├──────────────┤
+ *   │              │
+ *   │  Terminal    │   ← Pinch-to-zoom → font size persists via VM
+ *   │              │
+ *   │          ║A║ │   ← VerticalZoomSlider (right edge, auto-hide)
+ *   └──────────────┘
+ *
+ * Fullscreen (long-press "Enter fullscreen" in the topbar menu) hides both
+ * the topbar and the slider so the termux view gets the whole screen.
  */
 @Composable
 fun TerminalScreen(
     terminalManager: TerminalManager,
     ubuntuSetupState: UbuntuSetupState,
     onRetry: () -> Unit,
+    terminalViewModel: TerminalViewModel = hiltViewModel(),
 ) {
-    var fullscreen by remember { mutableStateOf(false) }
-
     when (ubuntuSetupState) {
         UbuntuSetupState.Idle,
         UbuntuSetupState.Extracting,
@@ -58,48 +69,86 @@ fun TerminalScreen(
             SetupProgress(state = ubuntuSetupState)
         }
         UbuntuSetupState.Ready -> {
-            Column(modifier = Modifier.fillMaxSize()) {
-                if (!fullscreen) {
-                    TerminalTopBar(
-                        sessionTitle = "IrisShell",
-                        activeTabIndexFlow = terminalManager.activeTabIndex,
-                        tabCount = terminalManager.tabCount,
-                        isFullscreen = false,
-                        onRefresh = {
-                            // Phase 1: drop the active PTY and create a fresh one.
-                            terminalManager.currentSession?.finishIfRunning()
-                            terminalManager.addTab()
-                        },
-                        onToggleFullscreen = { fullscreen = true },
-                        onClose = {
-                            terminalManager.currentSession?.finishIfRunning()
-                        },
-                    )
-                }
-                Box(modifier = Modifier.fillMaxSize()) {
-                    TerminalViewHost(terminalManager = terminalManager)
-                    if (fullscreen) {
-                        // Tap the screen to exit fullscreen — a thin overlay
-                        // captures the gesture and triggers collapse.
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
-                            contentAlignment = Alignment.TopStart,
-                        ) {
-                            CompactFullscreenExit {
-                                fullscreen = false
-                            }
-                        }
-                    }
-                }
-            }
+            ReadyScreen(
+                terminalManager = terminalManager,
+                terminalViewModel = terminalViewModel,
+            )
         }
         is UbuntuSetupState.Failed -> {
             SetupFailure(
                 error = ubuntuSetupState.error,
                 onRetry = onRetry,
             )
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun ReadyScreen(
+    terminalManager: TerminalManager,
+    terminalViewModel: TerminalViewModel,
+) {
+    var fullscreen by remember { mutableStateOf(false) }
+    val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
+    val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (!fullscreen) {
+            TerminalTopBar(
+                sessionTitle = "IrisShell",
+                activeTabIndexFlow = terminalManager.activeTabIndex,
+                tabCount = terminalManager.tabCount,
+                isFullscreen = false,
+                onRefresh = {
+                    terminalManager.currentSession?.finishIfRunning()
+                    terminalManager.addTab()
+                },
+                onToggleFullscreen = { fullscreen = true },
+                onClose = {
+                    terminalManager.currentSession?.finishIfRunning()
+                },
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, _, zoom, _ ->
+                        if (zoom != 1f) {
+                            terminalViewModel.bumpFontSize(zoom)
+                            terminalViewModel.showSlider()
+                        }
+                    }
+                },
+        ) {
+            TerminalViewHost(
+                terminalManager = terminalManager,
+                fontSizeSp = fontSizeSp,
+            )
+
+            if (!fullscreen && sliderVisible) {
+                VerticalZoomSlider(
+                    value = fontSizeSp,
+                    onValueChange = { terminalViewModel.setFontSize(it) },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 16.dp),
+                )
+            }
+
+            if (fullscreen) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    contentAlignment = Alignment.TopStart,
+                ) {
+                    CompactFullscreenExit {
+                        fullscreen = false
+                    }
+                }
+            }
         }
     }
 }
@@ -179,8 +228,13 @@ private fun SetupFailure(error: String, onRetry: () -> Unit) {
     }
 }
 
+private const val TERMINAL_PINCH_THRESHOLD = 0.04f
+
 @Composable
-private fun TerminalViewHost(terminalManager: TerminalManager) {
+private fun TerminalViewHost(
+    terminalManager: TerminalManager,
+    fontSizeSp: Int,
+) {
     val terminalViewRef = remember {
         androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
     }
@@ -193,6 +247,10 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         }
     }
 
+    LaunchedEffect(fontSizeSp) {
+        terminalViewRef.value?.setTextSize(fontSizeSp)
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, _ -> }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -203,21 +261,18 @@ private fun TerminalViewHost(terminalManager: TerminalManager) {
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
             TerminalView(ctx, null).apply {
-                setTextSize(12)
+                setTextSize(fontSizeSp)
                 isFocusable = true
                 isFocusableInTouchMode = true
                 setTerminalViewClient(viewClient)
-                terminalManager.currentSession?.let { session ->
-                    attachSession(session)
-                }
+                terminalManager.currentSession?.let { session -> attachSession(session) }
                 terminalManager.registerTerminalView(this, ctx)
                 terminalViewRef.value = this
             }
         },
         update = { view ->
-            terminalManager.currentSession?.let { session ->
-                view.attachSession(session)
-            }
+            view.setTextSize(fontSizeSp)
+            terminalManager.currentSession?.let { session -> view.attachSession(session) }
             terminalManager.registerTerminalView(view, view.context)
             terminalViewRef.value = view
             view.requestFocus()
