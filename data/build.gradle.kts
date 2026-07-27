@@ -59,5 +59,5 @@ dependencies {
 // interfaces (e.g. SetTerminalFontSizeUseCase) are on the classpath when the
 // @Binds processor inspects BindingsModule.
 tasks.matching { it.name == "kspDebugKotlin" || it.name == "kspReleaseKotlin" }.configureEach {
-    dependsOn(":domain:compileKotlin", ":domain:compileReleaseKotlin")
+    dependsOn(":domain:compileKotlin")
 }
