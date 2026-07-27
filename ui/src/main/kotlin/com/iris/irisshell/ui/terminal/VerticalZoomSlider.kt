@@ -60,7 +60,7 @@ import kotlin.math.roundToInt
  * Top = MAX_FONT_SP, bottom = MIN_FONT_SP. Mapping is linear / continuous.
  */
 @Composable
-internal fun VerticalZoomSlider(
+fun VerticalZoomSlider(
     value: Int,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
