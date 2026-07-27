@@ -156,7 +156,7 @@ private fun ReadyScreen(
 @Composable
 private fun CompactFullscreenExit(onExitFullscreen: () -> Unit) {
     androidx.compose.material3.Surface(
-        color = com.iris.irisshell.ui.theme.IrisSurface.copy(alpha = 0.85f),
+          color = com.iris.irisshell.design.system.IrisSurface.copy(alpha = 0.85f),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
     ) {
         androidx.compose.foundation.layout.Box(
@@ -166,7 +166,7 @@ private fun CompactFullscreenExit(onExitFullscreen: () -> Unit) {
         ) {
             Text(
                 text = "Tap to exit fullscreen",
-                color = com.iris.irisshell.ui.theme.IrisTextSecondary,
+                  color = com.iris.irisshell.design.system.IrisTextSecondary,
                 style = MaterialTheme.typography.labelMedium,
             )
         }

@@ -34,10 +34,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iris.irisshell.ui.theme.IrisPrimary
-import com.iris.irisshell.ui.theme.IrisSurface
-import com.iris.irisshell.ui.theme.IrisSurfaceVariant
-import com.iris.irisshell.ui.theme.IrisTextSecondary
+import com.iris.irisshell.design.system.IrisPrimary
+import com.iris.irisshell.design.system.IrisSurface
+import com.iris.irisshell.design.system.IrisSurfaceVariant
+import com.iris.irisshell.design.system.IrisTextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
