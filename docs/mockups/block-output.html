@@ -301,6 +301,28 @@
     caret-color: var(--iris-primary);
   }
 
+  /* Input overflow modes — wrap mode forces textarea-style multiline so
+     long content cascades vertically. Compose impl mirrors this with a multiline BasicTextField (softWrap=true). */
+  .a .active-prompt textarea.input[data-mode="wrap"]  { word-break: break-all; overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; resize: none; height: auto; font-family: inherit; background: transparent; border: none; color: var(--iris-text); font-size: 13px; flex: 1; outline: none; caret-color: var(--iris-primary); line-height: 1.5; padding: 2px 0; }
+  .a .active-prompt input.input[data-mode="scroll"]   { white-space: pre; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; min-width: 0; }
+  .a .active-prompt input.input[data-mode="truncate"]{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .a .active-prompt .input.multi {
+    /* when wrap engages (multi-line), give it vertical breathing room */
+    padding: 2px 0;
+    line-height: 1.5;
+  }
+  /* Tiny helper chip on the right side of mode showcase */
+  .mode-chip {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--iris-text-muted);
+    background: var(--iris-surface-variant);
+    border: 1px solid var(--iris-border-subtle);
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+  }
+
   /* ==================================================================== */
   /* === CONCEPT B — FULL-KART (prompt + output together in one card) === */
   /* ==================================================================== */
@@ -416,6 +438,19 @@
     background: transparent; border: none; color: var(--iris-text);
     font-family: inherit; font-size: 13px; flex: 1; outline: none;
     caret-color: var(--iris-primary);
+  }
+  .b .active-prompt textarea.input[data-mode="wrap"]  { word-break: break-all; overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; resize: none; font-family: inherit; background: transparent; border: none; color: var(--iris-text); font-size: 13px; flex: 1; outline: none; caret-color: var(--iris-primary); line-height: 1.5; padding: 2px 0; }
+  .b .active-prompt input.input[data-mode="scroll"]   { white-space: pre; overflow-x: auto; overflow-y: hidden; min-width: 0; }
+  .b .active-prompt input.input[data-mode="truncate"] { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .b .mode-chip {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--iris-text-muted);
+    background: var(--iris-surface);
+    border: 1px solid var(--iris-border-subtle);
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
   }
 </style>
 </head>
@@ -589,10 +624,54 @@ app/src/main/java/com/iris/irisshell/ui/terminal/TerminalScreen.kt | 7 ±2  +2 �
       <div class="output collapsed"></div>
     </div>
 
-    <!-- Active prompt -->
+    <!-- Spotlight ❺ — short input: baseline, single line -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❺ — kısa input: tek satır, problem yok</span>
+    </div>
     <div class="active-prompt">
       <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
-      <input class="input" type="text" autofocus />
+      <input class="input" type="text" value="ls" autofocus />
+    </div>
+
+    <!-- Spotlight ❻ — long input: three side-by-side modes to compare
+         wrap vs scroll vs truncate.  Same long text in each. -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❻ — uzun input: 3 mod yan yana (wrap / scroll / truncate). aynı uzun metin</span>
+    </div>
+    <div class="active-prompt">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <textarea class="input" rows="1" data-mode="wrap">git commit -m 'feat(block): mockup overflow spotlights — wrap mode. فعًلا، هذا اختبار طويل جداً على التفاف النص ضمن بطاقة الأمر. Russian: Привет, это очень длинная командная строка для проверки переноса.'</textarea>
+      <span class="mode-chip">wrap</span>
+    </div>
+    <div class="active-prompt" style="margin-top: 8px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <input class="input" type="text" data-mode="scroll" value="git commit -m 'feat(block): mockup overflow spotlights — scroll mode. فعًلا، هذا اختبار طويل جداً على التفاف النص ضمن بطاقة الأمر. Russian: Привет, это очень длинная командная строка для проверки переноса.'" />
+      <span class="mode-chip">scroll</span>
+    </div>
+    <div class="active-prompt" style="margin-top: 8px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <input class="input" type="text" data-mode="truncate" value="git commit -m 'feat(block): mockup overflow spotlights — truncate mode. فعًلا، هذا اختبار طويل جداً على التفاف النص ضمن بطاقة الأمر. Russian: Привет, это очень длинная командная строка для проверки переноса.'" />
+      <span class="mode-chip">truncate</span>
+    </div>
+
+    <!-- Spotlight ❼ — single long token (URL/SHA): three modes -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❼ — tek-token (SHA): 3 mod, 80-char SHA hash</span>
+    </div>
+    <div class="active-prompt">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <textarea class="input" rows="1" data-mode="wrap">git checkout 7a3f9c4d2e8b1f6a3c5d4e7b9f2a1c6d8e0b3f5a7c9d2e4b6f8a1c3d5e7b9f2a4c6d8e0b</textarea>
+      <span class="mode-chip">wrap</span>
+    </div>
+    <div class="active-prompt" style="margin-top: 8px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <input class="input" type="text" data-mode="scroll" value="git checkout 7a3f9c4d2e8b1f6a3c5d4e7b9f2a1c6d8e0b3f5a7c9d2e4b6f8a1c3d5e7b9f2a4c6d8e0b" />
+      <span class="mode-chip">scroll</span>
+    </div>
+    <div class="active-prompt" style="margin-top: 8px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <input class="input" type="text" data-mode="truncate" value="git checkout 7a3f9c4d2e8b1f6a3c5d4e7b9f2a1c6d8e0b3f5a7c9d2e4b6f8a1c3d5e7b9f2a4c6d8e0b" />
+      <span class="mode-chip">truncate</span>
     </div>
   </div>
 
@@ -727,10 +806,53 @@ app/src/main/java/com/iris/irisshell/ui/terminal/TerminalScreen.kt | 7 ±2  +2 �
       <div class="output collapsed"></div>
     </div>
 
-    <!-- Active prompt -->
+    <!-- Spotlight ❺ — short input -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❺ — kısa input (baseline)</span>
+    </div>
     <div class="active-prompt">
       <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
-      <input class="input" type="text" />
+      <input class="input" type="text" value="ls" />
+    </div>
+
+    <!-- Spotlight ❻ — long input: 3 modes -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❻ — uzun input: wrap / scroll / truncate yan yana</span>
+    </div>
+    <div class="active-prompt">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <textarea class="input" rows="1" data-mode="wrap">git commit -m 'feat(block): mockup overflow spotlights — wrap. فعًلا، هذا اختبار طويل جداً. Russian: Привет, это очень длинная командная строка.'</textarea>
+      <span class="mode-chip">wrap</span>
+    </div>
+    <div class="active-prompt" style="margin-top: 8px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <input class="input" type="text" data-mode="scroll" value="git commit -m 'feat(block): mockup overflow spotlights — scroll. فعًلا، هذا اختبار طويل جداً. Russian: Привет, это очень длинная командная строка.'" />
+      <span class="mode-chip">scroll</span>
+    </div>
+    <div class="active-prompt" style="margin-top: 8px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <input class="input" type="text" data-mode="truncate" value="git commit -m 'feat(block): mockup overflow spotlights — truncate. فعًلا، هذا اختبار طويل جداً. Russian: Привет, это очень длинная командная строка.'" />
+      <span class="mode-chip">truncate</span>
+    </div>
+
+    <!-- Spotlight ❼ — long SHA -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❼ — tek-token 80-char SHA: 3 mod</span>
+    </div>
+    <div class="active-prompt">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <textarea class="input" rows="1" data-mode="wrap">git checkout 7a3f9c4d2e8b1f6a3c5d4e7b9f2a1c6d8e0b3f5a7c9d2e4b6f8a1c3d5e7b9f2a4c6d8e0b</textarea>
+      <span class="mode-chip">wrap</span>
+    </div>
+    <div class="active-prompt" style="margin-top: 8px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <input class="input" type="text" data-mode="scroll" value="git checkout 7a3f9c4d2e8b1f6a3c5d4e7b9f2a1c6d8e0b3f5a7c9d2e4b6f8a1c3d5e7b9f2a4c6d8e0b" />
+      <span class="mode-chip">scroll</span>
+    </div>
+    <div class="active-prompt" style="margin-top: 8px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <input class="input" type="text" data-mode="truncate" value="git checkout 7a3f9c4d2e8b1f6a3c5d4e7b9f2a1c6d8e0b3f5a7c9d2e4b6f8a1c3d5e7b9f2a4c6d8e0b" />
+      <span class="mode-chip">truncate</span>
     </div>
   </div>
 
