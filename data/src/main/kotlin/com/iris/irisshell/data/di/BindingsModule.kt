@@ -1,9 +1,13 @@
 package com.iris.irisshell.data.di
 
+import com.iris.irisshell.data.session.ObserveActiveSessionUseCaseImpl
+import com.iris.irisshell.data.session.SessionRepositoryImpl
 import com.iris.irisshell.data.settings.FirstLaunchRepositoryImpl
 import com.iris.irisshell.data.settings.TerminalFontSizeRepositoryImpl
 import com.iris.irisshell.data.terminal.BootstrapObserver
 import com.iris.irisshell.data.terminal.TriggerBootstrap
+import com.iris.irisshell.domain.session.ObserveActiveSessionUseCase
+import com.iris.irisshell.domain.session.SessionRepository
 import com.iris.irisshell.domain.terminal.ObserveBootstrapUseCase
 import com.iris.irisshell.domain.terminal.ObserveFirstLaunchUseCase
 import com.iris.irisshell.domain.terminal.SetTerminalFontSizeUseCase
@@ -48,4 +52,16 @@ abstract class BindingsModule {
     abstract fun bindSetTerminalFontSize(
         impl: TerminalFontSizeRepositoryImpl,
     ): SetTerminalFontSizeUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindSessionRepository(
+        impl: SessionRepositoryImpl,
+    ): SessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindObserveActiveSession(
+        impl: ObserveActiveSessionUseCaseImpl,
+    ): ObserveActiveSessionUseCase
 }

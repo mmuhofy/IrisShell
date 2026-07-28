@@ -69,19 +69,22 @@ _Last updated: 2026-07-16_
 - [ ] Support: Gradle, npm, cargo, git, apt, docker, pip, adb, logcat
 
 ### Session System
-- [ ] Session list screen — real terminal snapshot per card
-- [ ] Session preview swipe — Shared Element Transition
-- [ ] Card → terminal morph animation
-- [ ] Session naming (e.g. `prod-server`, `dev-local`)
-- [ ] Session groups + favorites + recents
-- [ ] New session sheet
-- [ ] Session search + filter
-- [ ] Session Navigator — trigger TBD
+_Scope (revised 2026-07-28): TopBar modal session switcher only — no Home screen, no groups, no search, no navigator. Session naming kept._
+
+- [ ] Session list screen — real terminal snapshot per card (DEFERRED — out of Phase 2 scope)
+- [ ] Session preview swipe — Shared Element Transition (DEFERRED)
+- [ ] Card → terminal morph animation (DEFERRED)
+- [ ] Session naming (e.g. `prod-server`, `dev-local`) — kept
+- [ ] Session groups + favorites + recents (DEFERRED)
+- [ ] New session sheet — kept (TopBar `[+]` action)
+- [ ] Session search + filter (DEFERRED)
+- [ ] Session Navigator — trigger TBD (DEFERRED)
+- [ ] TopBar modal session switcher — yatay pager, kart tap, last-session default
 
 ### Screens
-- [ ] Sessions (Home) screen — full implementation
+- [ ] Sessions (Home) screen — full implementation (DEFERRED — modal switcher replaces it)
 - [ ] Terminal screen — full implementation
-- [ ] Tab bar: Terminal / Files / Agent
+- [ ] Tab bar: Terminal / Files / Agent (REMOVED — per Muhofy 2026-07-28)
 - [ ] Overflow menu: rename, export, share, settings
 - [ ] Toolbar: session name, branch, status
 
