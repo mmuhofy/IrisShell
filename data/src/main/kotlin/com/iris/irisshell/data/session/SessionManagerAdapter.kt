@@ -3,6 +3,7 @@ package com.iris.irisshell.data.session
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.terminal.TerminalManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -75,7 +77,11 @@ class SessionManagerAdapter @Inject constructor(
         activeJob = appScope.launch {
             sessionRepository.observeActiveId().collectLatest { id ->
                 _activeId.value = id
-                if (id != null) terminalManager.switchSessionById(id)
+                if (id != null) {
+                    withContext(Dispatchers.Main.immediate) {
+                        terminalManager.switchSessionById(id)
+                    }
+                }
             }
         }
 
@@ -93,31 +99,39 @@ class SessionManagerAdapter @Inject constructor(
      * add → rename → remove. (Removing before renaming would lose
      * the positional mapping we need to rename.)
      */
-    private fun reconcile(snapshots: List<SessionSnapshot>) {
+    /**
+     * Reconcile the Room snapshot list against TerminalManager. All
+     * TerminalManager calls go through `withContext(Dispatchers.Main)`
+     * because `addTabWithId` internally calls `terminalViewRef.attachSession`,
+     * an Android View API that requires the main thread.
+     */
+    private suspend fun reconcile(snapshots: List<SessionSnapshot>) {
         val currentIds = snapshots.map { it.id }.toSet()
         val currentNames = snapshots.associate { it.id to it.name }
 
-        // 1. Adds — spawn PTYs for ids that weren't there before.
-        val added = currentIds - lastIds
-        added.forEach { id ->
-            val name = currentNames[id] ?: ""
-            terminalManager.addTabWithId(id, name)
-        }
-
-        // 2. Renames — push new display names for known ids.
-        lastNames.forEach { (id, oldName) ->
-            val newName = currentNames[id]
-            if (newName != null && newName != oldName) {
-                val idx = terminalManager.getIndexForId(id)
-                if (idx >= 0) terminalManager.renameTab(idx, newName)
+        withContext(Dispatchers.Main.immediate) {
+            // 1. Adds — spawn PTYs for ids that weren't there before.
+            val added = currentIds - lastIds
+            added.forEach { id ->
+                val name = currentNames[id] ?: ""
+                terminalManager.addTabWithId(id, name)
             }
-        }
 
-        // 3. Removes — kill the PTYs for ids that disappeared.
-        val removed = lastIds - currentIds
-        removed.forEach { id ->
-            val idx = terminalManager.getIndexForId(id)
-            if (idx >= 0) terminalManager.closeTab(idx)
+            // 2. Renames — push new display names for known ids.
+            lastNames.forEach { (id, oldName) ->
+                val newName = currentNames[id]
+                if (newName != null && newName != oldName) {
+                    val idx = terminalManager.getIndexForId(id)
+                    if (idx >= 0) terminalManager.renameTab(idx, newName)
+                }
+            }
+
+            // 3. Removes — kill the PTYs for ids that disappeared.
+            val removed = lastIds - currentIds
+            removed.forEach { id ->
+                val idx = terminalManager.getIndexForId(id)
+                if (idx >= 0) terminalManager.closeTab(idx)
+            }
         }
 
         lastIds = currentIds
