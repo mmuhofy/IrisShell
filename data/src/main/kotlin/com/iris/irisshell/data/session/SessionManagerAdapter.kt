@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
-import com.iris.irisshell.domain.session.SessionRepository
 
 /**
  * Bridges the persistent session metadata in [SessionRepositoryImpl]
@@ -39,8 +38,7 @@ import com.iris.irisshell.domain.session.SessionRepository
  */
 @Singleton
 class SessionManagerAdapter @Inject constructor(
-    private val sessionRepository: SessionRepository,
-    private val sessionRepositoryImpl: SessionRepositoryImpl,
+    private val sessionRepository: SessionRepositoryImpl,
     private val terminalManager: TerminalManager,
     @com.iris.irisshell.data.di.ApplicationScope private val appScope: CoroutineScope,
 ) {
@@ -88,7 +86,7 @@ class SessionManagerAdapter @Inject constructor(
         // tabs in the same order. This is correct for freshly-created
         // sessions that never had their order shuffled (which Phase 2
         // doesn't support yet).
-        val rows: List<String> = sessionRepositoryImpl.observeAllIds().first()
+        val rows: List<String> = sessionRepository.observeAllIds().first()
         return rows.indexOf(id)
     }
 
