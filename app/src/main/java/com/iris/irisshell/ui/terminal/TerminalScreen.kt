@@ -30,7 +30,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
-import com.iris.irisshell.ui.topbar.TerminalTopBar
+import com.iris.irisshell.ui.session.SessionSwitcherSheet
+import com.iris.irisshell.ui.session.SessionSwitcherViewModel
+import com.iris.irisshell.ui.topbar.SessionSwitcherTopBar
 import com.termux.view.TerminalView
 
 /**
@@ -88,17 +90,17 @@ fun TerminalScreen(
 private fun ReadyScreen(
     terminalManager: TerminalManager,
     terminalViewModel: TerminalViewModel,
+    sessionSwitcherViewModel: SessionSwitcherViewModel = hiltViewModel(),
 ) {
     var fullscreen by remember { mutableStateOf(false) }
+    var switcherOpen by remember { mutableStateOf(false) }
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
-            TerminalTopBar(
-                sessionTitle = "IrisShell",
-                activeTabIndexFlow = terminalManager.activeTabIndex,
-                tabCount = terminalManager.tabCount,
+            SessionSwitcherTopBar(
+                viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
@@ -108,6 +110,7 @@ private fun ReadyScreen(
                 onClose = {
                     terminalManager.currentSession?.finishIfRunning()
                 },
+                onOpenSwitcher = { switcherOpen = true },
             )
         }
         Box(
@@ -150,6 +153,10 @@ private fun ReadyScreen(
                 }
             }
         }
+    }
+
+    if (switcherOpen) {
+        SessionSwitcherSheet(onDismiss = { switcherOpen = false })
     }
 }
 

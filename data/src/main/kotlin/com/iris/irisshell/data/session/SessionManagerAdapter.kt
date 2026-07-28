@@ -1,5 +1,6 @@
 package com.iris.irisshell.data.session
 
+import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.terminal.TerminalManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -8,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,20 +21,20 @@ import javax.inject.Singleton
  * (the repository impl and the application scope). The `:ui` layer
  * should never touch this; it asks the repository directly.
  *
- * **Responsibilities**
- *  - When the repository creates a session → ask [TerminalManager] to
- *    spawn a PTY for it (via the existing `addTab` + `renameTab`
- *    APIs; the future `addNamedSession` refactor will replace those).
- *  - When the repository's active-id changes → ask [TerminalManager]
- *    to switch to the matching tab.
- *  - Periodically (every [SNAPSHOT_TICK_MS]) read the active tab's
- *    screen via the public `TerminalEmulator.getScreen().getTranscriptText()`
- *    and push the last [SNAPSHOT_LINE_COUNT] lines back into the
- *    repository so the UI's `liveSnapshotLines` is up to date.
- *
- * **Not** done here (deferred to Phase 2 follow-up):
- *  - Closing the active session via the switcher (UI hook only).
- *  - Snapshot capture on graceful exit (handled by [TerminalManager.onSessionFinished]).
+ * **Reconciliation strategy** — diff-driven:
+ *  - On every emission of [SessionRepositoryImpl.observeAll], compute
+ *    (added, removed, renamed) against the in-memory TerminalManager
+ *    id map.
+ *  - For each *added* id → call [TerminalManager.addTabWithId] so the
+ *    PTY is spawned.
+ *  - For each *removed* id → call [TerminalManager.closeTab] on the
+ *    matching positional index (id-keyed lookup goes through
+ *    [TerminalManager.getIndexForId]).
+ *  - For each *renamed* id → call [TerminalManager.renameTab] on its
+ *    positional index.
+ *  - Active-id changes → [TerminalManager.switchSessionById].
+ *  - Snapshot ticker is a separate loop, currently a no-op until the
+ *    TerminalManager exposes `getActiveEmulator()`.
  */
 @Singleton
 class SessionManagerAdapter @Inject constructor(
@@ -43,25 +43,39 @@ class SessionManagerAdapter @Inject constructor(
     @com.iris.irisshell.data.di.ApplicationScope private val appScope: CoroutineScope,
 ) {
 
-    private var watchJob: Job? = null
+    private var reconcileJob: Job? = null
+    private var activeJob: Job? = null
     private var tickerJob: Job? = null
+
+    /** Last-seen map of session id → display name. Used for rename diff. */
+    private var lastNames: Map<String, String> = emptyMap()
+
+    /** Last-seen set of session ids. Used for add/remove diff. */
+    private var lastIds: Set<String> = emptySet()
 
     private val _activeId = MutableStateFlow<String?>(null)
     val activeIdFlow: StateFlow<String?> = _activeId.asStateFlow()
 
     /**
-     * Start the adapter — observes the active-session pointer and
-     * drives the TerminalManager accordingly. Idempotent: calling
-     * twice is safe (existing jobs are cancelled first).
+     * Start the adapter. Idempotent — calling twice cancels existing
+     * jobs first. Called from `IrisApplication.onCreate()` (Phase 2
+     * follow-up) so the adapter boots up alongside the Hilt graph.
      */
     fun start() {
-        watchJob?.cancel()
+        reconcileJob?.cancel()
+        activeJob?.cancel()
         tickerJob?.cancel()
 
-        watchJob = appScope.launch {
+        reconcileJob = appScope.launch {
+            sessionRepository.observeAll().collectLatest { snapshots ->
+                reconcile(snapshots)
+            }
+        }
+
+        activeJob = appScope.launch {
             sessionRepository.observeActiveId().collectLatest { id ->
                 _activeId.value = id
-                if (id != null) attachToActiveSession(id)
+                if (id != null) terminalManager.switchSessionById(id)
             }
         }
 
@@ -74,36 +88,49 @@ class SessionManagerAdapter @Inject constructor(
     }
 
     /**
-     * Map a session id to the corresponding runtime tab index, or -1.
-     * Until Phase 2 follow-up mapping lands, we use a position-based
-     * mapping: rows in Room ordered by lastUsedAtMs map to tabs in the
-     * same order. This is correct for freshly-created sessions that
-     * never had their order shuffled (which Phase 2 doesn't support
-     * yet).
+     * Diff the latest snapshot list against the last-seen state and
+     * tell TerminalManager what to do. Order of operations matters:
+     * add → rename → remove. (Removing before renaming would lose
+     * the positional mapping we need to rename.)
      */
-    private suspend fun indexOfSession(id: String): Int {
-        // Position-based mapping: rows ordered by lastUsedAtMs map to
-        // tabs in the same order. This is correct for freshly-created
-        // sessions that never had their order shuffled (which Phase 2
-        // doesn't support yet).
-        val rows: List<String> = sessionRepository.observeAllIds().first()
-        return rows.indexOf(id)
-    }
+    private fun reconcile(snapshots: List<SessionSnapshot>) {
+        val currentIds = snapshots.map { it.id }.toSet()
+        val currentNames = snapshots.associate { it.id to it.name }
 
-    private suspend fun attachToActiveSession(id: String) {
-        val idx = indexOfSession(id)
-        if (idx < 0) return
-        terminalManager.switchTab(idx)
+        // 1. Adds — spawn PTYs for ids that weren't there before.
+        val added = currentIds - lastIds
+        added.forEach { id ->
+            val name = currentNames[id] ?: ""
+            terminalManager.addTabWithId(id, name)
+        }
+
+        // 2. Renames — push new display names for known ids.
+        lastNames.forEach { (id, oldName) ->
+            val newName = currentNames[id]
+            if (newName != null && newName != oldName) {
+                val idx = terminalManager.getIndexForId(id)
+                if (idx >= 0) terminalManager.renameTab(idx, newName)
+            }
+        }
+
+        // 3. Removes — kill the PTYs for ids that disappeared.
+        val removed = lastIds - currentIds
+        removed.forEach { id ->
+            val idx = terminalManager.getIndexForId(id)
+            if (idx >= 0) terminalManager.closeTab(idx)
+        }
+
+        lastIds = currentIds
+        lastNames = currentNames
     }
 
     private fun captureLiveSnapshot() {
-        // Block engine deferred — for now, no-op. The Phase 2 follow-up
-        // adds live preview via TerminalEmulator.getScreen().getTranscriptText()
-        // once TerminalManager exposes a getActiveEmulator() seam.
+        // Snapshot capture requires TerminalManager to expose its
+        // active TerminalEmulator. Deferred to a Phase 2 follow-up.
     }
 
     private companion object {
         const val SNAPSHOT_TICK_MS = 500L
-        const val SNAPSHOT_LINE_COUNT = 50
     }
 }
+
