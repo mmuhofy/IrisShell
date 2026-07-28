@@ -67,6 +67,11 @@ fun SessionSwitcherTopBar(
     val activeName by viewModel.activeName.collectAsStateWithLifecycle()
     val sessions by viewModel.allSessions.collectAsStateWithLifecycle()
     val totalCount = sessions.size
+    val subtitle = if (totalCount > 0) {
+        "$totalCount session${if (totalCount == 1) "" else "s"} • ${activeName ?: "—"}"
+    } else {
+        null
+    }
 
     TopAppBar(
         modifier = modifier.fillMaxWidth(),
@@ -102,9 +107,9 @@ fun SessionSwitcherTopBar(
                                 .size(18.dp),
                         )
                     }
-                    if (totalCount > 0) {
+                    if (subtitle != null) {
                         Text(
-                            text = "$totalCount session${if (totalCount == 1) "" else "s"}",
+                            text = subtitle,
                             color = IrisTextSecondary,
                             fontSize = 12.sp,
                             style = MaterialTheme.typography.bodySmall,

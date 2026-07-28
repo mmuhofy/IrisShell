@@ -1,5 +1,8 @@
 package com.iris.irisshell.ui.session
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,10 +21,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -58,10 +67,39 @@ fun SessionCard(
     val strokeColor = stateStroke(snapshot.state)
     val preview = previewLines(snapshot, previewLineCount)
 
+    // Press feedback — separate from clickable so the pager's drag
+    // gesture still gets the raw touch stream.
+    var pressed by remember { mutableStateOf(false) }
+    val targetScale = when {
+        pressed  -> 0.96f
+        isActive -> 1.02f
+        else     -> 1.00f
+    }
+    val scale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "session-card-scale",
+    )
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 12.dp, vertical = 16.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val down = awaitPointerEvent()
+                        pressed = down.changes.any { it.pressed }
+                    }
+                }
+            }
             .clip(RoundedCornerShape(6.dp))
             .background(IrisSurface)
             .border(

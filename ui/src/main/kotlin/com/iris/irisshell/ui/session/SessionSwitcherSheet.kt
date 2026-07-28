@@ -1,5 +1,13 @@
 package com.iris.irisshell.ui.session
 
+import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,6 +60,7 @@ import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.domain.session.SessionSnapshot
+import com.iris.irisshell.ui.util.BlurDialogWindow
 
 /**
  * Centred popup dialog over the terminal screen.
@@ -78,6 +88,13 @@ fun SessionSwitcherSheet(
 
     var showCreateDialog by remember { mutableStateOf(false) }
 
+    // On Android 12+ the dialog's parent window is blurred while the
+    // popup is on screen. On older devices this is a no-op; the dialog
+    // falls back to its default dim scrim.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        BlurDialogWindow(radiusDp = 22f, enabled = !showCreateDialog)
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -85,32 +102,56 @@ fun SessionSwitcherSheet(
             decorFitsSystemWindows = false,
         ),
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .height(540.dp)
-                .systemBarsPadding(),
-            shape = RoundedCornerShape(12.dp),
-            color = IrisSurface,
+        // Spring-driven Apple-style enter/leave — scale 0.88 → 1.0
+        // with alpha 0 → 1 over 280ms. Damping gives a gentle overshoot
+        // without the iOS-style bounce.
+        AnimatedVisibility(
+            visible = true,
+            enter = scaleIn(
+                initialScale = 0.88f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                ),
+            ) + fadeIn(
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+            ),
+            exit = scaleOut(
+                targetScale = 0.92f,
+                animationSpec = spring(stiffness = Spring.StiffnessMedium),
+            ) + fadeOut(
+                animationSpec = spring(stiffness = Spring.StiffnessMedium),
+            ),
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                SwitcherTopBar(
-                    onClose = onDismiss,
-                    onCreate = { showCreateDialog = true },
-                )
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth(0.92f)
+                    .height(540.dp)
+                    .systemBarsPadding()
+                    .graphicsLayer { shadowElevation = 24f },
+                shape = RoundedCornerShape(12.dp),
+                color = IrisSurface,
+                tonalElevation = 6.dp,
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    SwitcherTopBar(
+                        onClose = onDismiss,
+                        onCreate = { showCreateDialog = true },
+                    )
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (sessions.isEmpty()) {
-                        EmptyState(onCreate = { showCreateDialog = true })
-                    } else {
-                        PagerContent(
-                            sessions = sessions,
-                            activeId = activeId,
-                            onActivate = { id ->
-                                viewModel.activate(id)
-                                onDismiss()
-                            },
-                        )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (sessions.isEmpty()) {
+                            EmptyState(onCreate = { showCreateDialog = true })
+                        } else {
+                            PagerContent(
+                                sessions = sessions,
+                                activeId = activeId,
+                                onActivate = { id ->
+                                    viewModel.activate(id)
+                                    onDismiss()
+                                },
+                            )
+                        }
                     }
                 }
             }
