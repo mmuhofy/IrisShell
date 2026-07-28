@@ -301,16 +301,104 @@
     caret-color: var(--iris-primary);
   }
 
-  /* Input overflow modes — wrap mode forces textarea-style multiline so
-     long content cascades vertically. Compose impl mirrors this with a multiline BasicTextField (softWrap=true). */
-  .a .active-prompt textarea.input[data-mode="wrap"]  { word-break: break-all; overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; resize: none; height: auto; font-family: inherit; background: transparent; border: none; color: var(--iris-text); font-size: 13px; flex: 1; outline: none; caret-color: var(--iris-primary); line-height: 1.5; padding: 2px 0; }
-  .a .active-prompt input.input[data-mode="scroll"]   { white-space: pre; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; min-width: 0; }
-  .a .active-prompt input.input[data-mode="truncate"]{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  .a .active-prompt .input.multi {
-    /* when wrap engages (multi-line), give it vertical breathing room */
-    padding: 2px 0;
-    line-height: 1.5;
+  /* === Hanging-indent variant for wrap mode ============================ */
+  /* When a long command wraps, the second and subsequent lines start at
+     the SAME column as the first character of the command (immediately
+     after the prompt), not at the left edge of the card. This matches
+     fish / zsh / Warp wrap behaviour and keeps the visual column of
+     each command character stable.
+     Implementation: the card is a block element with a CSS variable
+     --prompt-w representing the rendered width of the prompt string.
+     Inside it, the prompt is an inline-block element with that fixed
+     width; the command is an inline span that wraps naturally; the
+     parent .prompt-card has padding-left equal to --prompt-w and
+     text-indent equal to -prompt-w. The first line of the command
+     therefore starts at column 0 of the padded area (i.e. after the
+     prompt); wrapped lines also start at column 0 because of the
+     negative text-indent offsetting the padding. */
+  .a .block.hang .prompt-card {
+    display: block;
+    padding: 4px 10px 4px calc(10px + var(--prompt-w, 200px));
+    text-indent: calc(-1 * var(--prompt-w, 200px));
+    line-height: 1.55;
+    word-break: break-all;
+    overflow-wrap: anywhere;
   }
+  .a .block.hang .prompt-card .prompt {
+    display: inline-block;
+    width: var(--prompt-w, 200px);
+    text-indent: 0;       /* reset so prompt content isn't re-indented */
+    vertical-align: baseline;
+    margin-right: 0;     /* no gap needed; padding takes care of it */
+    white-space: pre;     /* keep prompt string intact (no wrap inside it) */
+    flex-shrink: unset;
+  }
+  .a .block.hang .prompt-card .command {
+    display: inline;
+    flex: initial;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .a .block.hang .prompt-card .meta { display: none; } /* meta moves to toolbar */
+
+  /* Same for active prompt (input area) in hanging-indent mode */
+  .a .active-prompt.hang {
+    display: block;
+    padding: 4px 10px 4px calc(10px + var(--prompt-w, 200px));
+    text-indent: calc(-1 * var(--prompt-w, 200px));
+    line-height: 1.55;
+  }
+  .a .active-prompt.hang .prompt {
+    display: inline-block;
+    width: var(--prompt-w, 200px);
+    text-indent: 0;
+    vertical-align: baseline;
+    white-space: pre;
+    flex-shrink: unset;
+    margin-right: 0;
+  }
+  .a .active-prompt.hang textarea.input[data-mode="wrap"],
+  .a .active-prompt.hang input.input {
+    display: inline-block;
+    vertical-align: baseline;
+    text-indent: 0;
+  }
+
+  /* Variant-specific: same logic for panel B */
+  .b .block.hang .prompt-row {
+    display: block;
+    padding: 0 0 4px;
+    text-indent: 0; /* B doesn't apply hanging indent; its chrome is the card body, not the prompt line */
+    border-bottom: 1px solid var(--iris-border-subtle);
+    margin-bottom: 4px;
+  }
+  .b .block.hang .prompt-row .prompt {
+    display: inline-block;
+    width: var(--prompt-w, 200px);
+    white-space: pre;
+    flex-shrink: unset;
+    margin-right: 0;
+    vertical-align: baseline;
+  }
+  .b .block.hang .prompt-row .command {
+    display: inline;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    flex: initial;
+    min-width: 0;
+  }
+  .b .active-prompt.hang .prompt {
+    display: inline-block;
+    width: var(--prompt-w, 200px);
+    text-indent: 0;
+    vertical-align: baseline;
+    white-space: pre;
+    flex-shrink: unset;
+    margin-right: 0;
+  }
+  .b .active-prompt.hang textarea.input[data-mode="wrap"],
+  .b .active-prompt.hang input.input { display: inline-block; text-indent: 0; vertical-align: baseline; }
   /* Tiny helper chip on the right side of mode showcase */
   .mode-chip {
     display: inline-block;
@@ -469,7 +557,18 @@
   <span class="chip" data-preset="full-kart">full-kart</span>
   <span class="chip" data-preset="vs">vs (yan yana)</span>
   <span class="hsplit">·</span>
-  <span style="color: var(--iris-text-muted)">block state renkleri: <span style="color:var(--iris-success)">●</span> ok · <span style="color:var(--iris-error)">●</span> err · <span style="color:var(--iris-build)">●</span> running · <span style="color:var(--iris-primary)">●</span> hover/idle</span>
+  <span style="color: var(--iris-text-muted)">
+    kararlar:
+    <strong style="color: var(--iris-primary)">A prompt-kart</strong> +
+    <strong style="color: var(--iris-primary)">wrap</strong> +
+    <strong style="color: var(--iris-primary)">hanging-indent</strong> (spotlight ❽/❾)
+    · nested kart yok (sub-kart yok)
+    · block state:
+    <span style="color:var(--iris-success)">●</span> ok
+    <span style="color:var(--iris-error)">●</span> err
+    <span style="color:var(--iris-build)">●</span> run
+    <span style="color:var(--iris-primary)">●</span> hover
+  </span>
 </div>
 
 <!-- Layout: side-by-side compare -->
@@ -595,6 +694,47 @@ app/src/main/java/com/iris/irisshell/ui/terminal/TerminalScreen.kt | 7 ±2  +2 �
       </div>
     </div>
 
+    <!-- Spotlight ❽ — HANGING INDENT (fish/zsh-style wrap): the chosen input/transit mode -->
+    <!-- A long command, when wrapped, should continue at the SAME COLUMN
+         as its first character — not at the left edge of the card. So:
+         prompt + first char of command on line 1, then the rest cascades
+         at column 0 of where the command started -- i.e. after the prompt.
+         Implemented with .hang class that switches the prompt-card from
+         flex (prompt as shrink-0 item) to a block element with
+         padding-left = prompt-w and text-indent = -prompt-w. -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❽ — 🔥 hanging indent (seçilen): wrap'lenen komut prompt genişliğinden devam eder. fish/zsh/Warp davranışı</span>
+    </div>
+    <div class="block hang success" style="--prompt-w: 240px">
+      <div class="prompt-card">
+        <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell/master-feature-branch</span><span class="sign">$</span></span><span class="command">flutter pub run build_runner build --define=build_config=android_sdk=26 --define=build_config=compile_sdk=36 --define=build_config=min_sdk=26 --target=lib/main_dev.dart --verbose --no-pub --delete-conflicting-outputs --analyze-after</span>
+        <div class="toolbar">
+          <button title="Copy output">⧉</button>
+          <button title="Collapse">−</button>
+        </div>
+      </div>
+      <div class="output">[+12ms] Building build script...
+[124ms] Building asset graph completed
+[1m40s] Running build completed (success)</div>
+    </div>
+
+    <!-- Same showcase but with a SHORT cwd prompt — the hanging-indent
+         offset will be smaller so wrapped lines start shallower. -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❽b — aynı ama kısa prompt ile (24px): indent de küçük</span>
+    </div>
+    <div class="block hang success" style="--prompt-w: 24px">
+      <div class="prompt-card">
+        <span class="prompt"><span class="sign">$</span></span><span class="command">flutter pub run build_runner build --define=build_config=android_sdk=26 --define=build_config=compile_sdk=36 --define=build_config=min_sdk=26 --target=lib/main_dev.dart --verbose --no-pub --delete-conflicting-outputs --analyze-after</span>
+        <div class="toolbar">
+          <button title="Copy output">⧉</button>
+          <button title="Collapse">−</button>
+        </div>
+      </div>
+      <div class="output">[+12ms] Building build script...
+[1m40s] Running build completed (success)</div>
+    </div>
+
     <!-- Block 4 — running -->
     <div class="block running">
       <div class="prompt-card">
@@ -673,9 +813,17 @@ app/src/main/java/com/iris/irisshell/ui/terminal/TerminalScreen.kt | 7 ±2  +2 �
       <input class="input" type="text" data-mode="truncate" value="git checkout 7a3f9c4d2e8b1f6a3c5d4e7b9f2a1c6d8e0b3f5a7c9d2e4b6f8a1c3d5e7b9f2a4c6d8e0b" />
       <span class="mode-chip">truncate</span>
     </div>
-  </div>
 
-  <!-- ───────────── PANEL B — FULL-KART ───────────── -->
+    <!-- Spotlight ❾ — hanging indent on the INPUT itself: wrapped command
+         being typed continues at the prompt column, not the card edge. -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❾ — 🔥 input + hanging indent birlikte: canlı wrap prompt'la hizalı. SEÇİLEN MOD</span>
+    </div>
+    <div class="active-prompt hang" style="--prompt-w: 200px">
+      <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span>
+      <textarea class="input" rows="1" data-mode="wrap">flutter pub run build_runner build --define=build_config=android_sdk=26 --define=build_config=compile_sdk=36 --define=build_config=min_sdk=26 --target=lib/main_dev.dart --verbose --no-pub --delete-conflicting-outputs --analyze-after</textarea>
+    </div>
+  </div>
   <div class="panel b">
     <div class="panel-title">
       <span class="concept">B — full-kart</span>
@@ -774,6 +922,27 @@ app/src/main/java/com/iris/irisshell/ui/terminal/TerminalScreen.kt | 7 ±2  +2 �
 <span class="ansi-info">[2026-07-27 18:42:15]</span> OK     :ui:kspDebugKotlin
 <span class="ansi-info">[2026-07-27 18:42:18]</span> OK     :app:assembleDebug
 <span class="ansi-info">[2026-07-27 18:42:19]</span> END    assembleDebug (5.8s)</div>
+    </div>
+
+    <!-- Spotlight ❽-B — hanging-indent ile B'deki en uzun block. dikkat:
+         B'de prompt-row border-bottom'la output'tan ayrılır; hanging-indent
+         sadece prompt-row'da uygulanır, output kartın geri kalanında kendi
+         akışında serbest kalır. -->
+    <div class="spot">
+      <span class="spot-label">spotlight ❽-B — B'de hanging indent: prompt-row wrap'ler, output kart gövdesinde serbest akar</span>
+    </div>
+    <div class="block hang success" style="--prompt-w: 200px">
+      <div class="toolbar">
+        <button title="Copy output">⧉</button>
+        <button title="Collapse">−</button>
+        <span class="duration">1m42s · exit 0</span>
+      </div>
+      <div class="prompt-row">
+        <span class="prompt"><span class="user">muhofy</span><span class="at">@</span><span class="host">iris</span>:<span class="cwd">~/IrisShell</span><span class="sign">$</span></span><span class="command">flutter pub run build_runner build --define=build_config=android_sdk=26 --define=build_config=compile_sdk=36 --define=build_config=min_sdk=26 --target=lib/main_dev.dart --verbose --no-pub --delete-conflicting-outputs --analyze-after</span>
+      </div>
+      <div class="output">[INFO] Generating build script...
+[INFO] Building asset graph completed, took 124ms
+[INFO] Running build completed, took 1m40s</div>
     </div>
 
     <!-- Block 4 — running -->
