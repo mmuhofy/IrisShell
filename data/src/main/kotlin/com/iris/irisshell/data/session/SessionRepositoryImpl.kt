@@ -113,6 +113,13 @@ class SessionRepositoryImpl @Inject constructor(
     fun observeActiveId(): Flow<String?> =
         dataStore.data.map { it[KEY_ACTIVE_SESSION_ID] }.distinctUntilChanged()
 
+    /**
+     * Hot stream of session ids only, ordered by `last_used_at_ms` desc.
+     * Used by [SessionManagerAdapter] to map session id → tab index.
+     */
+    fun observeAllIds(): Flow<List<String>> =
+        dao.observeAll().map { rows -> rows.map { it.id } }
+
     /** Suspend getter for the active session id (or null). */
     suspend fun currentActiveId(): String? =
         dataStore.data.map { it[KEY_ACTIVE_SESSION_ID] }.first()
