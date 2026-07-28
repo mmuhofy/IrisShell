@@ -21,6 +21,17 @@ class TerminalManager(
     private val _tabNames: MutableList<String> = mutableListOf()
     val tabNames: List<String> get() = _tabNames
 
+    /**
+     * Reverse map: persistent session id (UUID, stored in Room) →
+     * positional index into [_sessions]. Phase 2 Session System uses
+     * ids so that the UI can refer to a session stably across app
+     * restarts. Inspired by ReTerminal's SessionService id-keyed
+     * HashMap (github.com/RohitKushvaha01/ReTerminal, file
+     * core/main/src/main/java/com/rk/terminal/service/SessionService.kt).
+     */
+    private val _idToIndex: MutableMap<String, Int> = mutableMapOf()
+    private val _indexToId: MutableMap<Int, String> = mutableMapOf()
+
     private val _activeTabIndex = MutableStateFlow(0)
     val activeTabIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
 
@@ -65,14 +76,50 @@ class TerminalManager(
         terminalViewRef = null
     }
 
-    fun addTab(): TerminalSession {
+    fun addTab(): TerminalSession = addTabWithId(null, "")
+
+    /**
+     * Id-aware spawn. When [persistentId] is non-null, the new session
+     * is recorded in [_idToIndex] so that the Session System can
+     * refer to it across app restarts. Returns the spawned
+     * [TerminalSession] just like [addTab] does.
+     */
+    fun addTabWithId(persistentId: String?, name: String): TerminalSession {
         val session = createNewSession()
         _sessions.add(session)
-        _tabNames.add("")
-        _activeTabIndex.value = _sessions.size - 1
+        _tabNames.add(name)
+        val newIndex = _sessions.size - 1
+        if (persistentId != null) {
+            _idToIndex[persistentId] = newIndex
+            _indexToId[newIndex] = persistentId
+        }
+        _activeTabIndex.value = newIndex
         terminalViewRef?.attachSession(session)
         return session
     }
+
+    /**
+     * Look up the positional tab index for a persistent session id, or
+     * `-1` if the id is unknown / the session was closed.
+     */
+    fun getIndexForId(persistentId: String): Int =
+        _idToIndex[persistentId] ?: -1
+
+    /** Reverse lookup: positional index → persistent id. */
+    fun getIdForIndex(index: Int): String? = _indexToId[index]
+
+    /**
+     * Switch to the session identified by [persistentId]. No-op when
+     * the id is unknown. Used by [SessionManagerAdapter] when the UI
+     * asks to change the active session.
+     */
+    fun switchSessionById(persistentId: String) {
+        val idx = getIndexForId(persistentId)
+        if (idx >= 0) switchTab(idx)
+    }
+
+    /** Currently-active session's persistent id, or null if unknown. */
+    fun activePersistentId(): String? = _indexToId[_activeTabIndex.value]
 
     fun renameTab(index: Int, name: String) {
         if (index in _tabNames.indices) {
@@ -102,6 +149,18 @@ class TerminalManager(
         _sessions[index].finishIfRunning()
         _sessions.removeAt(index)
         _tabNames.removeAt(index)
+        // Strip the id mapping for the closed index and rebase later
+        // indices down by one.
+        val closedId = _indexToId.remove(index)
+        if (closedId != null) _idToIndex.remove(closedId)
+        val rebased = _indexToId.toMap()
+        _indexToId.clear()
+        _idToIndex.clear()
+        rebased.forEach { (oldIdx, id) ->
+            val newIdx = if (oldIdx > index) oldIdx - 1 else oldIdx
+            _indexToId[newIdx] = id
+            _idToIndex[id] = newIdx
+        }
         when {
             index < _activeTabIndex.value -> _activeTabIndex.value--
             index == _activeTabIndex.value && _activeTabIndex.value >= _sessions.size ->
