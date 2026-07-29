@@ -168,6 +168,7 @@ private fun ReadyScreen(
             TerminalViewHost(
                 terminalManager = terminalManager,
                 fontSizeSp = fontSizeSp,
+                terminalViewModel = terminalViewModel,
                 modifier = Modifier.graphicsLayer {
                     scaleX = appearScale.value
                     scaleY = appearScale.value
@@ -291,6 +292,7 @@ private const val TERMINAL_PINCH_THRESHOLD = 0.04f
 private fun TerminalViewHost(
     terminalManager: TerminalManager,
     fontSizeSp: Int,
+    terminalViewModel: TerminalViewModel,
     modifier: Modifier = Modifier,
 ) {
     val terminalViewRef = remember {
