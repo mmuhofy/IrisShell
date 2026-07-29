@@ -207,7 +207,7 @@ private fun ReadyScreen(
                 value = fontSizeSp,
                 onValueChange = { terminalViewModel.setFontSize(it) },
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
+                    .align(Alignment.End)
                     .padding(end = 16.dp),
             )
         }
