@@ -1,6 +1,7 @@
 package com.iris.irisshell.ui.session
 
 import android.os.Build
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -8,9 +9,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +22,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -33,6 +40,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
@@ -54,25 +63,27 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.ui.util.BlurDialogWindow
 import android.view.Window
+import kotlinx.coroutines.delay
 
 /**
- * Centred popup dialog over the terminal screen — iOS App Switcher style.
+ * Centred popup dialog over the terminal screen — swipeable pager.
  *
  * Visual:
- *   - **No scrim/dim** — the dialog's window dim amount is forced to 0,
- *     so the terminal underneath stays at full brightness.
- *   - **Blur background on Android 12+** — terminal still composited
- *     underneath, just blurred. API <31 has no RenderEffect so it
- *     simply renders unblurred (and undimmed).
- *   - **Spring enter/leave** — scale 0.88 → 1.0 + alpha 0 → 1 over
- *     ~280ms with a medium-bouncy spring.
+ *   - **No scrim/dim** — the dialog's window dim amount is forced to 0.
+ *   - **Blur background on Android 12+** — terminal still composited, blurred.
+ *   - **Spring enter/leave** — scale 0.88 → 1.0 + alpha 0 → 1 over 280ms.
  *
- * Interaction (handled by [PagerSessionSwitcher]):
- *   - **Tap** a card → activate + dismiss.
- *   - **Long-press 150ms** → armed. Drag now swipes pages, finger-following
- *     tooltip, gold ring under finger, haptic ticks.
- *   - **Release while armed** → activate the page under finger, dismiss.
- *   - **Drag before 150ms** → ignored (no swipe-to-preview mode).
+ * Interaction:
+ *   - **Swipe** pages left/right via HorizontalPager.
+ *   - **Tap a card** → activate + dismiss.
+ *   - **× button** → dismiss without activating.
+ *
+ * Selection animation:
+ *   When the user taps a card, we play a brief "commit" flash:
+ *     - The tapped card scales up to 1.06× and glows gold for ~120ms.
+ *     - The whole dialog then collapses (scale 0.94 + fade) over 200ms.
+ *     - The result feels like the chosen card "explodes forward" into the
+ *       terminal view beneath.
  */
 @Composable
 fun SessionSwitcherSheet(
@@ -83,16 +94,17 @@ fun SessionSwitcherSheet(
     val activeId by viewModel.activeId.collectAsStateWithLifecycle()
 
     var showCreateDialog by remember { mutableStateOf(false) }
+    var committingId by remember { mutableStateOf<String?>(null) }
 
-    // Disable the default scrim (dim) on the dialog window. We want the
-    // terminal to stay bright behind the popup; the blur is sufficient.
     DisableDialogScrim()
 
-    // On Android 12+ the dialog's parent window is blurred while the
-    // popup is on screen. On older devices this is a no-op.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         BlurDialogWindow(radiusDp = 22f, enabled = !showCreateDialog)
     }
+
+    // When the sheet is mid-commit we want a snappier exit so the
+    // transition into the terminal feels instant.
+    val inCommit = committingId != null
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -113,10 +125,16 @@ fun SessionSwitcherSheet(
                 animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
             ),
             exit = scaleOut(
-                targetScale = 0.92f,
-                animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                targetScale = if (inCommit) 0.94f else 0.92f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumHigh,
+                ),
             ) + fadeOut(
-                animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumHigh,
+                ),
             ),
         ) {
             Surface(
@@ -139,19 +157,34 @@ fun SessionSwitcherSheet(
                         if (sessions.isEmpty()) {
                             EmptyState(onCreate = { showCreateDialog = true })
                         } else {
-                            PagerSessionSwitcher(
+                            PagerContent(
                                 sessions = sessions,
                                 activeId = activeId,
-                                onActivate = { id ->
-                                    viewModel.activate(id)
-                                    onDismiss()
+                                committingId = committingId,
+                                onCommit = { id ->
+                                    if (committingId == null) {
+                                        committingId = id
+                                        viewModel.activate(id)
+                                    }
                                 },
+                                onDismiss = onDismiss,
                             )
                         }
                     }
                 }
             }
         }
+    }
+
+    // Fire dismiss once the commit animation has played.
+    LaunchedEffect(committingId) {
+        val id = committingId ?: return@LaunchedEffect
+        delay(220)
+        onDismiss()
+        // Reset for next time the sheet opens.
+        committingId = null
+        // Suppress unused warning.
+        @Suppress("UNUSED_EXPRESSION") id
     }
 
     if (showCreateDialog) {
@@ -165,15 +198,61 @@ fun SessionSwitcherSheet(
     }
 }
 
-/**
- * Side-effect-only composable that walks up from [LocalView] to find
- * the host dialog window and forces its dim amount to zero. This makes
- * the popup's parent window transparent behind the surface, so the
- * terminal stays fully visible (no black scrim).
- *
- * Calling `setDimAmount(0f)` is safe across all supported API levels
- * (it's been in [Window] since API 1).
- */
+@Composable
+private fun PagerContent(
+    sessions: List<com.iris.irisshell.domain.session.SessionSnapshot>,
+    activeId: String?,
+    committingId: String?,
+    onCommit: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val activeIndex = sessions.indexOfFirst { it.id == activeId }.coerceAtLeast(0)
+    val pagerState = rememberPagerState(initialPage = activeIndex) {
+        sessions.size
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            pageSpacing = 12.dp,
+        ) { pageIndex ->
+            val snapshot = sessions[pageIndex]
+            val isCommitting = committingId != null && committingId == snapshot.id
+            SessionCard(
+                snapshot = snapshot,
+                isActive = snapshot.id == activeId,
+                isCommitting = isCommitting,
+                onActivate = { onCommit(snapshot.id) },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Page-indicator dots.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            sessions.forEachIndexed { i, _ ->
+                val active = pagerState.currentPage == i
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 3.dp)
+                        .size(if (active) 7.dp else 5.dp)
+                        .clip(CircleShape)
+                        .background(if (active) IrisPrimary else IrisTextMuted.copy(alpha = 0.5f)),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun DisableDialogScrim() {
     val view = LocalView.current
@@ -237,7 +316,7 @@ private fun EmptyState(onCreate: () -> Unit) {
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = "No sessions yet",

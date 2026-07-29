@@ -45,7 +45,7 @@ import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.domain.session.SessionState
 
 /**
- * One card in the [LongPressSessionGrid].
+ * One card in the [SessionSwitcherSheet]'s HorizontalPager.
  *
  * iOS-App-Switcher inspired layout:
  *
@@ -62,16 +62,17 @@ import com.iris.irisshell.domain.session.SessionState
  * Visual states:
  *   - **Default**: 14dp radius, soft shadow, no border.
  *   - **Active**: gold corner badge + 1.5dp gold ring + slightly larger.
- *   - **Hovered** (drag-mode): 1.04× scale + 2dp gold border + gold glow.
- *   - **Armed** (grid-wide drag mode): slight alpha dip when not hovered.
+ *   - **Pressed**: 0.96× scale, brief press feedback.
+ *   - **Committing**: 1.06× scale + gold glow ring, played when the user
+ *     taps the card — the card "explodes forward" for ~120ms before the
+ *     sheet collapses.
  */
 @Composable
 fun SessionCard(
     snapshot: SessionSnapshot,
     isActive: Boolean,
     onActivate: () -> Unit,
-    isHovered: Boolean = false,
-    isArmed: Boolean = false,
+    isCommitting: Boolean = false,
     previewLineCount: Int = 3,
     modifier: Modifier = Modifier,
 ) {
@@ -81,14 +82,13 @@ fun SessionCard(
         relativeTime(snapshot.lastUsedAtMs)
     }
 
-    // Press feedback on the card itself — independent from the
-    // long-press grid overlay.
+    // Press feedback on the card itself.
     var pressed by remember { mutableStateOf(false) }
     val targetScale = when {
-        isHovered -> 1.04f
-        pressed   -> 0.96f
-        isActive  -> 1.02f
-        else      -> 1f
+        isCommitting -> 1.06f
+        pressed      -> 0.96f
+        isActive     -> 1.02f
+        else         -> 1f
     }
     val scale by animateFloatAsState(
         targetValue = targetScale,
@@ -97,6 +97,16 @@ fun SessionCard(
             stiffness = Spring.StiffnessMediumLow,
         ),
         label = "session-card-scale",
+    )
+
+    // Glow alpha ramp — jumps to 1 when committing, fades back if reset.
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isCommitting) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessHigh,
+        ),
+        label = "session-card-glow",
     )
 
     Box(
@@ -114,16 +124,19 @@ fun SessionCard(
                 }
             }
             .then(
-                if (isHovered) {
+                if (isCommitting || isActive) {
+                    val elev = if (isCommitting) 24.dp else 10.dp
+                    val ambient = if (isCommitting) IrisPrimary.copy(alpha = 0.5f * glowAlpha + 0.1f)
+                                  else IrisPrimary.copy(alpha = 0f)
                     Modifier.shadow(
-                        elevation = 16.dp,
+                        elevation = elev,
                         shape = RoundedCornerShape(14.dp),
-                        ambientColor = IrisPrimary.copy(alpha = 0.4f),
-                        spotColor = IrisPrimary.copy(alpha = 0.4f),
+                        ambientColor = ambient,
+                        spotColor = ambient,
                     )
                 } else {
                     Modifier.shadow(
-                        elevation = if (isActive) 10.dp else 6.dp,
+                        elevation = 6.dp,
                         shape = RoundedCornerShape(14.dp),
                     )
                 },
@@ -131,17 +144,17 @@ fun SessionCard(
             .clip(RoundedCornerShape(14.dp))
             .background(IrisSurfaceVariant.copy(alpha = 0.85f))
             .then(
-                if (isActive || isHovered) {
+                if (isCommitting || isActive) {
                     Modifier.border(
-                        width = if (isHovered) 2.dp else 1.5.dp,
-                        color = IrisPrimary,
+                        width = if (isCommitting) 2.5.dp else 1.5.dp,
+                        color = IrisPrimary.copy(alpha = if (isCommitting) glowAlpha.coerceAtLeast(0.6f) else 1f),
                         shape = RoundedCornerShape(14.dp),
                     )
                 } else {
                     Modifier
                 },
             )
-            .clickable(enabled = !isArmed, onClick = onActivate),
+            .clickable(enabled = !isCommitting, onClick = onActivate),
     ) {
         Column(
             modifier = Modifier
