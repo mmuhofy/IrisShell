@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.iris.irisshell.domain.terminal.SetTerminalFontSizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,9 +24,15 @@ import javax.inject.Inject
  * clamped to [MIN_FONT_SP]..[MAX_FONT_SP] and pushed back into
  * [SetTerminalFontSizeUseCase] so the choice survives process death (DataStore).
  *
- * The slider is only visible while the user is actively pinching —
- * [onPinchEnd] flips [sliderVisible] back to false after a short grace
- * period ([SLIDER_HIDE_DELAY_MS]).
+ * The slider is visible while the user is actively pinching — [showSlider]
+ * flips it on, and after the user lifts their fingers [onPinchEnd] starts
+ * a [SLIDER_HIDE_DELAY_MS] timer that flips it back off. Any new pinch
+ * (or slider drag) cancels the pending hide so the slider stays visible
+ * during continuous interaction.
+ *
+ * Without this timer the slider would stay on screen forever after the
+ * first pinch, blocking subsequent gestures from reaching the terminal
+ * area. That's the "second pinch doesn't work" bug.
  */
 @HiltViewModel
 class TerminalViewModel @Inject constructor(
@@ -44,19 +52,39 @@ class TerminalViewModel @Inject constructor(
     private val _sliderVisible = MutableStateFlow(false)
     val sliderVisible: StateFlow<Boolean> = _sliderVisible.asStateFlow()
 
+    private var hideJob: Job? = null
+
     fun showSlider() {
+        hideJob?.cancel()
         _sliderVisible.value = true
     }
 
+    /**
+     * Called when the pinch gesture lifts. Schedules the slider to hide
+     * after a short grace period; any new [showSlider] / [setFontSize] call
+     * cancels this job.
+     */
+    fun onPinchEnd() {
+        hideJob?.cancel()
+        hideJob = viewModelScope.launch {
+            delay(SLIDER_HIDE_DELAY_MS)
+            _sliderVisible.value = false
+        }
+    }
+
     fun hideSlider() {
+        hideJob?.cancel()
         _sliderVisible.value = false
     }
 
     /**
      * Slider thumb dragged by the user to [value] (in sp units).
-     * Persisted and immediately published via [fontSizeSp].
+     * Persisted and immediately published via [fontSizeSp]. Also cancels
+     * the pending auto-hide so the slider stays visible while the user is
+     * actively dragging it.
      */
     fun setFontSize(value: Int) {
+        hideJob?.cancel()
         val clamped = value.coerceIn(MIN_FONT_SP, MAX_FONT_SP)
         viewModelScope.launch { persist.set(clamped.toFloat()) }
     }
@@ -72,12 +100,19 @@ class TerminalViewModel @Inject constructor(
     }
 
     fun toggleSlider(visible: Boolean) {
+        hideJob?.cancel()
         _sliderVisible.value = visible
+    }
+
+    override fun onCleared() {
+        hideJob?.cancel()
+        super.onCleared()
     }
 
     companion object {
         const val MIN_FONT_SP: Int = 10
         const val MAX_FONT_SP: Int = 32
         const val DEFAULT_FONT_SP: Int = 14
+        const val SLIDER_HIDE_DELAY_MS: Long = 2500L
     }
 }

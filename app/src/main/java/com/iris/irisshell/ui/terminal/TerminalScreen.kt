@@ -97,6 +97,20 @@ private fun ReadyScreen(
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
 
+    // Animate font-size transitions so the terminal content scales up/down
+    // smoothly instead of snapping. baseline sp = the size the AndroidView
+    // is configured at (DEFAULT_FONT_SP). currentSp animates from there.
+    val baselineSp = DEFAULT_FONT_SP
+    val animatedSp by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = fontSizeSp.toFloat(),
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+        ),
+        label = "terminal-font-scale",
+    )
+    val terminalScale = (animatedSp / baselineSp).coerceIn(0.7f, 2.0f)
+
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
             SessionSwitcherTopBar(
@@ -117,7 +131,13 @@ private fun ReadyScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, _, zoom, _ ->
+                    detectTransformGestures(
+                        onGestureEnd = {
+                            // Lift detected → start the auto-hide timer
+                            // for the zoom slider.
+                            terminalViewModel.onPinchEnd()
+                        },
+                    ) { _, _, zoom, _ ->
                         if (zoom != 1f) {
                             terminalViewModel.bumpFontSize(zoom)
                             terminalViewModel.showSlider()
@@ -125,9 +145,17 @@ private fun ReadyScreen(
                     }
                 },
         ) {
+            // Smooth scale wrap so the AndroidView (which only knows about
+            // integer sp sizes) eases between font sizes. Pinch the view to
+            // animatedSp; the underlying setTextSize still snaps in steps
+            // but the visible scale animates the transition.
             TerminalViewHost(
                 terminalManager = terminalManager,
                 fontSizeSp = fontSizeSp,
+                modifier = androidx.compose.ui.graphics.graphicsLayer {
+                    scaleX = terminalScale
+                    scaleY = terminalScale
+                },
             )
 
             if (!fullscreen && sliderVisible) {
@@ -241,6 +269,7 @@ private const val TERMINAL_PINCH_THRESHOLD = 0.04f
 private fun TerminalViewHost(
     terminalManager: TerminalManager,
     fontSizeSp: Int,
+    modifier: Modifier = Modifier,
 ) {
     val terminalViewRef = remember {
         androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
@@ -265,7 +294,7 @@ private fun TerminalViewHost(
     }
 
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         factory = { ctx ->
             TerminalView(ctx, null).apply {
                 setTextSize(fontSizeSp)
