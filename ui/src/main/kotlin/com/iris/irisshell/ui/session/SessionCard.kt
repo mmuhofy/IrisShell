@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -44,36 +45,50 @@ import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.domain.session.SessionState
 
 /**
- * One card in the [SessionSwitcherSheet]'s HorizontalPager.
+ * One card in the [LongPressSessionGrid].
  *
- * Layout (B-kart style — prompt+output single kart analog):
- *   - 6dp radius
- *   - Surface bg
- *   - 3dp left stroke in [stateColor] (IrisSuccess / IrisPrimary / muted)
- *   - Top: name (large, bold) + state chip
- *   - Bottom: last [previewLineCount] lines of transcript in a sub-surface
- *     with reduced opacity, monospace, truncated to [previewLineCount]
+ * iOS-App-Switcher inspired layout:
  *
- * Tap → [onActivate].
+ *   ┌─────────────────────────────────────┐
+ *   │  ● shell                          ⓘ │   ← dot + name + info badge
+ *   │  Running · 2m ago                   │   ← subtitle: state + freshness
+ *   │                                     │
+ *   │  ┌───────────────────────────────┐  │
+ *   │  │  $ ls -la                     │  │   ← transcript preview
+ *   │  │  total 12                     │  │     (mono, 3 lines)
+ *   │  └───────────────────────────────┘  │
+ *   └─────────────────────────────────────┘
+ *
+ * Visual states:
+ *   - **Default**: 14dp radius, soft shadow, no border.
+ *   - **Active**: gold corner badge + 1.5dp gold ring + slightly larger.
+ *   - **Hovered** (drag-mode): 1.04× scale + 2dp gold border + gold glow.
+ *   - **Armed** (grid-wide drag mode): slight alpha dip when not hovered.
  */
 @Composable
 fun SessionCard(
     snapshot: SessionSnapshot,
     isActive: Boolean,
     onActivate: () -> Unit,
-    previewLineCount: Int = 6,
+    isHovered: Boolean = false,
+    isArmed: Boolean = false,
+    previewLineCount: Int = 3,
     modifier: Modifier = Modifier,
 ) {
-    val strokeColor = stateStroke(snapshot.state)
+    val dotColor = stateDotColor(snapshot.state)
     val preview = previewLines(snapshot, previewLineCount)
+    val freshness = remember(snapshot.lastUsedAtMs) {
+        relativeTime(snapshot.lastUsedAtMs)
+    }
 
-    // Press feedback — separate from clickable so the pager's drag
-    // gesture still gets the raw touch stream.
+    // Press feedback on the card itself — independent from the
+    // long-press grid overlay.
     var pressed by remember { mutableStateOf(false) }
     val targetScale = when {
-        pressed  -> 0.96f
-        isActive -> 1.02f
-        else     -> 1.00f
+        isHovered -> 1.04f
+        pressed   -> 0.96f
+        isActive  -> 1.02f
+        else      -> 1f
     }
     val scale by animateFloatAsState(
         targetValue = targetScale,
@@ -86,8 +101,6 @@ fun SessionCard(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 12.dp, vertical = 16.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -95,71 +108,93 @@ fun SessionCard(
             .pointerInput(Unit) {
                 awaitPointerEventScope {
                     while (true) {
-                        val down = awaitPointerEvent()
-                        pressed = down.changes.any { it.pressed }
+                        val ev = awaitPointerEvent()
+                        pressed = ev.changes.any { it.pressed }
                     }
                 }
             }
-            .clip(RoundedCornerShape(6.dp))
-            .background(IrisSurface)
-            .border(
-                width = if (isActive) 2.dp else 1.dp,
-                color = strokeColor,
-                shape = RoundedCornerShape(6.dp),
+            .then(
+                if (isHovered) {
+                    Modifier.shadow(
+                        elevation = 16.dp,
+                        shape = RoundedCornerShape(14.dp),
+                        ambientColor = IrisPrimary.copy(alpha = 0.4f),
+                        spotColor = IrisPrimary.copy(alpha = 0.4f),
+                    )
+                } else {
+                    Modifier.shadow(
+                        elevation = if (isActive) 10.dp else 6.dp,
+                        shape = RoundedCornerShape(14.dp),
+                    )
+                },
             )
-            .clickable(onClick = onActivate),
+            .clip(RoundedCornerShape(14.dp))
+            .background(IrisSurfaceVariant.copy(alpha = 0.85f))
+            .then(
+                if (isActive || isHovered) {
+                    Modifier.border(
+                        width = if (isHovered) 2.dp else 1.5.dp,
+                        color = IrisPrimary,
+                        shape = RoundedCornerShape(14.dp),
+                    )
+                } else {
+                    Modifier
+                },
+            )
+            .clickable(enabled = !isArmed, onClick = onActivate),
     ) {
-        // Left stroke — a separate, non-rounded strip inside the
-        // rounded card. Using `padding(start = 4dp)` plus a 4dp-wide
-        // box that hugs the left edge.
-        Box(
-            modifier = Modifier
-                .padding(start = 0.dp)
-                .width(4.dp)
-                .fillMaxSize()
-                .background(strokeColor),
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 14.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
-            // Top row: name + state chip.
+            // ---- Top row: dot + name + corner badge ----
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = snapshot.name,
-                        color = IrisText,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = stateLabel(snapshot.state),
-                        color = stateLabelColor(snapshot.state),
-                        style = MaterialTheme.typography.labelMedium,
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(dotColor),
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(
+                    text = snapshot.name,
+                    color = IrisText,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                if (isActive) {
+                    ActiveCornerBadge()
                 }
-                StateChip(snapshot.state)
             }
+
+            // ---- Subtitle: state label · freshness ----
+            Text(
+                text = "${stateLabel(snapshot.state)} · $freshness",
+                color = IrisTextMuted,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Normal,
+                ),
+                modifier = Modifier.padding(top = 2.dp, start = 18.dp),
+            )
 
             Spacer(Modifier.height(12.dp))
 
-            // Live preview block — sub-surface, monospace.
+            // ---- Live preview block ----
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(IrisSurfaceVariant.copy(alpha = 0.6f))
-                    .padding(8.dp),
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(IrisSurface.copy(alpha = 0.5f))
+                    .padding(10.dp),
             ) {
                 if (preview.isEmpty()) {
                     Text(
@@ -168,12 +203,12 @@ fun SessionCard(
                         style = MaterialTheme.typography.bodySmall,
                     )
                 } else {
-                    Column {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         preview.forEach { line ->
                             Text(
                                 text = line,
-                                color = IrisText,
-                                fontSize = 12.sp,
+                                color = IrisText.copy(alpha = 0.85f),
+                                fontSize = 11.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -186,43 +221,26 @@ fun SessionCard(
 }
 
 @Composable
-private fun StateChip(state: SessionState) {
-    val (label, color) = when (state) {
-        SessionState.Running -> "RUNNING" to IrisPrimary
-        SessionState.Idle    -> "IDLE"    to IrisTextMuted
-        SessionState.Closed  -> "CLOSED"  to IrisTextMuted
-    }
+private fun ActiveCornerBadge() {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(3.dp))
-            .border(1.dp, color, RoundedCornerShape(3.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    ) {
-        Text(
-            text = label,
-            color = color,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Medium,
-        )
-    }
+            .size(8.dp)
+            .clip(CircleShape)
+            .background(IrisPrimary)
+            .border(1.dp, IrisSurface, CircleShape),
+    )
 }
 
-private fun stateStroke(state: SessionState): Color = when (state) {
+private fun stateDotColor(state: SessionState): Color = when (state) {
     SessionState.Running -> IrisPrimary
-    SessionState.Idle    -> IrisSurfaceVariant
-    SessionState.Closed  -> IrisTextMuted
+    SessionState.Idle    -> IrisTextMuted
+    SessionState.Closed  -> IrisTextMuted.copy(alpha = 0.4f)
 }
 
 private fun stateLabel(state: SessionState): String = when (state) {
-    SessionState.Running -> "pty process alive"
-    SessionState.Idle    -> "not yet started"
-    SessionState.Closed  -> "process exited"
-}
-
-private fun stateLabelColor(state: SessionState): Color = when (state) {
-    SessionState.Running -> IrisPrimary
-    SessionState.Idle    -> IrisTextMuted
-    SessionState.Closed  -> IrisTextMuted
+    SessionState.Running -> "Running"
+    SessionState.Idle    -> "Idle"
+    SessionState.Closed  -> "Closed"
 }
 
 private fun previewLines(snapshot: SessionSnapshot, max: Int): List<String> {
@@ -230,5 +248,19 @@ private fun previewLines(snapshot: SessionSnapshot, max: Int): List<String> {
     return when {
         live.isNotEmpty() -> live.takeLast(max)
         else              -> emptyList()
+    }
+}
+
+private fun relativeTime(thenMs: Long): String {
+    if (thenMs <= 0) return "—"
+    val now = System.currentTimeMillis()
+    val diff = (now - thenMs).coerceAtLeast(0)
+    val s = diff / 1000
+    return when {
+        s < 60       -> "just now"
+        s < 3600     -> "${s / 60}m ago"
+        s < 86_400   -> "${s / 3600}h ago"
+        s < 604_800  -> "${s / 86_400}d ago"
+        else         -> "${s / 604_800}w ago"
     }
 }
