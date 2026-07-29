@@ -3,7 +3,6 @@ package com.iris.irisshell.ui.terminal
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -161,17 +159,11 @@ private fun ReadyScreen(
                 onOpenSwitcher = { switcherOpen = true },
             )
         }
+        // Box no longer owns the pinch gesture — Termux's ScaleGestureDetector
+        // handles it through TerminalViewClient.onScale. The Box is just a
+        // container for the AndroidView + the optional fullscreen overlay.
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        if (zoom != 1f) {
-                            terminalViewModel.bumpFontSize(zoom)
-                            terminalViewModel.showSlider()
-                        }
-                    }
-                },
+            modifier = Modifier.fillMaxSize(),
         ) {
             TerminalViewHost(
                 terminalManager = terminalManager,
@@ -305,7 +297,20 @@ private fun TerminalViewHost(
         androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
     }
     val lifecycleOwner = LocalLifecycleOwner.current
-    val viewClient = remember { TerminalViewClientImpl() }
+    // Wire Termux's own ScaleGestureDetector callback into our ViewModel.
+    // Compose's detectTransformGestures can't see the events because
+    // AndroidView's onTouchEvent consumes them — the Termux recogniser
+    // fires before Compose does. So pinch has to go through
+    // TerminalViewClient.onScale, which is the only thing Termux exposes.
+    val viewClient = remember(terminalViewModel) {
+        TerminalViewClientImpl(
+            onScaleChange = { factor ->
+                terminalViewModel.bumpFontSize(factor)
+                terminalViewModel.showSlider()
+                factor
+            },
+        )
+    }
 
     LaunchedEffect(Unit) {
         if (terminalManager.tabCount == 0) {
