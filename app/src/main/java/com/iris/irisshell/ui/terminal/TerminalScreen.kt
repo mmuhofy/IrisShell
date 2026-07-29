@@ -1,6 +1,9 @@
 package com.iris.irisshell.ui.terminal
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -96,20 +100,43 @@ private fun ReadyScreen(
     var switcherOpen by remember { mutableStateOf(false) }
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
+    val activeId by sessionSwitcherViewModel.activeId.collectAsState()
 
-    // Animate font-size transitions so the terminal content scales up/down
-    // smoothly instead of snapping. baseline sp = the size the AndroidView
-    // is configured at (DEFAULT_FONT_SP). currentSp animates from there.
-    val baselineSp = DEFAULT_FONT_SP
-    val animatedSp by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = fontSizeSp.toFloat(),
-        animationSpec = androidx.compose.animation.core.spring(
-            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
-            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
-        ),
-        label = "terminal-font-scale",
-    )
-    val terminalScale = (animatedSp / baselineSp).coerceIn(0.7f, 2.0f)
+    // Animate the terminal view's scale + alpha whenever the active
+    // session changes (i.e. user picked a card in the switcher). Triggers
+    // a smooth "card explodes forward into terminal" feel:
+    //   scale 0.92 → 1.0 + alpha 0 → 1 over ~280ms.
+    // Uses [Animatable] + per-trigger LaunchedEffect so every session
+    // switch restarts the animation cleanly (state is snapped to 0 first,
+    // then animated back to 1).
+    val appearScale = remember { androidx.compose.animation.core.Animatable(1f) }
+    val appearAlpha = remember { androidx.compose.animation.core.Animatable(1f) }
+    LaunchedEffect(activeId) {
+        // Snap to start values, then animate to 1. Per-trigger keying
+        // means each session change replays the entry animation.
+        appearScale.snapTo(0.92f)
+        appearAlpha.snapTo(0f)
+        kotlinx.coroutines.coroutineScope {
+            launch {
+                appearScale.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                )
+            }
+            launch {
+                appearAlpha.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium,
+                    ),
+                )
+            }
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
@@ -131,30 +158,38 @@ private fun ReadyScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    detectTransformGestures(
-                        onGestureEnd = {
-                            // Lift detected → start the auto-hide timer
-                            // for the zoom slider.
-                            terminalViewModel.onPinchEnd()
-                        },
-                    ) { _, _, zoom, _ ->
-                        if (zoom != 1f) {
-                            terminalViewModel.bumpFontSize(zoom)
-                            terminalViewModel.showSlider()
+                    // We can't use detectTransformGestures' onGestureEnd
+                    // because that overload isn't in this Compose version.
+                    // Wrap the gesture in awaitEachGesture so we always
+                    // fire onPinchEnd on lift, even if no zoom happened.
+                    awaitEachGesture {
+                        val start = System.currentTimeMillis()
+                        var sawPinch = false
+                        try {
+                            detectTransformGestures { _, _, zoom, _ ->
+                                if (zoom != 1f) {
+                                    sawPinch = true
+                                    terminalViewModel.bumpFontSize(zoom)
+                                    terminalViewModel.showSlider()
+                                }
+                            }
+                        } finally {
+                            // detectTransformGestures only returns when all
+                            // pointers are released → schedule slider hide.
+                            if (sawPinch) terminalViewModel.onPinchEnd()
+                            // Suppress unused warning on start.
+                            @Suppress("UNUSED_EXPRESSION") start
                         }
                     }
                 },
         ) {
-            // Smooth scale wrap so the AndroidView (which only knows about
-            // integer sp sizes) eases between font sizes. Pinch the view to
-            // animatedSp; the underlying setTextSize still snaps in steps
-            // but the visible scale animates the transition.
             TerminalViewHost(
                 terminalManager = terminalManager,
                 fontSizeSp = fontSizeSp,
-                modifier = androidx.compose.ui.graphics.graphicsLayer {
-                    scaleX = terminalScale
-                    scaleY = terminalScale
+                modifier = Modifier.graphicsLayer {
+                    scaleX = appearScale
+                    scaleY = appearScale
+                    alpha = appearAlpha
                 },
             )
 
