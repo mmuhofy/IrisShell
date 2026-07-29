@@ -11,7 +11,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,13 +40,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -71,13 +67,12 @@ import android.view.Window
  *   - **Spring enter/leave** — scale 0.88 → 1.0 + alpha 0 → 1 over
  *     ~280ms with a medium-bouncy spring.
  *
- * Interaction (handled by [LongPressSessionGrid]):
+ * Interaction (handled by [PagerSessionSwitcher]):
  *   - **Tap** a card → activate + dismiss.
- *   - **Long-press 150ms** → drag mode (cards shrink, finger-following
- *     tooltip, gold ring under finger, haptic ticks).
- *   - **Release on a card** during drag → activate that card.
- *   - **Release outside any card** during drag → dismiss without
- *     changing session.
+ *   - **Long-press 150ms** → armed. Drag now swipes pages, finger-following
+ *     tooltip, gold ring under finger, haptic ticks.
+ *   - **Release while armed** → activate the page under finger, dismiss.
+ *   - **Drag before 150ms** → ignored (no swipe-to-preview mode).
  */
 @Composable
 fun SessionSwitcherSheet(
@@ -144,14 +139,13 @@ fun SessionSwitcherSheet(
                         if (sessions.isEmpty()) {
                             EmptyState(onCreate = { showCreateDialog = true })
                         } else {
-                            LongPressSessionGrid(
+                            PagerSessionSwitcher(
                                 sessions = sessions,
                                 activeId = activeId,
                                 onActivate = { id ->
                                     viewModel.activate(id)
                                     onDismiss()
                                 },
-                                onDismiss = onDismiss,
                             )
                         }
                     }
