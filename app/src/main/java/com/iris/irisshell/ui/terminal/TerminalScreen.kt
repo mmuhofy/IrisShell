@@ -183,16 +183,6 @@ private fun ReadyScreen(
                 },
             )
 
-            if (!fullscreen && sliderVisible) {
-                VerticalZoomSlider(
-                    value = fontSizeSp,
-                    onValueChange = { terminalViewModel.setFontSize(it) },
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 16.dp),
-                )
-            }
-
             if (fullscreen) {
                 Box(
                     modifier = Modifier
@@ -205,6 +195,21 @@ private fun ReadyScreen(
                     }
                 }
             }
+        }
+
+        // Slider lives outside the pinch-detection Box. If it lived inside,
+        // a two-finger pinch whose second finger happened to land on the
+        // 56dp slider strip would route the pointer events to the slider's
+        // own gesture handler and the box's detectTransformGestures would
+        // never fire — making the second pinch silently a no-op.
+        if (!fullscreen && sliderVisible) {
+            VerticalZoomSlider(
+                value = fontSizeSp,
+                onValueChange = { terminalViewModel.setFontSize(it) },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 16.dp),
+            )
         }
     }
 
