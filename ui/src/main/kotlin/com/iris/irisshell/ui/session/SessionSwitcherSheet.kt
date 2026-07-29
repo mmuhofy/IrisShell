@@ -128,12 +128,12 @@ fun SessionSwitcherSheet(
                 targetScale = if (inCommit) 0.94f else 0.92f,
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMediumHigh,
+                    stiffness = Spring.StiffnessHigh,
                 ),
             ) + fadeOut(
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMediumHigh,
+                    stiffness = Spring.StiffnessHigh,
                 ),
             ),
         ) {
