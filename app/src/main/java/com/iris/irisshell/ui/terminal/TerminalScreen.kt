@@ -3,7 +3,6 @@ package com.iris.irisshell.ui.terminal
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +37,9 @@ import com.iris.irisshell.ui.session.SessionSwitcherSheet
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.SessionSwitcherTopBar
 import com.termux.view.TerminalView
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Phase 1 Terminal screen.
@@ -102,21 +104,16 @@ private fun ReadyScreen(
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
 
-    // Animate the terminal view's scale + alpha whenever the active
-    // session changes (i.e. user picked a card in the switcher). Triggers
-    // a smooth "card explodes forward into terminal" feel:
-    //   scale 0.92 → 1.0 + alpha 0 → 1 over ~280ms.
-    // Uses [Animatable] + per-trigger LaunchedEffect so every session
-    // switch restarts the animation cleanly (state is snapped to 0 first,
-    // then animated back to 1).
+    // Session-switch entry animation. When activeId changes, snap the
+    // terminal view to (scale 0.92, alpha 0) then animate back to (1, 1).
+    // The chosen card in the session switcher thus "explodes forward"
+    // into the terminal surface beneath.
     val appearScale = remember { androidx.compose.animation.core.Animatable(1f) }
     val appearAlpha = remember { androidx.compose.animation.core.Animatable(1f) }
     LaunchedEffect(activeId) {
-        // Snap to start values, then animate to 1. Per-trigger keying
-        // means each session change replays the entry animation.
         appearScale.snapTo(0.92f)
         appearAlpha.snapTo(0f)
-        kotlinx.coroutines.coroutineScope {
+        coroutineScope {
             launch {
                 appearScale.animateTo(
                     targetValue = 1f,
@@ -135,6 +132,16 @@ private fun ReadyScreen(
                     ),
                 )
             }
+        }
+    }
+
+    // Slider auto-hide. Whenever the slider becomes visible, schedule a
+    // hide after a short grace period. Any new pinch (or slider drag)
+    // cancels the pending hide via setFontSize in the ViewModel.
+    LaunchedEffect(sliderVisible) {
+        if (sliderVisible) {
+            delay(2500L)
+            terminalViewModel.hideSlider()
         }
     }
 
@@ -158,27 +165,10 @@ private fun ReadyScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    // We can't use detectTransformGestures' onGestureEnd
-                    // because that overload isn't in this Compose version.
-                    // Wrap the gesture in awaitEachGesture so we always
-                    // fire onPinchEnd on lift, even if no zoom happened.
-                    awaitEachGesture {
-                        val start = System.currentTimeMillis()
-                        var sawPinch = false
-                        try {
-                            detectTransformGestures { _, _, zoom, _ ->
-                                if (zoom != 1f) {
-                                    sawPinch = true
-                                    terminalViewModel.bumpFontSize(zoom)
-                                    terminalViewModel.showSlider()
-                                }
-                            }
-                        } finally {
-                            // detectTransformGestures only returns when all
-                            // pointers are released → schedule slider hide.
-                            if (sawPinch) terminalViewModel.onPinchEnd()
-                            // Suppress unused warning on start.
-                            @Suppress("UNUSED_EXPRESSION") start
+                    detectTransformGestures { _, _, zoom, _ ->
+                        if (zoom != 1f) {
+                            terminalViewModel.bumpFontSize(zoom)
+                            terminalViewModel.showSlider()
                         }
                     }
                 },
@@ -187,9 +177,9 @@ private fun ReadyScreen(
                 terminalManager = terminalManager,
                 fontSizeSp = fontSizeSp,
                 modifier = Modifier.graphicsLayer {
-                    scaleX = appearScale
-                    scaleY = appearScale
-                    alpha = appearAlpha
+                    scaleX = appearScale.value
+                    scaleY = appearScale.value
+                    alpha = appearAlpha.value
                 },
             )
 
