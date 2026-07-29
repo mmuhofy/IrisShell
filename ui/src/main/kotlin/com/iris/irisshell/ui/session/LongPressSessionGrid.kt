@@ -29,10 +29,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.iris.irisshell.domain.session.SessionSnapshot
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * The long-press + drag-to-select grid that powers the session switcher.
@@ -136,10 +132,9 @@ fun LongPressSessionGrid(
                                 ?: continue
                             if (firstDown == null) continue
 
-                            // Wait threshold or release.
-                            val timer = launch {
-                                delay(longPressThresholdMs)
-                            }
+                            // Track elapsed time via wall clock instead of
+                            // a coroutine timer — `awaitPointerEventScope`
+                            // provides no CoroutineScope for `launch`.
                             var elapsed = 0L
                             var armedNow = false
                             val startTime = System.currentTimeMillis()
@@ -148,7 +143,6 @@ fun LongPressSessionGrid(
                                 val ev = awaitPointerEvent(PointerEventPass.Main)
                                 val change = ev.changes.firstOrNull { it.id == firstDown.id }
                                 if (change == null || !change.pressed) {
-                                    timer.cancel()
                                     break
                                 }
                                 elapsed = System.currentTimeMillis() - startTime
@@ -178,7 +172,6 @@ fun LongPressSessionGrid(
                                     }
                                 }
                             }
-                            timer.cancel()
 
                             // Handle release.
                             if (armed || armedNow) {
