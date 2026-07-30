@@ -108,7 +108,11 @@ fun SessionSwitcherSheet(
     var renameNewName by remember { mutableStateOf("") }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
+    // Own scope for snackbar dispatch — survives recomposition so the
+    // Snackbar doesn't get cancelled mid-dispatch when the dialog content
+    // recomposes (which previously crashed with CancellationException
+    // bubbling out of showSnackbar).
+    val snackbarScope = rememberCoroutineScope()
 
     DisableDialogScrim()
 
@@ -210,26 +214,27 @@ fun SessionSwitcherSheet(
         @Suppress("UNUSED_EXPRESSION") id
     }
 
-    // After a delete, capture which session became active (or none) so the
-    // Snackbar can label it correctly. We pull this lazily after the Room
-    // flow updates — coroutineScope so we don't block composition.
-    LaunchedEffect(deletingId, sessions) {
-        val id = deletingId ?: return@LaunchedEffect
-        if (!sessions.any { it.id == id }) {
-            // The deletion just completed — sessions flow no longer contains it.
-            val wasActive = activeId == id || pendingDelete?.wasActive == true
-            val fallbackName = sessions.firstOrNull()?.name
-            pendingDelete = DeletedSession(
-                snapshot = pendingDelete?.snapshot ?: return@LaunchedEffect,
-                wasActive = wasActive,
-                fallbackName = fallbackName,
+    // After the Room deletion propagates and the sessions flow updates,
+    // figure out which session became active (if any) so the Snackbar can
+    // label it correctly. We re-read both activeId and the sessions list
+    // here because the onConfirm snapshot only had `fallbackName = null`.
+    LaunchedEffect(sessions, activeId) {
+        val pd = pendingDelete ?: return@LaunchedEffect
+        if (pd.fallbackName == null && !sessions.any { it.id == pd.snapshot.id }) {
+            // The deleted session is gone from the list — pick the new
+            // most-recent as the fallback name.
+            val fallback = sessions.firstOrNull { it.id == activeId }?.name
+            pendingDelete = pd.copy(
+                wasActive = pd.wasActive || pd.snapshot.id == activeId,
+                fallbackName = fallback,
             )
-            deletingId = null
         }
     }
 
     // Show the snackbar whenever pendingDelete becomes non-null. UNDO
-    // re-inserts via repository.restoreSession.
+    // re-inserts via repository.restoreSession. Runs on a separate
+    // scope so the snackbar dispatch isn't cancelled by recomposition
+    // of the Dialog content (which was the cause of the previous crash).
     LaunchedEffect(pendingDelete) {
         val pd = pendingDelete ?: return@LaunchedEffect
         val msg = if (pd.wasActive && pd.fallbackName != null) {
@@ -237,18 +242,25 @@ fun SessionSwitcherSheet(
         } else {
             "Deleted '${pd.snapshot.name}'"
         }
-        val result = snackbarHostState.showSnackbar(
-            message = msg,
-            actionLabel = "Undo",
-            withDismissAction = true,
-            duration = androidx.compose.material3.SnackbarDuration.Short,
-        )
-        when (result) {
-            SnackbarResult.ActionPerformed -> {
-                viewModel.restoreSession(pd.snapshot)
+        snackbarScope.launch {
+            val result = try {
+                snackbarHostState.showSnackbar(
+                    message = msg,
+                    actionLabel = "Undo",
+                    withDismissAction = true,
+                    duration = androidx.compose.material3.SnackbarDuration.Short,
+                )
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Parent scope was cancelled (e.g. sheet closed) — give up.
+                SnackbarResult.Dismissed
             }
-            SnackbarResult.Dismissed -> {
-                pendingDelete = null
+            when (result) {
+                SnackbarResult.ActionPerformed -> {
+                    viewModel.restoreSession(pd.snapshot)
+                }
+                SnackbarResult.Dismissed -> {
+                    pendingDelete = null
+                }
             }
         }
     }
@@ -280,8 +292,15 @@ fun SessionSwitcherSheet(
             DeleteConfirmDialog(
                 snapshot = target,
                 onConfirm = {
-                    val wasActive = target.id == activeId
-                    pendingDelete = DeletedSession(target, wasActive, fallbackName = null)
+                    // Stash the snapshot up-front so the snackbar effect can
+                    // pick it up the moment we close the confirm dialog.
+                    // fallbackName starts null; the post-deletion effect
+                    // below fills it in once the sessions flow updates.
+                    pendingDelete = DeletedSession(
+                        snapshot = target,
+                        wasActive = target.id == activeId,
+                        fallbackName = null,
+                    )
                     viewModel.delete(target.id)
                     deletingId = null
                 },
