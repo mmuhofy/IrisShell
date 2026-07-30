@@ -70,6 +70,7 @@ import com.iris.irisshell.ui.util.BlurDialogWindow
 import android.view.Window
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /**
  * Centred popup dialog over the terminal screen — swipeable pager with
