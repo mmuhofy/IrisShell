@@ -18,6 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,6 +78,8 @@ fun SessionCard(
     snapshot: SessionSnapshot,
     isActive: Boolean,
     onActivate: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
     isCommitting: Boolean = false,
     previewLineCount: Int = 3,
     modifier: Modifier = Modifier,
@@ -161,7 +169,7 @@ fun SessionCard(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
-            // ---- Top row: dot + name + corner badge ----
+            // ---- Top row: dot + name + corner badge + overflow menu ----
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -186,6 +194,11 @@ fun SessionCard(
                 if (isActive) {
                     ActiveCornerBadge()
                 }
+                OverflowMenu(
+                    onRename = onRename,
+                    onDelete = onDelete,
+                    enabled = !isCommitting,
+                )
             }
 
             // ---- Subtitle: state label · freshness ----
@@ -242,6 +255,53 @@ private fun ActiveCornerBadge() {
             .background(IrisPrimary)
             .border(1.dp, IrisSurface, CircleShape),
     )
+}
+
+@Composable
+private fun OverflowMenu(
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+    enabled: Boolean,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(
+            onClick = { expanded = true },
+            enabled = enabled,
+            modifier = Modifier.size(32.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = "Session options",
+                tint = IrisTextMuted,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(IrisSurfaceVariant),
+        ) {
+            DropdownMenuItem(
+                text = {
+                    Text("Rename", color = IrisText, fontSize = 14.sp)
+                },
+                onClick = {
+                    expanded = false
+                    onRename()
+                },
+            )
+            DropdownMenuItem(
+                text = {
+                    Text("Delete", color = IrisPrimary, fontSize = 14.sp)
+                },
+                onClick = {
+                    expanded = false
+                    onDelete()
+                },
+            )
+        }
+    }
 }
 
 private fun stateDotColor(state: SessionState): Color = when (state) {

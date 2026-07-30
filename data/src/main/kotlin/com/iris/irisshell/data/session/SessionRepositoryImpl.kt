@@ -90,12 +90,37 @@ class SessionRepositoryImpl @Inject constructor(
     override suspend fun delete(id: String) {
         dao.delete(id)
         // If we just deleted the active one, clear the active pointer
-        // and (TODO Phase 2 follow-up) fall back to most-recent.
+        // and fall back to most-recent so the user always lands on a
+        // valid session after closing the dialog.
         val activeId = dataStore.data
             .map { it[KEY_ACTIVE_SESSION_ID] }
             .first()
         if (activeId == id) {
             dataStore.edit { it.remove(KEY_ACTIVE_SESSION_ID) }
+            val remaining = dao.observeAll().first()
+            val fallback = remaining.firstOrNull()
+            if (fallback != null) {
+                dataStore.edit { it[KEY_ACTIVE_SESSION_ID] = fallback.id }
+            }
+        }
+    }
+
+    override suspend fun restoreSession(snapshot: SessionSnapshot, activate: Boolean) {
+        // Re-insert the row using the original id and metadata. The session
+        // is restored to Idle state (the previous PTY is gone). If the user
+        // asked for activation, flip the active pointer too.
+        dao.upsert(
+            SessionEntity(
+                id = snapshot.id,
+                name = snapshot.name,
+                state = SessionState.Idle.name,
+                createdAtMs = snapshot.createdAtMs,
+                lastUsedAtMs = System.currentTimeMillis(),
+                lastSnapshot = "",
+            )
+        )
+        if (activate) {
+            dataStore.edit { it[KEY_ACTIVE_SESSION_ID] = snapshot.id }
         }
     }
 

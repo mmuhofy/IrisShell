@@ -34,6 +34,13 @@ interface SessionRepository {
     /** Drop a session entirely. Closes its PTY if open. */
     suspend fun delete(id: String)
 
+    /**
+     * Re-insert a previously-deleted session. Used by the Undo action on
+     * the session switcher's Snackbar — preserves the original id and
+     * metadata. Re-activates the session if [activate] is true.
+     */
+    suspend fun restoreSession(snapshot: SessionSnapshot, activate: Boolean = false)
+
     /** Mark the session as the most-recently-used (updates lastUsedAtMs). */
     suspend fun touch(id: String)
 }

@@ -55,6 +55,16 @@ class SessionSwitcherViewModel @Inject constructor(
         viewModelScope.launch { sessionRepository.rename(id, newName) }
     }
 
+    fun delete(id: String) {
+        viewModelScope.launch { sessionRepository.delete(id) }
+    }
+
+    fun restoreSession(snapshot: SessionSnapshot, activate: Boolean = false) {
+        viewModelScope.launch {
+            sessionRepository.restoreSession(snapshot, activate)
+        }
+    }
+
     fun activate(id: String) {
         viewModelScope.launch { activeSession.setActive(id) }
     }
