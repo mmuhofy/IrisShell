@@ -30,12 +30,12 @@ class TerminalViewClientImpl(
 
     override fun onSingleTapUp(e: MotionEvent) {
         val view = terminalView ?: return
-        if (view.mEmulator == null) return
+        val emulator = view.mEmulator ?: return
         val colRow = view.getColumnAndRow(e, false)
         val col = colRow[0]
         val row = colRow[1]
         if (col < 0 || row < 0) return
-        val screen = view.mEmulator.getScreen() ?: return
+        val screen = emulator.getScreen() ?: return
         val word = screen.getWordAtLocation(col, row)
         if (word.isNullOrBlank()) return
         if (urlPattern.matches(word)) {
@@ -71,15 +71,27 @@ class TerminalViewClientImpl(
     override fun onCodePoint(codePoint: Int, ctrlDown: Boolean, session: TerminalSession): Boolean = false
     override fun onEmulatorSet() { }
 
-    override fun logError(tag: String?, message: String?) { Log.e(tag, message) }
-    override fun logWarn(tag: String?, message: String?) { Log.w(tag, message) }
-    override fun logInfo(tag: String?, message: String?) { Log.i(tag, message) }
-    override fun logDebug(tag: String?, message: String?) { Log.d(tag, message) }
-    override fun logVerbose(tag: String?, message: String?) { Log.v(tag, message) }
+    override fun logError(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.e(tag, message)
+    }
+    override fun logWarn(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.w(tag, message)
+    }
+    override fun logInfo(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.i(tag, message)
+    }
+    override fun logDebug(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.d(tag, message)
+    }
+    override fun logVerbose(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.v(tag, message)
+    }
     override fun logStackTraceWithMessage(tag: String?, message: String?, e: Exception?) {
-        if (e != null) Log.e(tag, message, e) else Log.e(tag, message)
+        val t = tag ?: "IrisShell"
+        val m = message ?: ""
+        if (e != null) Log.e(t, m, e) else Log.e(t, m)
     }
     override fun logStackTrace(tag: String?, e: Exception?) {
-        if (e != null) Log.e(tag, "", e)
+        if (e != null) Log.e(tag ?: "IrisShell", "", e)
     }
 }

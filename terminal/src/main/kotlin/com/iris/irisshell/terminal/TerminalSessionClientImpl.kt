@@ -57,15 +57,27 @@ class TerminalSessionClientImpl : TerminalSessionClient {
 
     override fun getTerminalCursorStyle(): Int? = null
 
-    override fun logError(tag: String?, message: String?) { Log.e(tag, message) }
-    override fun logWarn(tag: String?, message: String?) { Log.w(tag, message) }
-    override fun logInfo(tag: String?, message: String?) { Log.i(tag, message) }
-    override fun logDebug(tag: String?, message: String?) { Log.d(tag, message) }
-    override fun logVerbose(tag: String?, message: String?) { Log.v(tag, message) }
+    override fun logError(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.e(tag, message)
+    }
+    override fun logWarn(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.w(tag, message)
+    }
+    override fun logInfo(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.i(tag, message)
+    }
+    override fun logDebug(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.d(tag, message)
+    }
+    override fun logVerbose(tag: String?, message: String?) {
+        if (tag != null && message != null) Log.v(tag, message)
+    }
     override fun logStackTraceWithMessage(tag: String?, message: String?, e: Exception?) {
-        if (e != null) Log.e(tag, message, e) else Log.e(tag, message)
+        val t = tag ?: "IrisShell"
+        val m = message ?: ""
+        if (e != null) Log.e(t, m, e) else Log.e(t, m)
     }
     override fun logStackTrace(tag: String?, e: Exception?) {
-        if (e != null) Log.e(tag, "", e)
+        if (e != null) Log.e(tag ?: "IrisShell", "", e)
     }
 }
