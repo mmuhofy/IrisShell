@@ -1,0 +1,41 @@
+package com.iris.irisshell.data.settings
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import com.iris.irisshell.data.local.irisShellDataStore
+import com.iris.irisshell.domain.settings.SettingsRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * DataStore-backed implementation of [SettingsRepository].
+ *
+ * Block Mode flag lives at [KEY_USE_BLOCK_ENGINE]. Reads emit false on
+ * first launch (the default), so Classic Terminal stays the user's
+ * out-of-the-box experience — matching `docs/block-engine/PLAN.md` §2.
+ */
+@Singleton
+class SettingsRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
+) : SettingsRepository {
+
+    private val dataStore: DataStore<Preferences> = context.irisShellDataStore
+
+    override val useBlockEngine: Flow<Boolean> =
+        dataStore.data.map { prefs -> prefs[KEY_USE_BLOCK_ENGINE] ?: DEFAULT_USE_BLOCK_ENGINE }
+
+    override suspend fun setUseBlockEngine(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[KEY_USE_BLOCK_ENGINE] = enabled }
+    }
+
+    private companion object {
+        val KEY_USE_BLOCK_ENGINE = booleanPreferencesKey("use_block_engine")
+        const val DEFAULT_USE_BLOCK_ENGINE: Boolean = false
+    }
+}
