@@ -2,11 +2,13 @@ package com.iris.irisshell.data.di
 
 import com.iris.irisshell.data.session.ObserveActiveSessionUseCaseImpl
 import com.iris.irisshell.data.session.SessionRepositoryImpl
+import com.iris.irisshell.data.block.BlockRepositoryImpl
 import com.iris.irisshell.data.settings.FirstLaunchRepositoryImpl
 import com.iris.irisshell.data.settings.SettingsRepositoryImpl
 import com.iris.irisshell.data.settings.TerminalFontSizeRepositoryImpl
 import com.iris.irisshell.data.terminal.BootstrapObserver
 import com.iris.irisshell.data.terminal.TriggerBootstrap
+import com.iris.irisshell.domain.block.BlockRepository
 import com.iris.irisshell.domain.session.ObserveActiveSessionUseCase
 import com.iris.irisshell.domain.session.SessionRepository
 import com.iris.irisshell.domain.settings.SettingsRepository
@@ -72,4 +74,10 @@ abstract class BindingsModule {
     abstract fun bindSettingsRepository(
         impl: SettingsRepositoryImpl,
     ): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBlockRepository(
+        impl: BlockRepositoryImpl,
+    ): BlockRepository
 }
