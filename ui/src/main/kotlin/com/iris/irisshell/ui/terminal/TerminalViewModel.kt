@@ -2,6 +2,7 @@ package com.iris.irisshell.ui.terminal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.iris.irisshell.domain.settings.SettingsRepository
 import com.iris.irisshell.domain.terminal.SetTerminalFontSizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -37,9 +38,14 @@ import javax.inject.Inject
 @HiltViewModel
 class TerminalViewModel @Inject constructor(
     setTerminalFontSize: SetTerminalFontSizeUseCase,
+    settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val persist = setTerminalFontSize
+
+    /** Block Mode toggle — defaults to false (Classic Mode). */
+    val useBlockEngine: StateFlow<Boolean> = settingsRepository.useBlockEngine
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val fontSizeSp: StateFlow<Int> = persist.observe()
         .map { it.toInt().coerceIn(MIN_FONT_SP, MAX_FONT_SP) }

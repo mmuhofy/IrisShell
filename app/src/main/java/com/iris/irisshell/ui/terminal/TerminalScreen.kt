@@ -34,6 +34,8 @@ import com.iris.irisshell.terminal.UbuntuSetupState
 import com.iris.irisshell.ui.session.SessionSwitcherSheet
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.SessionSwitcherTopBar
+import com.iris.irisshell.ui.block.BlockEngineViewModel
+import com.iris.irisshell.ui.block.BlockTerminalView
 import com.termux.view.TerminalView
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -95,12 +97,14 @@ private fun ReadyScreen(
     terminalManager: TerminalManager,
     terminalViewModel: TerminalViewModel,
     sessionSwitcherViewModel: SessionSwitcherViewModel = hiltViewModel(),
+    blockEngineViewModel: BlockEngineViewModel = hiltViewModel(),
 ) {
     var fullscreen by remember { mutableStateOf(false) }
     var switcherOpen by remember { mutableStateOf(false) }
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
+    val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
 
     // Session-switch entry animation. When activeId changes, snap the
     // terminal view to (scale 0.92, alpha 0) then animate back to (1, 1).
@@ -165,16 +169,24 @@ private fun ReadyScreen(
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
-            TerminalViewHost(
-                terminalManager = terminalManager,
-                fontSizeSp = fontSizeSp,
-                terminalViewModel = terminalViewModel,
-                modifier = Modifier.graphicsLayer {
-                    scaleX = appearScale.value
-                    scaleY = appearScale.value
-                    alpha = appearAlpha.value
-                },
-            )
+            if (useBlockEngine) {
+                BlockTerminalView(
+                    blocks = blockEngineViewModel.blocks,
+                    onToggleCollapsed = blockEngineViewModel::onToggleCollapsed,
+                    onCommandSubmitted = blockEngineViewModel::onCommandSubmitted,
+                )
+            } else {
+                TerminalViewHost(
+                    terminalManager = terminalManager,
+                    fontSizeSp = fontSizeSp,
+                    terminalViewModel = terminalViewModel,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = appearScale.value
+                        scaleY = appearScale.value
+                        alpha = appearAlpha.value
+                    },
+                )
+            }
 
             if (fullscreen) {
                 Box(
