@@ -34,3 +34,18 @@ data class NetworkDelta(
 ) {
     val hasTraffic: Boolean get() = rxBytes > 0 || txBytes > 0
 }
+
+/**
+ * Network metrics surface available to `:ui`.
+ *
+ * Implemented in `:data` over Android's `TrafficStats`. UI consumers
+ * receive a domain interface so they stay decoupled from the data
+ * layer (per AGENT.md §107-145 layer rules).
+ */
+interface NetworkMetricsCollector {
+    /** Take a fresh sample and return it (updates internal deltas). */
+    fun sample(): NetworkSample
+
+    /** Current cumulative RX/TX totals (uid-scoped) without sampling. */
+    fun snapshotTotals(): Pair<Long, Long>
+}

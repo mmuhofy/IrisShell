@@ -3,6 +3,7 @@ package com.iris.irisshell.data.block
 import android.net.TrafficStats
 import android.os.Process
 import android.os.SystemClock
+import com.iris.irisshell.domain.block.NetworkMetricsCollector
 import com.iris.irisshell.domain.block.NetworkSample
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,7 +26,7 @@ import javax.inject.Singleton
  * UNTESTED — verify before use.
  */
 @Singleton
-class TrafficStatsCollector @Inject constructor() {
+class TrafficStatsCollector @Inject constructor() : NetworkMetricsCollector {
 
     private val uid: Int = Process.myUid()
     private var lastRx: Long = TrafficStats.getUidRxBytes(uid)
@@ -33,7 +34,7 @@ class TrafficStatsCollector @Inject constructor() {
     private var lastSampleMs: Long = SystemClock.elapsedRealtime()
 
     /** Returns the latest network sample and updates internal deltas. */
-    fun sample(): NetworkSample {
+    override fun sample(): NetworkSample {
         val now = SystemClock.elapsedRealtime()
         val elapsedSec = (now - lastSampleMs).coerceAtLeast(1L) / 1000.0
         val rx = TrafficStats.getUidRxBytes(uid)
@@ -52,6 +53,6 @@ class TrafficStatsCollector @Inject constructor() {
     }
 
     /** Cumulative bytes since session start (uid-scoped). */
-    fun snapshotTotals(): Pair<Long, Long> =
+    override fun snapshotTotals(): Pair<Long, Long> =
         TrafficStats.getUidRxBytes(uid) to TrafficStats.getUidTxBytes(uid)
 }

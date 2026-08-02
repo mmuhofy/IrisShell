@@ -2,9 +2,9 @@ package com.iris.irisshell.ui.block
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.iris.irisshell.data.block.TrafficStatsCollector
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockRepository
+import com.iris.irisshell.domain.block.NetworkMetricsCollector
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,7 +31,7 @@ import javax.inject.Inject
 @HiltViewModel
 class BlockEngineViewModel @Inject constructor(
     private val blockRepository: BlockRepository,
-    private val trafficStats: TrafficStatsCollector,
+    private val trafficStats: NetworkMetricsCollector,
 ) : ViewModel() {
 
     val blocks: StateFlow<List<Block>> = blockRepository.observe()
