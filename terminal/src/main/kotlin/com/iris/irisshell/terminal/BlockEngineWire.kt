@@ -40,7 +40,7 @@ class BlockEngineWire(
     /** Called by [TerminalManager] whenever the active session's text changes. */
     fun onSessionTextChanged(session: TerminalSession) {
         val emulator: TerminalEmulator = session.emulator ?: return
-        val raw = emulator.screen.transcriptTextWithoutJoinedLines
+        val raw = emulator.getScreen().transcriptTextWithoutJoinedLines
         val currentTail = AnsiStripper.strip(raw).lines().takeLast(tailSize)
         if (currentTail.isEmpty()) return
 
