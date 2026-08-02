@@ -5,8 +5,6 @@ import com.iris.irisshell.domain.block.CommandBoundary
 import com.iris.irisshell.domain.block.CommandBoundaryDetector
 import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Wires the Termux terminal session into the block engine.
@@ -30,8 +28,7 @@ import javax.inject.Singleton
  *
  * UNTESTED — verify before use.
  */
-@Singleton
-class BlockEngineWire @Inject constructor(
+class BlockEngineWire(
     private val blockRepository: BlockRepository,
 ) {
 
