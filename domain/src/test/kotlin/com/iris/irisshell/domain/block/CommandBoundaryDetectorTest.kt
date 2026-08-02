@@ -53,7 +53,7 @@ class CommandBoundaryDetectorTest {
 
     @Test
     fun `line ending with dollar in middle of text is not prompt`() {
-        val lines = listOf("echo 'foo$bar' done")
+        val lines = listOf("Total: \$5")
         assertEquals(CommandBoundary.None, detector.detectPromptReady(lines))
     }
 
