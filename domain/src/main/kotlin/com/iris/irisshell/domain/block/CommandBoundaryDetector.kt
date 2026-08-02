@@ -59,13 +59,14 @@ class CommandBoundaryDetector {
         // Match short lines that end with a single marker char.
         if (stripped.length <= 3) return true
 
-        // Family 3: spaceship / oh-my-zsh style — ends with `❯ ` or `➜ `.
-        if (stripped.endsWith("❯") || stripped.endsWith("➜")) return true
+        // Family 3: spaceship / oh-my-zsh style — ends with `❯`, `➜`, `✗`, `✓`.
+        if (stripped.endsWith("❯") || stripped.endsWith("➜") ||
+            stripped.endsWith("✗") || stripped.endsWith("✓")) return true
 
         return false
     }
 
     private companion object {
-        val PROMPT_TERMINATORS = setOf('$', '#', '%', '❯', '➜', '>')
+        val PROMPT_TERMINATORS = setOf('$', '#', '%', '❯', '➜', '>', '✗', '✓')
     }
 }
