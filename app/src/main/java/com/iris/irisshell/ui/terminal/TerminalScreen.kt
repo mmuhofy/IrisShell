@@ -65,6 +65,7 @@ fun TerminalScreen(
     terminalManager: TerminalManager,
     ubuntuSetupState: UbuntuSetupState,
     onRetry: () -> Unit,
+    onOpenSettings: () -> Unit = {},
     terminalViewModel: TerminalViewModel = hiltViewModel(),
 ) {
     when (ubuntuSetupState) {
@@ -80,6 +81,7 @@ fun TerminalScreen(
             ReadyScreen(
                 terminalManager = terminalManager,
                 terminalViewModel = terminalViewModel,
+                onOpenSettings = onOpenSettings,
             )
         }
         is UbuntuSetupState.Failed -> {
@@ -96,6 +98,7 @@ fun TerminalScreen(
 private fun ReadyScreen(
     terminalManager: TerminalManager,
     terminalViewModel: TerminalViewModel,
+    onOpenSettings: () -> Unit,
     sessionSwitcherViewModel: SessionSwitcherViewModel = hiltViewModel(),
     blockEngineViewModel: BlockEngineViewModel = hiltViewModel(),
 ) {
@@ -161,6 +164,7 @@ private fun ReadyScreen(
                     terminalManager.currentSession?.finishIfRunning()
                 },
                 onOpenSwitcher = { switcherOpen = true },
+                onOpenSettings = onOpenSettings,
             )
         }
         // Box no longer owns the pinch gesture — Termux's ScaleGestureDetector

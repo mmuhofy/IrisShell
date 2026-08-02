@@ -62,6 +62,7 @@ fun SessionSwitcherTopBar(
     onToggleFullscreen: () -> Unit,
     onClose: () -> Unit,
     onOpenSwitcher: () -> Unit,
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val activeName by viewModel.activeName.collectAsStateWithLifecycle()
@@ -124,6 +125,7 @@ fun SessionSwitcherTopBar(
                 onRefresh = onRefresh,
                 onToggleFullscreen = onToggleFullscreen,
                 onClose = onClose,
+                onOpenSettings = onOpenSettings,
             )
         },
     )
@@ -135,6 +137,7 @@ private fun MoreActionsMenu(
     onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onClose: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -175,6 +178,13 @@ private fun MoreActionsMenu(
                 },
             )
             HorizontalDivider(color = IrisOutline)
+            DropdownMenuItem(
+                text = { MenuLabel("Settings") },
+                onClick = {
+                    expanded = false
+                    onOpenSettings()
+                },
+            )
             DropdownMenuItem(
                 text = { MenuLabel("Close session", destructive = true) },
                 onClick = {

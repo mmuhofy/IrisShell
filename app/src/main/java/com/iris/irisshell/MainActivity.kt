@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +30,7 @@ import com.iris.irisshell.ui.setup.SetupRecoveryScreen
 import com.iris.irisshell.ui.setup.onboarding.OnboardingScreen
 import com.iris.irisshell.ui.terminal.TerminalScreen
 import com.iris.irisshell.ui.theme.IrisTheme
+import com.iris.irisshell.ui.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -101,11 +105,36 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            else -> TerminalScreen(
+            else -> TerminalNavHost(
                 terminalManager = terminalManager,
-                ubuntuSetupState = UbuntuSetupState.Ready,
                 onRetry = { triggerBootstrap.retry() },
             )
+        }
+    }
+
+    @Composable
+    private fun TerminalNavHost(
+        terminalManager: TerminalManager,
+        onRetry: () -> Unit,
+    ) {
+        val navController = rememberNavController()
+        NavHost(
+            navController = navController,
+            startDestination = "terminal",
+        ) {
+            composable("terminal") {
+                TerminalScreen(
+                    terminalManager = terminalManager,
+                    ubuntuSetupState = UbuntuSetupState.Ready,
+                    onRetry = onRetry,
+                    onOpenSettings = { navController.navigate("settings") },
+                )
+            }
+            composable("settings") {
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
         }
     }
 }
