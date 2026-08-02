@@ -47,6 +47,12 @@ interface BlockRepository {
     /** Toggle the collapsed state of a specific block. */
     fun setCollapsed(blockId: String, collapsed: Boolean)
 
+    /**
+     * Update the running block's live counters (network bytes).
+     * No-op if there is no running block or the id does not match.
+     */
+    fun updateRunningCounters(blockId: String, currentRxBytes: Long, currentTxBytes: Long)
+
     /** Drop all blocks (e.g. on session close). */
     fun clear()
 }

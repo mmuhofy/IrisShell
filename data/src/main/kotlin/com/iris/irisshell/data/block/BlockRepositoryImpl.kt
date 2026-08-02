@@ -119,6 +119,23 @@ class BlockRepositoryImpl @Inject constructor() : BlockRepository {
         _blocks.value = current.toMutableList().apply { this[idx] = updated }
     }
 
+    override fun updateRunningCounters(blockId: String, currentRxBytes: Long, currentTxBytes: Long) {
+        val current = _blocks.value
+        val idx = current.indexOfFirst { it.id == blockId }
+        if (idx < 0) return
+        val target = current[idx]
+        if (target.state !is BlockState.Running) return
+        if (target.currentRxBytes == currentRxBytes && target.currentTxBytes == currentTxBytes) return
+        val updated = target.copy(
+            currentRxBytes = currentRxBytes,
+            currentTxBytes = currentTxBytes,
+        )
+        _blocks.value = current.toMutableList().apply { this[idx] = updated }
+        if (_runningBlock.value?.id == blockId) {
+            _runningBlock.value = updated
+        }
+    }
+
     override fun clear() {
         _blocks.value = emptyList()
         _runningBlock.value = null
