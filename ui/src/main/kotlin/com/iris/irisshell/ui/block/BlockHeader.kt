@@ -59,10 +59,11 @@ fun BlockHeader(block: Block, onCopy: () -> Unit, onToggleCollapse: () -> Unit, 
 
 @Composable
 private fun ExitBadge(block: Block) {
-    val (label, color) = when (block.state) {
+    val state = block.state
+    val (label, color) = when (state) {
         BlockState.Running -> "Running" to Color(0xFF4A90E2)
-        is BlockState.Success -> "Exit ${block.state.exitCode}" to Color(0xFF27AE60)
-        is BlockState.Error -> "Exit ${block.state.exitCode}" to Color(0xFFC0392B)
+        is BlockState.Success -> "Exit ${state.exitCode}" to Color(0xFF27AE60)
+        is BlockState.Error -> "Exit ${state.exitCode}" to Color(0xFFC0392B)
         BlockState.Cancelled -> "Cancelled" to Color(0xFF666666)
         BlockState.Idle -> "Idle" to Color(0xFF666666)
     }
