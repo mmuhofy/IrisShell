@@ -2,6 +2,8 @@ package com.iris.irisshell.di
 
 import android.app.Application
 import android.content.Context
+import com.iris.irisshell.domain.block.BlockRepository
+import com.iris.irisshell.terminal.BlockEngineWire
 import com.iris.irisshell.terminal.BootstrapStatePort
 import com.iris.irisshell.terminal.ProotRunner
 import com.iris.irisshell.terminal.TerminalManager
@@ -40,11 +42,19 @@ object TerminalModule {
     @Singleton
     fun provideTerminalManager(
         application: Application,
-        ubuntuBootstrap: UbuntuBootstrap
+        ubuntuBootstrap: UbuntuBootstrap,
+        blockEngineWire: BlockEngineWire,
     ): TerminalManager = TerminalManager(
         ubuntuBootstrap = ubuntuBootstrap,
-        application = application
+        application = application,
+        blockEngineWire = blockEngineWire,
     )
+
+    @Provides
+    @Singleton
+    fun provideBlockEngineWire(
+        blockRepository: BlockRepository,
+    ): BlockEngineWire = BlockEngineWire(blockRepository)
 
     @Provides
     @Singleton

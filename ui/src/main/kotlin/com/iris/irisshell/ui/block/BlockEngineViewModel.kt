@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockRepository
 import com.iris.irisshell.domain.block.NetworkMetricsCollector
+import com.iris.irisshell.domain.terminal.SubmitBlockCommandUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,6 +33,7 @@ import javax.inject.Inject
 class BlockEngineViewModel @Inject constructor(
     private val blockRepository: BlockRepository,
     private val trafficStats: NetworkMetricsCollector,
+    private val submitCommand: SubmitBlockCommandUseCase,
 ) : ViewModel() {
 
     val blocks: StateFlow<List<Block>> = blockRepository.observe()
@@ -46,6 +48,7 @@ class BlockEngineViewModel @Inject constructor(
     private var networkJob: Job? = null
 
     init {
+        blockRepository.clear()
         startNetworkTicker()
     }
 
@@ -78,6 +81,7 @@ class BlockEngineViewModel @Inject constructor(
             startRxBytes = rx,
             startTxBytes = tx,
         )
+        viewModelScope.launch { submitCommand.submit(command) }
     }
 
     fun onCommandCompleted(exitCode: Int) {

@@ -8,6 +8,7 @@ import com.iris.irisshell.data.settings.FirstLaunchRepositoryImpl
 import com.iris.irisshell.data.settings.SettingsRepositoryImpl
 import com.iris.irisshell.data.settings.TerminalFontSizeRepositoryImpl
 import com.iris.irisshell.data.terminal.BootstrapObserver
+import com.iris.irisshell.data.terminal.SubmitBlockCommandUseCaseImpl
 import com.iris.irisshell.data.terminal.TriggerBootstrap
 import com.iris.irisshell.domain.block.BlockRepository
 import com.iris.irisshell.domain.block.NetworkMetricsCollector
@@ -17,6 +18,7 @@ import com.iris.irisshell.domain.settings.SettingsRepository
 import com.iris.irisshell.domain.terminal.ObserveBootstrapUseCase
 import com.iris.irisshell.domain.terminal.ObserveFirstLaunchUseCase
 import com.iris.irisshell.domain.terminal.SetTerminalFontSizeUseCase
+import com.iris.irisshell.domain.terminal.SubmitBlockCommandUseCase
 import com.iris.irisshell.domain.terminal.TriggerBootstrapUseCase
 import dagger.Binds
 import dagger.Module
@@ -88,4 +90,10 @@ abstract class BindingsModule {
     abstract fun bindNetworkMetrics(
         impl: TrafficStatsCollector,
     ): NetworkMetricsCollector
+
+    @Binds
+    @Singleton
+    abstract fun bindSubmitBlockCommand(
+        impl: SubmitBlockCommandUseCaseImpl,
+    ): SubmitBlockCommandUseCase
 }

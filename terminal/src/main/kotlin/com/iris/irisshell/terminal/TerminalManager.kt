@@ -15,7 +15,8 @@ import java.util.concurrent.TimeUnit
 
 class TerminalManager(
     private val ubuntuBootstrap: UbuntuBootstrap,
-    application: Application
+    application: Application,
+    private val blockEngineWire: BlockEngineWire? = null,
 ) {
     private val _sessions: MutableList<TerminalSession> = mutableListOf()
     private val _tabNames: MutableList<String> = mutableListOf()
@@ -66,6 +67,7 @@ class TerminalManager(
         terminalViewRef = view
         sessionClient.onTextChanged = { session ->
             view.onScreenUpdated()
+            blockEngineWire?.onSessionTextChanged(session)
         }
         sessionClient.clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         sessionClient.terminalView = view
