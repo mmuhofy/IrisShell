@@ -1,6 +1,5 @@
 package com.iris.irisshell.ui.block
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.iris.irisshell.domain.block.Block
@@ -75,7 +74,6 @@ class BlockEngineViewModel @Inject constructor(
     }
 
     fun onCommandSubmitted(prompt: String, command: String) {
-        Log.d("BlockEngine", "onCommandSubmitted prompt=$prompt cmd=$command")
         val (rx, tx) = trafficStats.snapshotTotals()
         blockRepository.onCommandSubmitted(
             prompt = prompt,
@@ -83,12 +81,7 @@ class BlockEngineViewModel @Inject constructor(
             startRxBytes = rx,
             startTxBytes = tx,
         )
-        Log.d("BlockEngine", "after onCommandSubmitted, blocks.size=${blockRepository.observe().value.size}")
-        viewModelScope.launch {
-            Log.d("BlockEngine", "submitting to PTY: $command")
-            submitCommand.submit(command)
-            Log.d("BlockEngine", "submit returned")
-        }
+        viewModelScope.launch { submitCommand.submit(command) }
     }
 
     fun onCommandCompleted(exitCode: Int) {
