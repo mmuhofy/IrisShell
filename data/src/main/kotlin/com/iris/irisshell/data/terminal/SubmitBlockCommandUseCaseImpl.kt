@@ -1,5 +1,6 @@
 package com.iris.irisshell.data.terminal
 
+import android.util.Log
 import com.iris.irisshell.domain.terminal.SubmitBlockCommandUseCase
 import com.iris.irisshell.terminal.TerminalManager
 import javax.inject.Inject
@@ -23,9 +24,23 @@ class SubmitBlockCommandUseCaseImpl @Inject constructor(
 ) : SubmitBlockCommandUseCase {
 
     override suspend fun submit(command: String) {
-        if (command.isBlank()) return
-        val session = terminalManager.currentSession ?: return
-        val emulator = session.emulator ?: return
+        Log.d("SubmitBlockCommand", "submit called: '$command'")
+        if (command.isBlank()) {
+            Log.d("SubmitBlockCommand", "blank, skipping")
+            return
+        }
+        val session = terminalManager.currentSession
+        if (session == null) {
+            Log.w("SubmitBlockCommand", "no current session")
+            return
+        }
+        val emulator = session.emulator
+        if (emulator == null) {
+            Log.w("SubmitBlockCommand", "session has no emulator")
+            return
+        }
+        Log.d("SubmitBlockCommand", "pasting ${command.length + 1} bytes to PTY")
         emulator.paste(command + "\r")
+        Log.d("SubmitBlockCommand", "paste returned")
     }
 }

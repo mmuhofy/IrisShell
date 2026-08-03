@@ -1,5 +1,6 @@
 package com.iris.irisshell.terminal
 
+import android.util.Log
 import com.iris.irisshell.domain.block.BlockRepository
 import com.iris.irisshell.domain.block.CommandBoundary
 import com.iris.irisshell.domain.block.CommandBoundaryDetector
@@ -39,6 +40,7 @@ class BlockEngineWire(
 
     /** Called by [TerminalManager] whenever the active session's text changes. */
     fun onSessionTextChanged(session: TerminalSession) {
+        Log.d("BlockEngineWire", "onSessionTextChanged called, session=$session")
         val emulator: TerminalEmulator = session.emulator ?: return
         val raw = emulator.getScreen().getTranscriptTextWithoutJoinedLines()
         val currentTail = AnsiStripper.strip(raw).lines().takeLast(tailSize)
@@ -56,6 +58,7 @@ class BlockEngineWire(
         // Compute new lines beyond the previous tail.
         val newLines = computeNewLines(previousTail, currentTail)
         if (newLines.isNotEmpty()) {
+            Log.d("BlockEngineWire", "forwarding ${newLines.size} new lines")
             blockRepository.onOutputChunk(newLines.joinToString(separator = "\n"))
         }
 
