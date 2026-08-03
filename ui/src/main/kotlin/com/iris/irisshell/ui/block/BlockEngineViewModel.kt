@@ -48,7 +48,6 @@ class BlockEngineViewModel @Inject constructor(
     private var networkJob: Job? = null
 
     init {
-        blockRepository.clear()
         startNetworkTicker()
     }
 

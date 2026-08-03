@@ -176,6 +176,9 @@ class TerminalManager(
     fun switchTab(index: Int) {
         if (index < 0 || index >= _sessions.size || index == _activeTabIndex.value) return
         _activeTabIndex.value = index
+        // Block engine state is per-session; reset so the next snapshot
+        // is anchored against the new buffer.
+        blockEngineWire?.reset()
         currentSession?.let { terminalViewRef?.attachSession(it) }
     }
 
