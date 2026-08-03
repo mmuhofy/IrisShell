@@ -37,10 +37,10 @@ class BlockEngineViewModel @Inject constructor(
 ) : ViewModel() {
 
     val blocks: StateFlow<List<Block>> = blockRepository.observe()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val runningBlock: StateFlow<Block?> = blockRepository.observeRunningBlock()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _networkEnabled = MutableStateFlow(false)
     val networkEnabled: StateFlow<Boolean> = _networkEnabled.asStateFlow()
