@@ -35,10 +35,32 @@ class CommandBoundaryDetectorTest {
     }
 
     @Test
-    fun `oh-my-zsh arrow prompt is detected`() {
+    fun `oh-my-zsh arrow prompt with status is detected`() {
         val lines = listOf("➜  ~/IrisShell git:(main) ✗")
         val result = detector.detectPromptReady(lines)
         assertTrue(result is CommandBoundary.PromptReady)
+    }
+
+    @Test
+    fun `two-line prompt is detected`() {
+        val lines = listOf(
+            "total 48",
+            "drwxr-xr-x 5 root root 3456 Jul 28 12:09 .",
+            "muhofy@iris-shell:~/IrisShell",
+            "$ ",
+        )
+        val result = detector.detectPromptReady(lines)
+        assertTrue(result is CommandBoundary.PromptReady)
+        assertEquals(3, (result as CommandBoundary.PromptReady).atLine)
+    }
+
+    @Test
+    fun `bare dollar marker is detected`() {
+        val lines = listOf(
+            "Permission denied",
+            "$ ",
+        )
+        assertTrue(detector.detectPromptReady(lines) is CommandBoundary.PromptReady)
     }
 
     @Test
@@ -52,7 +74,7 @@ class CommandBoundaryDetectorTest {
     }
 
     @Test
-    fun `line ending with dollar in middle of text is not prompt`() {
+    fun `line with dollar in middle is not prompt`() {
         val lines = listOf("Total: \$5")
         assertEquals(CommandBoundary.None, detector.detectPromptReady(lines))
     }
