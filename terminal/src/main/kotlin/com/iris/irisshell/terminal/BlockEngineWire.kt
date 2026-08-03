@@ -14,18 +14,20 @@ import com.termux.terminal.TerminalSession
  *
  *   1. Pull the last N transcript lines from the emulator's screen buffer.
  *   2. Strip ANSI sequences to get plain text.
- *   3. **Anchor-diff** against the previous snapshot to extract only new
- *      lines (handles buffer scroll without losing the prefix).
+ *   3. **Prefix-anchored diff** against the previous snapshot to extract
+ *      only new lines (handles buffer scroll without losing alignment).
  *   4. If a prompt boundary is detected at the end of the new chunk,
- *      close the running block as `Success(0)` (exit-code injection is
- *      a v2 feature — see `docs/block-engine/PLAN.md` §7).
+ *      close the running block as `Success(0)`.
  *   5. Otherwise forward the new chunk to [BlockRepository.onOutputChunk]
  *      to append it to the currently running block.
  *
- * Diff strategy: pure suffix matching fails when the buffer scrolls
- * (the previous tail's oldest lines drop off). Instead, the previous
- * tail is searched backwards for the **most recent line that still
- * exists** in the current tail; everything after that anchor is new.
+ * Diff strategy: a pure suffix match fails when the terminal scrolls
+ * (oldest lines fall off the `takeLast` window). A pure line-hash match
+ * misfires on duplicate lines (very common — many CLIs repeat `""` or
+ * the prompt itself across rows). The fix: ignore blank lines for
+ * anchoring, then find the **most recent** line from the previous tail
+ * that still appears in the current tail. Everything after it (in the
+ * original full tail, blanks included) is new.
  *
  * UNTESTED — verify before use.
  */
@@ -36,7 +38,6 @@ class BlockEngineWire(
     private val boundaryDetector = CommandBoundaryDetector()
     private val tailSize: Int = 64
     private var previousTail: List<String> = emptyList()
-    private var previousTranscriptLength: Int = 0
     private var lastSeenPrompt: Boolean = false
 
     /** Called by [TerminalManager] whenever the active session's text changes. */
@@ -48,8 +49,7 @@ class BlockEngineWire(
 
         val boundary = boundaryDetector.detectPromptReady(currentTail)
 
-        if (previousTranscriptLength == 0) {
-            previousTranscriptLength = raw.length
+        if (previousTail.isEmpty()) {
             previousTail = currentTail
             lastSeenPrompt = boundary is CommandBoundary.PromptReady
             return
@@ -71,26 +71,35 @@ class BlockEngineWire(
         }
 
         previousTail = currentTail
-        previousTranscriptLength = raw.length
     }
 
     /**
-     * Anchor-based diff: find the most recent line from [previous] that
-     * still appears in [current], then return everything after it.
+     * Anchor-based diff with blank-line skipping.
      *
-     * Returns an empty list if no anchor exists (nothing changed in a
-     * way we can match — defensive fallback).
+     * Returns the slice of [current] that comes strictly after the last
+     * matching non-blank line. Returns an empty list when no anchor is
+     * found (defensive fallback — never forward everything).
      */
     private fun computeNewLines(previous: List<String>, current: List<String>): List<String> {
-        if (previous.isEmpty()) return emptyList()
-        val currentIndexByLine = HashMap<String, Int>(current.size * 2)
-        current.forEachIndexed { idx, line -> currentIndexByLine.putIfAbsent(line, idx) }
+        val prevNonBlank = previous.withIndex().filter { it.value.isNotBlank() }
+        if (prevNonBlank.isEmpty()) return emptyList()
 
-        for (i in previous.indices.reversed()) {
-            val anchorIndex = currentIndexByLine[previous[i]]
-            if (anchorIndex != null) {
-                return current.drop(anchorIndex + 1)
+        val currNonBlank = current.withIndex().filter { it.value.isNotBlank() }
+        if (currNonBlank.isEmpty()) return emptyList()
+
+        // Walk [previous]'s non-blank entries from the end; for each,
+        // find its last occurrence in [current]'s non-blank entries. The
+        // first hit is our scroll anchor.
+        for ((prevIdx, line) in prevNonBlank.reversed()) {
+            val matchIdx = currNonBlank.indexOfLast { it.value == line }
+            if (matchIdx >= 0) {
+                val currOriginalIdx = currNonBlank[matchIdx].index
+                // Map back to the original tail (which includes blanks)
+                // to preserve visual layout.
+                return current.drop(currOriginalIdx + 1).filter { it.isNotBlank() }
             }
+            // Unused: suppress compiler warning
+            @Suppress("UNUSED_EXPRESSION") prevIdx
         }
 
         return emptyList()
@@ -99,7 +108,6 @@ class BlockEngineWire(
     /** Reset internal state — call when the active session changes. */
     fun reset() {
         previousTail = emptyList()
-        previousTranscriptLength = 0
         lastSeenPrompt = false
         blockRepository.clear()
     }
