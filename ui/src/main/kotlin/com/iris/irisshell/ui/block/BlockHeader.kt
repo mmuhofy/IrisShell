@@ -1,5 +1,10 @@
 package com.iris.irisshell.ui.block
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +23,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -60,14 +66,49 @@ fun BlockHeader(block: Block, onCopy: () -> Unit, onToggleCollapse: () -> Unit, 
 @Composable
 private fun ExitBadge(block: Block) {
     val state = block.state
+    val isRunning = state is BlockState.Running
     val (label, color) = when (state) {
         BlockState.Running -> "Running" to Color(0xFF4A90E2)
         is BlockState.Success -> "Exit ${state.exitCode}" to Color(0xFF27AE60)
         is BlockState.Error -> "Exit ${state.exitCode}" to Color(0xFFC0392B)
-        BlockState.Cancelled -> "Cancelled" to Color(0xFF666666)
+        BlockState.Cancelled -> "Cancelled" to Color(0xFF888888)
         BlockState.Idle -> "Idle" to Color(0xFF666666)
     }
-    Pill(text = label, color = color)
+    if (isRunning) {
+        val transition = rememberInfiniteTransition(label = "running-spinner")
+        val rotation by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1200),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "spinner-rotation",
+        )
+        Row(
+            modifier = Modifier
+                .background(color.copy(alpha = 0.16f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .rotate(rotation)
+                    .background(color, CircleShape),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = label,
+                color = color,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
+    } else {
+        Pill(text = label, color = color)
+    }
 }
 
 @Composable
