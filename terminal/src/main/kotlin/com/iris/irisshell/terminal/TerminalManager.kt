@@ -61,20 +61,22 @@ class TerminalManager(
 
     init {
         sessionClient.onSessionFinished = { session -> onSessionFinished(session) }
+        // Block engine wire stays attached across Classic ↔ Block Mode
+        // switches — the wire drives the block repository regardless of
+        // which render layer is on screen.
+        sessionClient.onTextChanged = { session ->
+            terminalViewRef?.onScreenUpdated()
+            blockEngineWire?.onSessionTextChanged(session)
+        }
     }
 
     fun registerTerminalView(view: TerminalView, context: Context) {
         terminalViewRef = view
-        sessionClient.onTextChanged = { session ->
-            view.onScreenUpdated()
-            blockEngineWire?.onSessionTextChanged(session)
-        }
         sessionClient.clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         sessionClient.terminalView = view
     }
 
     fun unregisterTerminalView() {
-        sessionClient.onTextChanged = null
         terminalViewRef = null
     }
 
