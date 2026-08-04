@@ -138,8 +138,7 @@ private fun CopyButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(28.dp)
-            .clickable(onClick = onClick)
-            .border(1.dp, IrisBorderSubtle, CircleShape),
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
