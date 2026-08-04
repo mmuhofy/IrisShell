@@ -104,7 +104,7 @@ class BlockEngineWire(
             ByteStreamEvent.TuiEntered -> {
                 // TUI alternates screen — discard buffered output so we
                 // don't flood the block with vim's screen contents.
-                blockRepository.onCommandCancelled(reason = "TUI entered")
+                blockRepository.onCommandCancelled()
             }
             ByteStreamEvent.TuiExited -> {
                 // Next prompt will close the block properly.
