@@ -14,21 +14,23 @@ import com.termux.terminal.TerminalSession
  *
  *   1. Pull the full transcript from the emulator's screen buffer.
  *   2. Strip ANSI sequences to get plain text.
- *   3. **Substring diff** against the previous transcript to extract
- *      only the appended text (handles echo, scroll, prompt changes).
- *   4. Strip the echoed command line (the shell echoes typed chars as
- *      they arrive — they belong on the input row, not in the output).
- *   5. If a prompt boundary is detected at the end of the appended text,
- *      close the running block as `Success(0)`.
+ *   3. **Substring diff with rolling anchor** — find the longest tail
+ *      of [previousTranscript] that exists as a substring in
+ *      [current]. Everything after that match point in [current] is new.
+ *   4. Strip the echoed command line.
+ *   5. If a prompt boundary is detected at the end of the appended
+ *      slice, close the running block as `Success(0)`.
  *   6. Otherwise forward the new lines to [BlockRepository.onOutputChunk].
  *
- * Diff strategy: line-based anchor diff fails when the echoed command
- * line concatenates with the previous prompt (e.g.
- * `muhofy@iris-shell:~$ ls`) because the anchor line is no longer the
- * prefix of any single current line. Substring-based diff handles this
- * correctly — find the longest common prefix between the previous
- * transcript's tail and the current transcript, then forward what
- * comes after.
+ * Why rolling anchor and not simple longest-common-prefix:
+ *
+ * The terminal buffer scrolls when output exceeds the screen height.
+ * The previous transcript's prefix is no longer present in the new
+ * transcript, so a pure prefix diff returns zero overlap and every
+ * tick silently drops all output. The rolling anchor searches the
+ * previous transcript for **any** substring that still exists in the
+ * current one — preferring the longest tail match so we anchor as
+ * close to the cursor as possible.
  *
  * UNTESTED — verify before use.
  */
@@ -37,8 +39,7 @@ class BlockEngineWire(
 ) {
 
     private val boundaryDetector = CommandBoundaryDetector()
-    private val previousTranscript: StringBuilder = StringBuilder()
-    private var initialized: Boolean = false
+    private var previousTranscript: String = ""
     private var lastSeenPrompt: Boolean = false
 
     /** Called by [TerminalManager] whenever the active session's text changes. */
@@ -48,73 +49,61 @@ class BlockEngineWire(
         val current = AnsiStripper.strip(raw)
         if (current.isEmpty()) return
 
-        if (!initialized) {
-            previousTranscript.setLength(0)
-            previousTranscript.append(current)
-            initialized = true
+        if (previousTranscript.isEmpty()) {
+            previousTranscript = current
             val firstBoundary = boundaryDetector.detectPromptReady(current.lines())
             lastSeenPrompt = firstBoundary is CommandBoundary.PromptReady
             return
         }
 
-        // Longest common prefix between previous transcript (tail) and
-        // current transcript. We anchor on the previous transcript's
-        // tail of up to ANCHOR_WINDOW bytes (4 KB) — enough to span a
-        // typical prompt + a line or two of context, while keeping the
-        // comparison bounded.
-        val anchorWindow = previousTranscript.length.coerceAtMost(ANCHOR_WINDOW_BYTES)
-        val anchor = previousTranscript.substring(previousTranscript.length - anchorWindow)
-        val overlapLen = commonPrefixLength(anchor, current)
-        if (overlapLen <= 0) {
-            // No overlap — buffer fully refreshed (e.g. terminal reset).
-            // Drop previous state and reseed.
-            previousTranscript.setLength(0)
-            previousTranscript.append(current)
+        // Anchor search: find the longest tail of [previousTranscript]
+        // that still appears as a substring of [current]. We constrain
+        // the search to tails of length >= MIN_ANCHOR bytes to avoid
+        // spurious matches on tiny fragments.
+        val anchor = findRollingAnchor(previousTranscript, current)
+        if (anchor == null || anchor.length < MIN_ANCHOR_BYTES) {
+            // No usable anchor — buffer scrolled past everything we
+            // remembered. Re-seed and drop this tick's output (we have
+            // no way to know which lines are new).
+            previousTranscript = current
             return
         }
 
-        val appended = current.substring(overlapLen)
-        // Append the new tail to the running transcript.
-        previousTranscript.append(appended)
-
-        // Trim transcript to a reasonable size so it does not grow
-        // unbounded across long sessions.
-        if (previousTranscript.length > MAX_TRANSCRIPT_BYTES) {
-            val drop = previousTranscript.length - MAX_TRANSCRIPT_BYTES
-            previousTranscript.delete(0, drop)
+        val anchorIdxInCurrent = current.lastIndexOf(anchor)
+        if (anchorIdxInCurrent < 0) {
+            // Should not happen given the find, but be defensive.
+            previousTranscript = current
+            return
         }
+        val appended = current.substring(anchorIdxInCurrent + anchor.length)
+        previousTranscript = current
 
         if (appended.isEmpty()) return
 
         val appendedLines = appended.split('\n')
-        // Echoed command handling: if the first appended line ends with
-        // the running block's command (the user just typed it), drop it
-        // — it belongs on the input row, not in the output. The block
-        // repository knows the current command; we look it up.
+
+        // Echo handling — the shell echoes the user's typed command at
+        // the start of its output. Strip it from the slice before
+        // pushing to the repository.
         val echoed = blockRepository.currentCommand()
-        val outputLines = appendedLines
-            .let { lines ->
-                if (echoed != null && lines.isNotEmpty()) {
-                    val first = lines.first().trimEnd()
-                    if (first.endsWith(echoed)) lines.drop(1) else lines
-                } else {
-                    lines
-                }
-            }
+        val linesAfterEcho = if (echoed != null && appendedLines.isNotEmpty()) {
+            val first = appendedLines.first().trimEnd()
+            if (first.endsWith(echoed)) appendedLines.drop(1) else appendedLines
+        } else {
+            appendedLines
+        }
+
+        val trimmed = linesAfterEcho
             .map { it.trimEnd() }
-            // Drop a trailing empty line caused by the final \n.
             .let { if (it.isNotEmpty() && it.last().isEmpty()) it.dropLast(1) else it }
             .filter { it.isNotBlank() }
 
         val boundary = boundaryDetector.detectPromptReady(
-            // For prompt detection, look at the *appended* lines only —
-            // not the full transcript — so we only react to prompts
-            // that appeared since the last tick.
-            appendedLines.map { it.trimEnd() },
+            linesAfterEcho.map { it.trimEnd() },
         )
 
-        if (outputLines.isNotEmpty() && boundary !is CommandBoundary.PromptReady) {
-            blockRepository.onOutputChunk(outputLines.joinToString(separator = "\n"))
+        if (trimmed.isNotEmpty() && boundary !is CommandBoundary.PromptReady) {
+            blockRepository.onOutputChunk(trimmed.joinToString(separator = "\n"))
         }
 
         when (boundary) {
@@ -128,23 +117,40 @@ class BlockEngineWire(
         }
     }
 
+    /**
+     * Returns the longest tail of [previous] that appears as a substring
+     * of [current]. Constrains the search to tails whose length is in
+     * [[MIN_ANCHOR_BYTES], [MAX_ANCHOR_BYTES]] — too small matches
+     * cause false positives; too large matches become expensive and
+     * unlikely to survive a scroll.
+     *
+     * Uses [String.lastIndexOf] which returns the rightmost match —
+     * i.e. the anchor closest to the cursor, which is what we want.
+     *
+     * Returns null if no acceptable match is found.
+     */
+    private fun findRollingAnchor(previous: String, current: String): String? {
+        val maxLen = minOf(previous.length, MAX_ANCHOR_BYTES)
+        val minLen = minOf(maxLen, MIN_ANCHOR_BYTES)
+        var len = maxLen
+        while (len >= minLen) {
+            val tail = previous.substring(previous.length - len)
+            if (current.lastIndexOf(tail) >= 0) return tail
+            len--
+            if (len < minLen) break
+        }
+        return null
+    }
+
     /** Reset internal state — call when the active session changes. */
     fun reset() {
-        previousTranscript.setLength(0)
-        initialized = false
+        previousTranscript = ""
         lastSeenPrompt = false
         blockRepository.clear()
     }
 
-    private fun commonPrefixLength(a: String, b: String): Int {
-        val max = minOf(a.length, b.length)
-        var i = 0
-        while (i < max && a[i] == b[i]) i++
-        return i
-    }
-
     private companion object {
-        const val ANCHOR_WINDOW_BYTES = 4096
-        const val MAX_TRANSCRIPT_BYTES = 32 * 1024
+        const val MIN_ANCHOR_BYTES = 16
+        const val MAX_ANCHOR_BYTES = 8192
     }
 }
