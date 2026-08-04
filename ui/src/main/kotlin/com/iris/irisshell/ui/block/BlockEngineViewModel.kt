@@ -70,6 +70,11 @@ class BlockEngineViewModel @Inject constructor(
             currentRxBytes = rx,
             currentTxBytes = tx,
         )
+        // Force a re-emit of the running block so the elapsed-time label
+        // updates every 500ms — updateRunningCounters is a no-op when
+        // network totals do not change, which would otherwise leave the
+        // duration frozen on the UI.
+        blockRepository.bumpRunningBlock(running.id)
     }
 
     fun onCommandSubmitted(prompt: String, command: String) {

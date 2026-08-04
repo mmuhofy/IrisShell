@@ -136,6 +136,20 @@ class BlockRepositoryImpl @Inject constructor() : BlockRepository {
         }
     }
 
+    override fun currentCommand(): String? = _runningBlock.value?.command
+
+    override fun bumpRunningBlock(blockId: String) {
+        val current = _blocks.value
+        val idx = current.indexOfFirst { it.id == blockId }
+        if (idx < 0) return
+        val target = current[idx]
+        if (target.state !is BlockState.Running) return
+        _blocks.value = current.toMutableList().apply { this[idx] = target.copy() }
+        if (_runningBlock.value?.id == blockId) {
+            _runningBlock.value = _runningBlock.value?.copy()
+        }
+    }
+
     override fun clear() {
         _blocks.value = emptyList()
         _runningBlock.value = null

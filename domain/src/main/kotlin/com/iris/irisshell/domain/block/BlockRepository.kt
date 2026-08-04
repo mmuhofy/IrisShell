@@ -53,6 +53,20 @@ interface BlockRepository {
      */
     fun updateRunningCounters(blockId: String, currentRxBytes: Long, currentTxBytes: Long)
 
+    /**
+     * Currently-running block's command string, or null if no block is
+     * running. Used by [BlockEngineWire] to identify the echoed line
+     * that the shell prints as the user types and strip it from output.
+     */
+    fun currentCommand(): String?
+
+    /**
+     * Re-emit the running block unchanged. Used by the ViewModel's
+     * 500ms ticker to drive live `elapsed time` updates on the UI even
+     * when network totals do not change.
+     */
+    fun bumpRunningBlock(blockId: String)
+
     /** Drop all blocks (e.g. on session close). */
     fun clear()
 }

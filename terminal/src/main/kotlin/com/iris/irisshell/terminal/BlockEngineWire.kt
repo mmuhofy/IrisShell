@@ -12,22 +12,23 @@ import com.termux.terminal.TerminalSession
  * Triggered from [TerminalManager] every time the session's text changes
  * (`onTextChanged`). On each tick:
  *
- *   1. Pull the last N transcript lines from the emulator's screen buffer.
+ *   1. Pull the full transcript from the emulator's screen buffer.
  *   2. Strip ANSI sequences to get plain text.
- *   3. **Prefix-anchored diff** against the previous snapshot to extract
- *      only new lines (handles buffer scroll without losing alignment).
- *   4. If a prompt boundary is detected at the end of the new chunk,
+ *   3. **Substring diff** against the previous transcript to extract
+ *      only the appended text (handles echo, scroll, prompt changes).
+ *   4. Strip the echoed command line (the shell echoes typed chars as
+ *      they arrive — they belong on the input row, not in the output).
+ *   5. If a prompt boundary is detected at the end of the appended text,
  *      close the running block as `Success(0)`.
- *   5. Otherwise forward the new chunk to [BlockRepository.onOutputChunk]
- *      to append it to the currently running block.
+ *   6. Otherwise forward the new lines to [BlockRepository.onOutputChunk].
  *
- * Diff strategy: a pure suffix match fails when the terminal scrolls
- * (oldest lines fall off the `takeLast` window). A pure line-hash match
- * misfires on duplicate lines (very common — many CLIs repeat `""` or
- * the prompt itself across rows). The fix: ignore blank lines for
- * anchoring, then find the **most recent** line from the previous tail
- * that still appears in the current tail. Everything after it (in the
- * original full tail, blanks included) is new.
+ * Diff strategy: line-based anchor diff fails when the echoed command
+ * line concatenates with the previous prompt (e.g.
+ * `muhofy@iris-shell:~$ ls`) because the anchor line is no longer the
+ * prefix of any single current line. Substring-based diff handles this
+ * correctly — find the longest common prefix between the previous
+ * transcript's tail and the current transcript, then forward what
+ * comes after.
  *
  * UNTESTED — verify before use.
  */
@@ -36,28 +37,84 @@ class BlockEngineWire(
 ) {
 
     private val boundaryDetector = CommandBoundaryDetector()
-    private val tailSize: Int = 64
-    private var previousTail: List<String> = emptyList()
+    private val previousTranscript: StringBuilder = StringBuilder()
+    private var initialized: Boolean = false
     private var lastSeenPrompt: Boolean = false
 
     /** Called by [TerminalManager] whenever the active session's text changes. */
     fun onSessionTextChanged(session: TerminalSession) {
         val emulator: TerminalEmulator = session.emulator ?: return
         val raw = emulator.getScreen().getTranscriptTextWithoutJoinedLines()
-        val currentTail = AnsiStripper.strip(raw).lines().takeLast(tailSize)
-        if (currentTail.isEmpty()) return
+        val current = AnsiStripper.strip(raw)
+        if (current.isEmpty()) return
 
-        val boundary = boundaryDetector.detectPromptReady(currentTail)
-
-        if (previousTail.isEmpty()) {
-            previousTail = currentTail
-            lastSeenPrompt = boundary is CommandBoundary.PromptReady
+        if (!initialized) {
+            previousTranscript.setLength(0)
+            previousTranscript.append(current)
+            initialized = true
+            lastSeenPrompt = boundaryDetector.detectPromptReady(current.lines())
+                is CommandBoundary.PromptReady
             return
         }
 
-        val newLines = computeNewLines(previousTail, currentTail)
-        if (newLines.isNotEmpty()) {
-            blockRepository.onOutputChunk(newLines.joinToString(separator = "\n"))
+        // Longest common prefix between previous transcript (tail) and
+        // current transcript. We anchor on the previous transcript's
+        // tail of up to ANCHOR_WINDOW bytes (4 KB) — enough to span a
+        // typical prompt + a line or two of context, while keeping the
+        // comparison bounded.
+        val anchorWindow = previousTranscript.length.coerceAtMost(ANCHOR_WINDOW_BYTES)
+        val anchor = previousTranscript.substring(previousTranscript.length - anchorWindow)
+        val overlapLen = commonPrefixLength(anchor, current)
+        if (overlapLen <= 0) {
+            // No overlap — buffer fully refreshed (e.g. terminal reset).
+            // Drop previous state and reseed.
+            previousTranscript.setLength(0)
+            previousTranscript.append(current)
+            return
+        }
+
+        val appended = current.substring(overlapLen)
+        // Append the new tail to the running transcript.
+        previousTranscript.append(appended)
+
+        // Trim transcript to a reasonable size so it does not grow
+        // unbounded across long sessions.
+        if (previousTranscript.length > MAX_TRANSCRIPT_BYTES) {
+            val drop = previousTranscript.length - MAX_TRANSCRIPT_BYTES
+            previousTranscript.delete(0, drop)
+        }
+
+        if (appended.isEmpty()) return
+
+        val appendedLines = appended.split('\n')
+        // Echoed command handling: if the first appended line ends with
+        // the running block's command (the user just typed it), drop it
+        // — it belongs on the input row, not in the output. The block
+        // repository knows the current command; we look it up.
+        val echoed = blockRepository.currentCommand()
+        val outputLines = appendedLines
+            .let { lines ->
+                if (echoed != null && lines.isNotEmpty()) {
+                    val first = lines.first().trimEnd()
+                    if (first.endsWith(echoed)) lines.drop(1) else lines
+                } else {
+                    lines
+                }
+            }
+            .map { it.trimEnd() }
+            // Drop a trailing empty line caused by the final \n.
+            .let { if (it.isNotEmpty() && it.last().isEmpty()) it.dropLast(1) else it }
+            .filter { it.isNotBlank() }
+
+        val boundary = boundaryDetector.detectPromptReady(
+            // For prompt detection, look at the *appended* lines only —
+            // not the full transcript — so we only react to prompts
+            // that appeared since the last tick.
+            appendedLines.map { it.trimEnd() },
+        )
+
+        if (outputLines.isNotEmpty() && boundary !is CommandBoundary.PromptReady) {
+            blockRepository.onOutputChunk(outputLines.joinToString(separator = "\n"))
         }
 
         when (boundary) {
@@ -69,46 +126,25 @@ class BlockEngineWire(
             }
             else -> lastSeenPrompt = false
         }
-
-        previousTail = currentTail
-    }
-
-    /**
-     * Anchor-based diff with blank-line skipping.
-     *
-     * Returns the slice of [current] that comes strictly after the last
-     * matching non-blank line. Returns an empty list when no anchor is
-     * found (defensive fallback — never forward everything).
-     */
-    private fun computeNewLines(previous: List<String>, current: List<String>): List<String> {
-        val prevNonBlank = previous.withIndex().filter { it.value.isNotBlank() }
-        if (prevNonBlank.isEmpty()) return emptyList()
-
-        val currNonBlank = current.withIndex().filter { it.value.isNotBlank() }
-        if (currNonBlank.isEmpty()) return emptyList()
-
-        // Walk [previous]'s non-blank entries from the end; for each,
-        // find its last occurrence in [current]'s non-blank entries. The
-        // first hit is our scroll anchor.
-        for ((prevIdx, line) in prevNonBlank.reversed()) {
-            val matchIdx = currNonBlank.indexOfLast { it.value == line }
-            if (matchIdx >= 0) {
-                val currOriginalIdx = currNonBlank[matchIdx].index
-                // Map back to the original tail (which includes blanks)
-                // to preserve visual layout.
-                return current.drop(currOriginalIdx + 1).filter { it.isNotBlank() }
-            }
-            // Unused: suppress compiler warning
-            @Suppress("UNUSED_EXPRESSION") prevIdx
-        }
-
-        return emptyList()
     }
 
     /** Reset internal state — call when the active session changes. */
     fun reset() {
-        previousTail = emptyList()
+        previousTranscript.setLength(0)
+        initialized = false
         lastSeenPrompt = false
         blockRepository.clear()
+    }
+
+    private fun commonPrefixLength(a: String, b: String): Int {
+        val max = minOf(a.length, b.length)
+        var i = 0
+        while (i < max && a[i] == b[i]) i++
+        return i
+    }
+
+    private companion object {
+        const val ANCHOR_WINDOW_BYTES = 4096
+        const val MAX_TRANSCRIPT_BYTES = 32 * 1024
     }
 }
