@@ -52,8 +52,8 @@ class BlockEngineWire(
             previousTranscript.setLength(0)
             previousTranscript.append(current)
             initialized = true
-            lastSeenPrompt = boundaryDetector.detectPromptReady(current.lines())
-                is CommandBoundary.PromptReady
+            val firstBoundary = boundaryDetector.detectPromptReady(current.lines())
+            lastSeenPrompt = firstBoundary is CommandBoundary.PromptReady
             return
         }
 
