@@ -351,6 +351,86 @@ body {
 .hud-cmd { color: var(--text); margin-left: 6px; }
 .hud-output { color: var(--text-secondary); }
 .hud-output div { line-height: 1.7; }
+
+/* ---------- Warp Sade (Presets 4-6) ---------- */
+.card-warp {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--surface);
+  margin-bottom: 4px;
+  padding: 12px 12px 12px 16px;
+  position: relative;
+  border-radius: 4px;
+}
+.card-warp::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 1px;
+  background: var(--outline);
+}
+.card-warp-success::before { background: var(--success); }
+.card-warp-error::before   { background: var(--error); }
+.card-warp-running::before { background: var(--build); opacity: 0.6; }
+.warp-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.6;
+  transition: opacity 150ms;
+}
+.card-warp:hover .warp-meta { opacity: 1; }
+.warp-exit-success { color: var(--success); }
+.warp-exit-error   { color: var(--error); }
+.warp-exit-running { color: var(--build); }
+.warp-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: warp-spin 1.2s linear infinite;
+  margin-right: 4px;
+}
+@keyframes warp-spin { to { transform: rotate(360deg); } }
+.warp-spacer { flex: 1; }
+.warp-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+.card-warp:hover .warp-btn { opacity: 1; }
+.warp-btn:hover { color: var(--primary); }
+.warp-body {
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+.warp-line { white-space: pre-wrap; }
+.warp-input-line .warp-prompt { color: var(--primary); margin-right: 6px; }
+
+/* Warp Sade + Iris Touch — gold prompt, slight border on active block */
+.card-warp.iris-touch {
+  border: 1px solid transparent;
+}
+.card-warp.iris-touch.card-warp-active {
+  border-color: rgba(232,197,71,0.4);
+}
+.iris-touch .warp-prompt {
+  color: var(--primary);
+  font-weight: 500;
+}
+.warp-canvas {
+  padding: 24px 16px;
+  display: flex;
+  justify-content: center;
+}
 </style>
 </head>
 <body>
@@ -413,6 +493,104 @@ body {
       </div>
     </div>
   </div>
+</section>
+
+<section class="preset">
+  <div class="preset-header">
+    <div class="preset-title">Preset 4 · Warp Sade</div>
+    <div class="preset-sub">Pure terminal aesthetic — minimum chrome, subtle accent borders.</div>
+  </div>
+  <div class="canvas">
+    <div class="card-warp card-warp-success">
+      <div class="warp-meta">
+        <span class="warp-exit-success">Exit 0</span>
+        <span>340ms</span>
+        <span class="warp-spacer"></span>
+        <button class="warp-btn">⎘</button>
+        <button class="warp-btn">⌄</button>
+      </div>
+      <div class="warp-body">
+        <div class="warp-line warp-input-line"><span class="warp-prompt">$</span>ls -la</div>
+        <div class="warp-line">total 48</div>
+        <div class="warp-line">drwxr-xr-x  5 root root  3456 Jul 28  .</div>
+        <div class="warp-line">drwxr-xr-x  3 root root  3456 Jul 28  ..</div>
+        <div class="warp-line">-rw-r--r--  1 root root  1820 Jul 28  README.md</div>
+      </div>
+    </div>
+    <div class="card-warp card-warp-error">
+      <div class="warp-meta">
+        <span class="warp-exit-error">Exit 127</span>
+        <span>80ms</span>
+        <span class="warp-spacer"></span>
+        <button class="warp-btn">⎘</button>
+        <button class="warp-btn">⌄</button>
+      </div>
+      <div class="warp-body">
+        <div class="warp-line warp-input-line"><span class="warp-prompt">$</span>flibber</div>
+        <div class="warp-line">command not found: flibber</div>
+      </div>
+    </div>
+    <div class="card-warp card-warp-running">
+      <div class="warp-meta">
+        <span class="warp-exit-running"><span class="warp-dot"></span>Running</span>
+        <span>2.4s</span>
+        <span class="warp-spacer"></span>
+        <button class="warp-btn">⎘</button>
+        <button class="warp-btn">⌄</button>
+      </div>
+      <div class="warp-body">
+        <div class="warp-line warp-input-line"><span class="warp-prompt">$</span>find / -name "*.kt" | head -20</div>
+        <div class="warp-line">/home/user/IrisShell/.../BlockEngine.kt</div>
+        <div class="warp-line">/home/user/IrisShell/.../BlockHeader.kt</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="preset">
+  <div class="preset-header">
+    <div class="preset-title">Preset 5 · Warp Sade + Iris Touch</div>
+    <div class="preset-sub">Warp Sade with gold prompt and active-block highlight.</div>
+  </div>
+  <div class="canvas">
+    <div class="card-warp iris-touch card-warp-success">
+      <div class="warp-meta">
+        <span class="warp-exit-success">Exit 0</span>
+        <span>340ms</span>
+        <span class="warp-spacer"></span>
+        <button class="warp-btn">⎘</button>
+        <button class="warp-btn">⌄</button>
+      </div>
+      <div class="warp-body">
+        <div class="warp-line warp-input-line"><span class="warp-prompt">muhofy@iris-shell:~/IrisShell$</span>ls -la</div>
+        <div class="warp-line">total 48</div>
+        <div class="warp-line">drwxr-xr-x  5 root root  3456 Jul 28  .</div>
+        <div class="warp-line">-rw-r--r--  1 root root  1820 Jul 28  README.md</div>
+      </div>
+    </div>
+    <div class="card-warp iris-touch card-warp-active">
+      <div class="warp-meta">
+        <span class="warp-exit-running"><span class="warp-dot"></span>Running</span>
+        <span>2.4s</span>
+        <span class="warp-spacer"></span>
+        <button class="warp-btn">⎘</button>
+        <button class="warp-btn">⌄</button>
+      </div>
+      <div class="warp-body">
+        <div class="warp-line warp-input-line"><span class="warp-prompt">muhofy@iris-shell:~/IrisShell$</span>find / -name "*.kt" | head -20</div>
+        <div class="warp-line">/home/user/IrisShell/.../BlockEngine.kt</div>
+        <div class="warp-line">/home/user/IrisShell/.../BlockHeader.kt</div>
+        <div class="warp-line">/home/user/IrisShell/.../BlockCard.kt</div>
+      </div>
+    </div>
+  </div>
+  <div class="canvas warp-canvas">
+    <div class="input-capsule">
+      <span class="input-accent"></span>
+      <span class="input-prompt">iris ▸</span>
+      <span class="input-text">apt install neovim</span>
+      <span class="input-count">16</span>
+    </div>
   </div>
 </section>
 
