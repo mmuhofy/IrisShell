@@ -4,14 +4,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
@@ -23,7 +21,6 @@ fun BlockBody(block: Block, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         InputRow(prompt = block.prompt, command = block.command)
         if (!block.isCollapsed) {
-            HorizontalDivider(thickness = 1.dp, color = IrisBorderSubtle)
             if (block.outputLines.isNotEmpty()) {
                 OutputRow(outputLines = block.outputLines)
             } else {
@@ -40,7 +37,7 @@ private fun EmptyOutputPlaceholder(isRunning: Boolean, modifier: Modifier = Modi
     androidx.compose.foundation.layout.Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 4.dp),
     ) {
         Text(
             text = text,
@@ -55,7 +52,7 @@ private fun EmptyOutputPlaceholder(isRunning: Boolean, modifier: Modifier = Modi
 @Composable
 private fun InputRow(prompt: String, command: String) {
     Row(
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         Text(
             text = prompt,
@@ -74,14 +71,15 @@ private fun InputRow(prompt: String, command: String) {
 
 @Composable
 private fun OutputRow(outputLines: List<String>) {
-    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 0.dp, )) {
         outputLines.forEach { line ->
             Text(
                 text = line,
-                color = IrisText,
+                color = IrisTextMuted,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
             )
         }
+        androidx.compose.foundation.layout.Spacer(Modifier.padding(bottom = 10.dp))
     }
 }

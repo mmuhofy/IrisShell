@@ -97,7 +97,7 @@ fun BlockInputField(
             )
             Text(
                 text = if (focused) "iris ▸" else "iris$",
-                color = IrisPrimary,
+                color = IrisPrimary.copy(alpha = 0.85f),
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(start = 10.dp),

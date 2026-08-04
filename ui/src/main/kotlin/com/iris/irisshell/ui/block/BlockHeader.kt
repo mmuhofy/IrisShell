@@ -2,12 +2,10 @@ package com.iris.irisshell.ui.block
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -17,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandMore
@@ -33,31 +30,32 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iris.irisshell.design.system.IrisBorderSubtle
-import com.iris.irisshell.design.system.IrisPrimary
-import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockState
 import com.iris.irisshell.domain.block.NetworkDelta
 
 @Composable
-fun BlockHeader(block: Block, onCopy: () -> Unit, onToggleCollapse: () -> Unit, modifier: Modifier = Modifier) {
+fun BlockHeader(
+    block: Block,
+    onCopy: () -> Unit,
+    onToggleCollapse: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(IrisSurfaceVariant, RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ExitBadge(block)
-        Spacer(Modifier.width(8.dp))
-        DurationBadge(block)
-        Spacer(modifier = Modifier.weight(1f))
+        ExitLabel(block)
+        Spacer(Modifier.width(10.dp))
+        DurationLabel(block)
         if (block.networkDelta.hasTraffic) {
-            NetworkBadge(block.networkDelta)
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(10.dp))
+            NetworkLabel(block.networkDelta)
         }
+        Spacer(modifier = Modifier.weight(1f))
         CopyButton(onCopy)
         Spacer(Modifier.width(4.dp))
         CollapseButton(block.isCollapsed, onToggleCollapse)
@@ -65,67 +63,74 @@ fun BlockHeader(block: Block, onCopy: () -> Unit, onToggleCollapse: () -> Unit, 
 }
 
 @Composable
-private fun ExitBadge(block: Block) {
+private fun ExitLabel(block: Block) {
     val state = block.state
     val isRunning = state is BlockState.Running
     val (label, color) = when (state) {
-        BlockState.Running -> "Running" to Color(0xFF4A90E2)
-        is BlockState.Success -> "Exit ${state.exitCode}" to Color(0xFF27AE60)
-        is BlockState.Error -> "Exit ${state.exitCode}" to Color(0xFFC0392B)
-        BlockState.Cancelled -> "Cancelled" to Color(0xFF888888)
-        BlockState.Idle -> "Idle" to Color(0xFF666666)
+        BlockState.Running -> "running" to Color(0xFF4A90E2)
+        is BlockState.Success -> "exit ${state.exitCode}" to Color(0xFF27AE60)
+        is BlockState.Error -> "exit ${state.exitCode}" to Color(0xFFC0392B)
+        BlockState.Cancelled -> "cancelled" to Color(0xFF888888)
+        BlockState.Idle -> "idle" to Color(0xFF666666)
     }
-    if (isRunning) {
-        val transition = rememberInfiniteTransition(label = "running-spinner")
-        val rotation by transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 360f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1200),
-                repeatMode = RepeatMode.Restart,
-            ),
-            label = "spinner-rotation",
-        )
-        Row(
-            modifier = Modifier
-                .background(color.copy(alpha = 0.16f), RoundedCornerShape(6.dp))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .rotate(rotation)
-                    .background(color, CircleShape),
-            )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (isRunning) {
+            RunningDot(color)
             Spacer(Modifier.width(6.dp))
-            Text(
-                text = label,
-                color = color,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                fontFamily = FontFamily.Monospace,
-            )
         }
-    } else {
-        Pill(text = label, color = color)
+        Text(
+            text = label,
+            color = color,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            fontFamily = FontFamily.Monospace,
+        )
     }
 }
 
 @Composable
-private fun DurationBadge(block: Block) {
-    val text = formatDuration(block.elapsedMs(System.currentTimeMillis()))
-    Pill(text = "⏱ $text", color = Color(0xFF888888))
+private fun RunningDot(color: Color) {
+    val transition = rememberInfiniteTransition(label = "running-dot")
+    val alpha by transition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "dot-alpha",
+    )
+    Box(
+        modifier = Modifier
+            .size(6.dp)
+            .background(color.copy(alpha = alpha), CircleShape),
+    )
 }
 
 @Composable
-private fun NetworkBadge(delta: NetworkDelta) {
+private fun DurationLabel(block: Block) {
+    val text = formatDuration(block.elapsedMs(System.currentTimeMillis()))
+    Text(
+        text = text,
+        color = IrisTextSecondary,
+        fontSize = 11.sp,
+        fontFamily = FontFamily.Monospace,
+    )
+}
+
+@Composable
+private fun NetworkLabel(delta: NetworkDelta) {
     val text = buildString {
         if (delta.rxBytes > 0) append("↓ ${formatBytes(delta.rxBytes)}")
         if (delta.rxBytes > 0 && delta.txBytes > 0) append("  ")
         if (delta.txBytes > 0) append("↑ ${formatBytes(delta.txBytes)}")
     }
-    Pill(text = text, color = IrisPrimary)
+    Text(
+        text = text,
+        color = IrisTextSecondary,
+        fontSize = 11.sp,
+        fontFamily = FontFamily.Monospace,
+    )
 }
 
 @Composable
@@ -151,8 +156,7 @@ private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(28.dp)
-            .clickable(onClick = onClick)
-            .border(1.dp, IrisBorderSubtle, CircleShape),
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -162,23 +166,6 @@ private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
             modifier = Modifier
                 .size(16.dp)
                 .rotate(if (isCollapsed) -90f else 0f),
-        )
-    }
-}
-
-@Composable
-private fun Pill(text: String, color: Color) {
-    Box(
-        modifier = Modifier
-            .background(color.copy(alpha = 0.16f), RoundedCornerShape(6.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-    ) {
-        Text(
-            text = text,
-            color = color,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = FontFamily.Monospace,
         )
     }
 }

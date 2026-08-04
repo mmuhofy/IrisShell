@@ -50,8 +50,10 @@ fun BlockTerminalView(
             state = listState,
         ) {
             items(list, key = { it.id }) { block ->
+                val isActive = block.id == list.lastOrNull()?.id
                 BlockCard(
                     block = block,
+                    isActive = isActive,
                     onCopy = {
                         val text = buildString {
                             append(block.prompt)
