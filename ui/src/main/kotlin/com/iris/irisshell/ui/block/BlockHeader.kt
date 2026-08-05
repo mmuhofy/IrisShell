@@ -45,19 +45,19 @@ fun BlockHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ExitLabel(block)
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(6.dp))
         DurationLabel(block)
         if (block.networkDelta.hasTraffic) {
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(6.dp))
             NetworkLabel(block.networkDelta)
         }
         Spacer(modifier = Modifier.weight(1f))
         CopyButton(onCopy)
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(2.dp))
         CollapseButton(block.isCollapsed, onToggleCollapse)
     }
 }
@@ -137,15 +137,15 @@ private fun NetworkLabel(delta: NetworkDelta) {
 private fun CopyButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(28.dp)
+            .size(24.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = Icons.Filled.ContentCopy,
             contentDescription = "Copy",
-            tint = IrisTextSecondary,
-            modifier = Modifier.size(14.dp),
+            tint = IrisTextSecondary.copy(alpha = 0.6f),
+            modifier = Modifier.size(12.dp),
         )
     }
 }
@@ -154,16 +154,16 @@ private fun CopyButton(onClick: () -> Unit) {
 private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(28.dp)
+            .size(24.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = Icons.Filled.ExpandMore,
             contentDescription = if (isCollapsed) "Expand" else "Collapse",
-            tint = IrisTextSecondary,
+            tint = IrisTextSecondary.copy(alpha = 0.6f),
             modifier = Modifier
-                .size(16.dp)
+                .size(14.dp)
                 .rotate(if (isCollapsed) -90f else 0f),
         )
     }

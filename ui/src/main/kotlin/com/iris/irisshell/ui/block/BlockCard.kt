@@ -1,18 +1,16 @@
 package com.iris.irisshell.ui.block
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.iris.irisshell.design.system.IrisBuild
 import com.iris.irisshell.design.system.IrisError
@@ -31,38 +29,28 @@ fun BlockCard(
     onToggleCollapse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accentColor: Color = when (val state = block.state) {
+    val accentColor = when (val state = block.state) {
         is BlockState.Success -> if (isActive) IrisPrimary else IrisSuccess
         is BlockState.Error -> if (isActive) IrisPrimary else IrisError
         BlockState.Running -> IrisBuild
         else -> IrisOutline
     }
-    val shape = RoundedCornerShape(8.dp)
-    val borderColor = if (isActive) accentColor.copy(alpha = 0.4f) else IrisOutline
-    val shadowModifier = if (isActive) {
-        Modifier.shadow(
-            elevation = 4.dp,
-            shape = shape,
-            ambientColor = IrisPrimary.copy(alpha = 0.15f),
-            spotColor = IrisPrimary.copy(alpha = 0.10f),
-        )
-    } else Modifier
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(IrisSurface, shape)
-            .border(1.dp, borderColor, shape)
-            .then(shadowModifier),
+            .padding(vertical = 4.dp)
+            .background(IrisSurface, RoundedCornerShape(4.dp))
+            .padding(start = 14.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(
                 modifier = Modifier
-                    .width(2.dp)
+                    .width(1.dp)
                     .fillMaxHeight()
-                    .background(accentColor),
+                    .background(accentColor.copy(alpha = if (isActive) 0.8f else 0.6f)),
             )
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth().padding(start = 12.dp)) {
                 BlockHeader(
                     block = block,
                     onCopy = onCopy,
