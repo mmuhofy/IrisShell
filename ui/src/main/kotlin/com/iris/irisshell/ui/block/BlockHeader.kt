@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.copy
+import com.composables.icons.lucide.chevronDown
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -140,7 +142,7 @@ private fun CopyButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Lucide.Copy,
+            imageVector = with(Lucide) { Copy },
             contentDescription = "Copy",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier.size(15.dp),
