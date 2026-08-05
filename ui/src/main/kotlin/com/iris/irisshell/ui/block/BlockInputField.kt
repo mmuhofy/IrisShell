@@ -16,7 +16,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import com.composables.icons.lucide.ArrowUp
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -140,7 +140,7 @@ fun BlockInputField(
                     modifier = Modifier.size(32.dp),
                 ) {
                     Icon(
-                        imageVector = ArrowUp,
+                        imageVector = Lucide.ArrowUp,
                         contentDescription = "Send",
                         tint = IrisPrimary,
                         modifier = Modifier.size(16.dp),
