@@ -6,27 +6,26 @@ import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 
 /**
- * Wires the Termux terminal session into the block engine via the
- * raw PTY byte stream.
+ * Wires the Termux terminal session into the block engine via the raw
+ * PTY byte stream.
  *
- * Subscribes to [TerminalEmulator.byteListener] when the active
- * session is known, so we receive every PTY byte **before** UTF-8
- * decoding and screen rendering. Each byte is fed through a
- * [ByteStreamParser] which produces [ByteStreamEvent]s.
+ * Subscribes to [TerminalEmulator.byteListener] when the active session
+ * is known, so every PTY byte is observed **before** UTF-8 decoding and
+ * screen rendering. Bytes feed a [ByteStreamParser] which emits
+ * [ByteStreamEvent.OutputLine]s.
  *
- * The wire then maps events to repository calls:
+ * The wire then:
  *
- *  - [ByteStreamEvent.OutputLine] — appended to the running block
- *    unless the line matches the user's just-submitted command
- *    (echo suppression).
- *  - [ByteStreamEvent.PromptReady] — closes the running block as
- *    `Success(0)`. Captures the prompt text for future use.
- *  - [ByteStreamEvent.TuiEntered] / [ByteStreamEvent.TuiExited] —
- *    bookkeeping only in v1; wire resets its line buffer on TUI exit
- *    but does not close the block (the next prompt will).
+ *  1. Strips the user command's echo from the first line.
+ *  2. Detects the shell prompt suffix (`$ `, `# `, `❯ `, `➜ `) on the
+ *     final accumulated line(s) of the running block.
+ *  3. When a prompt suffix is seen, closes the running block as
+ *     `Success(0)` and records the captured prompt text.
+ *  4. Pushes output lines to [BlockRepository.onOutputChunk] until the
+ *     prompt suffix arrives.
  *
  * Designed to be set up exactly once per active session in
- * [TerminalManager] — switching sessions detaches and re-attaches.
+ * [TerminalManager]. Switching sessions detaches and re-attaches.
  */
 class BlockEngineWire(
     private val blockRepository: BlockRepository,
@@ -44,11 +43,6 @@ class BlockEngineWire(
     /** Last command the user submitted — used to suppress shell echo. */
     private var pendingEcho: String? = null
 
-    /**
-     * Called by [TerminalManager] whenever the active session changes.
-     * Detaches from the previous session's emulator and attaches to the
-     * new one.
-     */
     fun attach(session: TerminalSession) {
         if (subscribedSession === session) return
         detach()
@@ -57,22 +51,15 @@ class BlockEngineWire(
         parser.reset()
     }
 
-    /** Detach from any currently subscribed session. */
     fun detach() {
         subscribedSession?.emulator?.byteListener = null
         subscribedSession = null
     }
 
-    /**
-     * Notify the wire that the user just submitted a command. The wire
-     * uses this to suppress the next line that matches the command
-     * verbatim (the shell echoes typed input).
-     */
     fun onCommandSubmitted(command: String) {
         pendingEcho = command
     }
 
-    /** Reset all internal state — call when the active session changes. */
     fun reset() {
         detach()
         parser.reset()
@@ -94,16 +81,20 @@ class BlockEngineWire(
                 val text = event.text
                 if (suppressEcho(text)) return
                 if (text.isEmpty()) return
-                blockRepository.onOutputChunk(text)
-            }
-            is ByteStreamEvent.PromptReady -> {
-                lastPrompt = event.text.ifBlank { DEFAULT_PROMPT }
-                pendingEcho = null
-                blockRepository.onCommandCompleted(exitCode = 0)
+                val promptSuffix = PROMPT_SUFFIX_REGEX.find(text)
+                if (promptSuffix != null) {
+                    val promptText = text.substring(0, promptSuffix.range.first)
+                    if (promptText.isNotEmpty()) {
+                        blockRepository.onOutputChunk(promptText)
+                    }
+                    lastPrompt = promptText.ifBlank { DEFAULT_PROMPT }
+                    pendingEcho = null
+                    blockRepository.onCommandCompleted(exitCode = 0)
+                } else {
+                    blockRepository.onOutputChunk(text)
+                }
             }
             ByteStreamEvent.TuiEntered -> {
-                // TUI alternates screen — discard buffered output so we
-                // don't flood the block with vim's screen contents.
                 blockRepository.onCommandCancelled()
             }
             ByteStreamEvent.TuiExited -> {
@@ -124,5 +115,8 @@ class BlockEngineWire(
 
     private companion object {
         const val DEFAULT_PROMPT = "muhofy@iris-shell:~/IrisShell$"
+        // Common shell prompt terminators: `$`, `#`, `❯`, `➜` — followed
+        // by optional trailing space.
+        val PROMPT_SUFFIX_REGEX = Regex("""[#$❯➜]\s*$""")
     }
 }

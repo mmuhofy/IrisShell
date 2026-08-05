@@ -127,6 +127,7 @@ class ByteStreamParser {
                 // Final byte — sequence ends here.
                 val params = csiParamBytes.toString()
                 checkTuiTransition(b, params)
+                csiParamBytes.setLength(0)
                 state = State.Normal
             }
             else -> state = State.Normal
@@ -190,20 +191,8 @@ class ByteStreamParser {
         if (lineBuffer.isEmpty()) return
         val line = lineBuffer.toString()
         lineBuffer.setLength(0)
-        val promptMatch = PROMPT_SUFFIX_REGEX.find(line)
-        if (promptMatch != null) {
-            val promptText = line.substring(0, promptMatch.range.first)
-            pendingEvents.addLast(ByteStreamEvent.OutputLine(line))
-            pendingEvents.addLast(ByteStreamEvent.PromptReady(promptText))
-        } else {
-            pendingEvents.addLast(ByteStreamEvent.OutputLine(line))
-        }
+        pendingEvents.addLast(ByteStreamEvent.OutputLine(line))
     }
 
     private enum class State { Normal, Escape, Csi, Osc, Dcs }
-
-    private companion object {
-        // Common shell prompt terminators: `$`, `#`, `❯`, `➜`.
-        val PROMPT_SUFFIX_REGEX = Regex("""[#$❯➜]\s*$""")
-    }
 }
