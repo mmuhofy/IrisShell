@@ -100,6 +100,11 @@ class BlockEngineWire(
             ByteStreamEvent.TuiExited -> {
                 // Next prompt will close the block properly.
             }
+            ByteStreamEvent.PromptReady -> {
+                // No-op: prompt detection happens inside OutputLine
+                // handling so we can capture the prompt text from the
+                // same line buffer flush.
+            }
         }
     }
 
