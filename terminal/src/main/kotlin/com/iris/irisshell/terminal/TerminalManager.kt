@@ -61,12 +61,9 @@ class TerminalManager(
 
     init {
         sessionClient.onSessionFinished = { session -> onSessionFinished(session) }
-        // Classic TerminalView render still needs onScreenUpdated on
-        // every redraw. The block engine wire consumes the raw byte
-        // stream via TerminalEmulator.byteListener — wired per-session
-        // in switchTab() — so we no longer hook onTextChanged here.
         sessionClient.onTextChanged = { session ->
             terminalViewRef?.onScreenUpdated()
+            blockEngineWire?.onSessionTextChanged(session)
         }
     }
 
@@ -98,7 +95,6 @@ class TerminalManager(
             _indexToId[newIndex] = persistentId
         }
         _activeTabIndex.value = newIndex
-        blockEngineWire?.attach(session)
         terminalViewRef?.attachSession(session)
         return session
     }
@@ -177,13 +173,10 @@ class TerminalManager(
     fun switchTab(index: Int) {
         if (index < 0 || index >= _sessions.size || index == _activeTabIndex.value) return
         _activeTabIndex.value = index
-        // Block engine state is per-session; reset so the new session
-        // gets a fresh byte-stream subscription.
+        // Block engine state is per-session; reset so the next snapshot
+        // is anchored against the new buffer.
         blockEngineWire?.reset()
-        currentSession?.let {
-            blockEngineWire?.attach(it)
-            terminalViewRef?.attachSession(it)
-        }
+        currentSession?.let { terminalViewRef?.attachSession(it) }
     }
 
     fun createSession(): TerminalSession {

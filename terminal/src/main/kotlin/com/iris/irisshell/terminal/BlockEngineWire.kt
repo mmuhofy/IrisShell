@@ -2,60 +2,94 @@ package com.iris.irisshell.terminal
 
 import com.iris.irisshell.domain.block.BlockEngineState
 import com.iris.irisshell.domain.block.BlockRepository
-import com.iris.irisshell.domain.terminal.ByteStreamEvent
 import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 
 /**
- * Wires the Termux terminal session into the block engine via the raw
- * PTY byte stream.
+ * Wires the Termux terminal session into the block engine via the
+ * transcript snapshot of the emulator screen.
  *
- * Subscribes to [TerminalEmulator.byteListener] when the active session
- * is known, so every PTY byte is observed **before** UTF-8 decoding and
- * screen rendering. Bytes feed a [ByteStreamParser] which emits
- * [ByteStreamEvent.OutputLine]s.
+ * Each [onSessionTextChanged] call:
+ *  1. Pulls the current transcript.
+ *  2. Strips ANSI sequences via [AnsiStripper].
+ *  3. Diffs against the previously seen transcript using a rolling
+ *     anchor (longest common tail-substring) so output survives
+ *     buffer scroll.
+ *  4. Detects the shell prompt suffix on the **last** line of the new
+ *     text — if present, closes the running block and records the
+ *     captured prompt for next time.
+ *  5. Echo-suppression: drops the first appended line if it matches
+ *     the most recently submitted command.
  *
- * The wire then:
- *
- *  1. Strips the user command's echo from the first line.
- *  2. Detects the shell prompt suffix (`$ `, `# `, `❯ `, `➜ `) on the
- *     final accumulated line(s) of the running block.
- *  3. When a prompt suffix is seen, closes the running block as
- *     `Success(0)` and records the captured prompt text.
- *  4. Pushes output lines to [BlockRepository.onOutputChunk] until the
- *     prompt suffix arrives.
- *
- * Designed to be set up exactly once per active session in
- * [TerminalManager]. Switching sessions detaches and re-attaches.
+ * This is a **transcript polling** design — every UI frame, the wire
+ * compares what the user can see now versus what we last saw, and
+ * pushes the difference into the block repository. See PLAN.md §3.
  */
 class BlockEngineWire(
     private val blockRepository: BlockRepository,
 ) : BlockEngineState {
 
-    private val parser = ByteStreamParser()
+    private var previousTranscript: String = ""
 
-    /** Session currently subscribed for byte events. */
-    private var subscribedSession: TerminalSession? = null
-
-    /** Last prompt text we saw — used as the `prompt` of new blocks. */
     @Volatile
     override var lastPrompt: String = DEFAULT_PROMPT
         private set
 
-    /** Last command the user submitted — used to suppress shell echo. */
     private var pendingEcho: String? = null
 
-    fun attach(session: TerminalSession) {
-        if (subscribedSession === session) return
-        detach()
-        subscribedSession = session
-        session.emulator?.byteListener = { byte -> onByte(byte) }
-        parser.reset()
-    }
+    fun onSessionTextChanged(session: TerminalSession) {
+        val emulator: TerminalEmulator = session.emulator ?: return
+        val raw = emulator.getScreen().getTranscriptTextWithoutJoinedLines()
+        val current = AnsiStripper.strip(raw)
+        if (current.isEmpty()) {
+            previousTranscript = ""
+            return
+        }
 
-    fun detach() {
-        subscribedSession?.emulator?.byteListener = null
-        subscribedSession = null
+        val appended = if (previousTranscript.isEmpty()) {
+            current
+        } else {
+            val anchor = findRollingAnchor(previousTranscript, current)
+                ?: return resetAnchor(current)
+            val idx = current.lastIndexOf(anchor)
+            if (idx < 0) return resetAnchor(current)
+            current.substring(idx + anchor.length)
+        }
+        previousTranscript = current
+        if (appended.isEmpty()) return
+
+        val lines = appended.split('\n')
+        val nonEmpty = lines
+            .map { it.trimEnd('\r') }
+            .filter { it.isNotEmpty() || lines.size == 1 }
+        if (nonEmpty.isEmpty()) return
+
+        val firstIsEcho = pendingEcho?.let { echo ->
+            nonEmpty.first().trimEnd() == echo || nonEmpty.first().trimEnd().endsWith(echo)
+        } ?: false
+        if (firstIsEcho) pendingEcho = null
+        val linesAfterEcho = if (firstIsEcho) nonEmpty.drop(1) else nonEmpty
+
+        if (linesAfterEcho.isEmpty()) return
+
+        val lastLine = linesAfterEcho.last()
+        val promptSuffix = PROMPT_SUFFIX_REGEX.find(lastLine)
+        if (promptSuffix != null) {
+            val promptText = lastLine.substring(0, promptSuffix.range.first).trimEnd()
+            val outputLines = if (promptText.isEmpty()) {
+                linesAfterEcho.dropLast(1)
+            } else {
+                linesAfterEcho.toMutableList().apply { set(lastIndex, promptText) }
+            }
+            if (outputLines.isNotEmpty()) {
+                blockRepository.onOutputChunk(outputLines.joinToString("\n"))
+            }
+            lastPrompt = promptText.ifBlank { DEFAULT_PROMPT }
+            pendingEcho = null
+            blockRepository.onCommandCompleted(exitCode = 0)
+        } else {
+            blockRepository.onOutputChunk(linesAfterEcho.joinToString("\n"))
+        }
     }
 
     fun onCommandSubmitted(command: String) {
@@ -63,67 +97,31 @@ class BlockEngineWire(
     }
 
     fun reset() {
-        detach()
-        parser.reset()
+        previousTranscript = ""
         pendingEcho = null
         blockRepository.clear()
     }
 
-    private fun onByte(byte: Byte) {
-        parser.feed(byte)
-        val events = parser.drainEvents()
-        for (event in events) {
-            handleEvent(event)
-        }
+    private fun resetAnchor(current: String) {
+        previousTranscript = current
     }
 
-    private fun handleEvent(event: ByteStreamEvent) {
-        when (event) {
-            is ByteStreamEvent.OutputLine -> {
-                val text = event.text
-                if (suppressEcho(text)) return
-                if (text.isEmpty()) return
-                val promptSuffix = PROMPT_SUFFIX_REGEX.find(text)
-                if (promptSuffix != null) {
-                    val promptText = text.substring(0, promptSuffix.range.first)
-                    if (promptText.isNotEmpty()) {
-                        blockRepository.onOutputChunk(promptText)
-                    }
-                    lastPrompt = promptText.ifBlank { DEFAULT_PROMPT }
-                    pendingEcho = null
-                    blockRepository.onCommandCompleted(exitCode = 0)
-                } else {
-                    blockRepository.onOutputChunk(text)
-                }
-            }
-            ByteStreamEvent.TuiEntered -> {
-                blockRepository.onCommandCancelled()
-            }
-            ByteStreamEvent.TuiExited -> {
-                // Next prompt will close the block properly.
-            }
-            is ByteStreamEvent.PromptReady -> {
-                // No-op: prompt detection happens inside OutputLine
-                // handling so we can capture the prompt text from the
-                // same line buffer flush.
-            }
+    private fun findRollingAnchor(previous: String, current: String): String? {
+        val maxLen = minOf(previous.length, MAX_ANCHOR_BYTES)
+        val minLen = minOf(maxLen, MIN_ANCHOR_BYTES)
+        var len = maxLen
+        while (len >= minLen) {
+            val tail = previous.substring(previous.length - len)
+            if (current.lastIndexOf(tail) >= 0) return tail
+            len--
         }
-    }
-
-    private fun suppressEcho(text: String): Boolean {
-        val echo = pendingEcho ?: return false
-        val stripped = text.trimEnd()
-        if (stripped == echo || stripped.endsWith(echo)) {
-            pendingEcho = null
-            return true
-        }
-        return false
+        return null
     }
 
     private companion object {
         const val DEFAULT_PROMPT = "muhofy@iris-shell:~/IrisShell$"
-        // Common shell prompt terminators: `$`, `#`, `❯`, `➜` — followed
-        // by optional trailing space.
+        const val MIN_ANCHOR_BYTES = 16
+        const val MAX_ANCHOR_BYTES = 8192
         val PROMPT_SUFFIX_REGEX = Regex("""[#$❯➜]\s*$""")
     }
 }

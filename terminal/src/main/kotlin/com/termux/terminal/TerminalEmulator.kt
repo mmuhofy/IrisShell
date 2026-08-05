@@ -187,17 +187,6 @@ class TerminalEmulator(
     @JvmField
     var mClient: TerminalSessionClient? = client
 
-    /**
-     * Iris Shell hook: invoked for every raw PTY byte that the emulator
-     * processes, **before** UTF-8 decoding / screen update. Subscribers
-     * receive the byte exactly as it came from the terminal.
-     *
-     * Set by [com.iris.irisshell.terminal.BlockEngineWire] to drive the
-     * byte-level parser. Null when no subscriber is registered.
-     */
-    @JvmField
-    var byteListener: ((Byte) -> Unit)? = null
-
     /** Keeps track of the current argument of the current escape sequence. Ranges from 0 to MAX_ESCAPE_PARAMETERS-1. */
     private var mArgIndex = 0
 
@@ -389,7 +378,6 @@ class TerminalEmulator(
 
 
     private fun processByte(byteToProcess: Byte) {
-        byteListener?.invoke(byteToProcess)
         if (mUtf8ToFollow > 0) {
             if ((byteToProcess.toInt() and 0b11000000) == 0b10000000) {
                 // 10xxxxxx, a continuation byte.
