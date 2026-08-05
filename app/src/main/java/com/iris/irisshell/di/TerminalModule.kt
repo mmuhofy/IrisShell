@@ -2,6 +2,7 @@ package com.iris.irisshell.di
 
 import android.app.Application
 import android.content.Context
+import com.iris.irisshell.domain.block.BlockEngineState
 import com.iris.irisshell.domain.block.BlockRepository
 import com.iris.irisshell.terminal.BlockEngineWire
 import com.iris.irisshell.terminal.BootstrapStatePort
@@ -55,6 +56,12 @@ object TerminalModule {
     fun provideBlockEngineWire(
         blockRepository: BlockRepository,
     ): BlockEngineWire = BlockEngineWire(blockRepository)
+
+    @Provides
+    @Singleton
+    fun provideBlockEngineState(
+        wire: BlockEngineWire,
+    ): BlockEngineState = wire
 
     @Provides
     @Singleton

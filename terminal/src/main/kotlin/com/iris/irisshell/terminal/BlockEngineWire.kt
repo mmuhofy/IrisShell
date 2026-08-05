@@ -1,5 +1,6 @@
 package com.iris.irisshell.terminal
 
+import com.iris.irisshell.domain.block.BlockEngineState
 import com.iris.irisshell.domain.block.BlockRepository
 import com.iris.irisshell.domain.terminal.ByteStreamEvent
 import com.termux.terminal.TerminalEmulator
@@ -29,7 +30,7 @@ import com.termux.terminal.TerminalSession
  */
 class BlockEngineWire(
     private val blockRepository: BlockRepository,
-) {
+) : BlockEngineState {
 
     private val parser = ByteStreamParser()
 
@@ -37,7 +38,8 @@ class BlockEngineWire(
     private var subscribedSession: TerminalSession? = null
 
     /** Last prompt text we saw — used as the `prompt` of new blocks. */
-    @Volatile var lastPrompt: String = DEFAULT_PROMPT
+    @Volatile
+    override var lastPrompt: String = DEFAULT_PROMPT
         private set
 
     /** Last command the user submitted — used to suppress shell echo. */
@@ -100,7 +102,7 @@ class BlockEngineWire(
             ByteStreamEvent.TuiExited -> {
                 // Next prompt will close the block properly.
             }
-            ByteStreamEvent.PromptReady -> {
+            is ByteStreamEvent.PromptReady -> {
                 // No-op: prompt detection happens inside OutputLine
                 // handling so we can capture the prompt text from the
                 // same line buffer flush.
