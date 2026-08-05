@@ -49,7 +49,7 @@ dependencies {
     // implementation(libs.lottie.compose)
 
     // Lucide icons — modern line icons used across Block Mode UI.
-    implementation(libs.compose.lucide.icons)
+    implementation(libs.compose.icons.lucide)
 
     // coroutines
     implementation(libs.kotlinx.coroutines.android)

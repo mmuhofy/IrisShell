@@ -17,9 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import io.github.thelacspace.lucide.LucideIcons
-import io.github.thelacspace.lucide.all.ChevronDown
-import io.github.thelacspace.lucide.all.Copy
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.Copy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -142,7 +141,7 @@ private fun CopyButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = LucideIcons.All.Copy,
+            imageVector = Copy,
             contentDescription = "Copy",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier.size(15.dp),
@@ -159,7 +158,7 @@ private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = LucideIcons.All.ChevronDown,
+            imageVector = ChevronDown,
             contentDescription = if (isCollapsed) "Expand" else "Collapse",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier
