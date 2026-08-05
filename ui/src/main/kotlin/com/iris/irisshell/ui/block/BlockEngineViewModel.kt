@@ -6,6 +6,7 @@ import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockRepository
 import com.iris.irisshell.domain.block.NetworkMetricsCollector
 import com.iris.irisshell.domain.terminal.SubmitBlockCommandUseCase
+import com.iris.irisshell.terminal.BlockEngineWire
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -34,6 +35,7 @@ class BlockEngineViewModel @Inject constructor(
     private val blockRepository: BlockRepository,
     private val trafficStats: NetworkMetricsCollector,
     private val submitCommand: SubmitBlockCommandUseCase,
+    private val blockEngineWire: BlockEngineWire,
 ) : ViewModel() {
 
     val blocks: StateFlow<List<Block>> = blockRepository.observe()
@@ -79,8 +81,9 @@ class BlockEngineViewModel @Inject constructor(
 
     fun onCommandSubmitted(prompt: String, command: String) {
         val (rx, tx) = trafficStats.snapshotTotals()
+        val resolvedPrompt = prompt.takeIf { it.isNotBlank() } ?: blockEngineWire.lastPrompt
         blockRepository.onCommandSubmitted(
-            prompt = prompt,
+            prompt = resolvedPrompt,
             command = command,
             startRxBytes = rx,
             startTxBytes = tx,
