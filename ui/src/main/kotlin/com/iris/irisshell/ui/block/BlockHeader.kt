@@ -16,8 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -137,15 +137,15 @@ private fun NetworkLabel(delta: NetworkDelta) {
 private fun CopyButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(24.dp)
+            .size(26.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Filled.ContentCopy,
+            imageVector = Icons.Outlined.ContentCopy,
             contentDescription = "Copy",
-            tint = IrisTextSecondary.copy(alpha = 0.6f),
-            modifier = Modifier.size(12.dp),
+            tint = IrisTextSecondary.copy(alpha = 0.7f),
+            modifier = Modifier.size(13.dp),
         )
     }
 }
@@ -154,16 +154,16 @@ private fun CopyButton(onClick: () -> Unit) {
 private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(24.dp)
+            .size(26.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Filled.ExpandMore,
+            imageVector = Icons.Outlined.KeyboardArrowDown,
             contentDescription = if (isCollapsed) "Expand" else "Collapse",
-            tint = IrisTextSecondary.copy(alpha = 0.6f),
+            tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier
-                .size(14.dp)
+                .size(16.dp)
                 .rotate(if (isCollapsed) -90f else 0f),
         )
     }
