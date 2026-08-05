@@ -48,6 +48,9 @@ dependencies {
     // the user; the onboarding wizard is Phase 2). Re-add when needed.
     // implementation(libs.lottie.compose)
 
+    // Lucide icons — modern line icons used across Block Mode UI.
+    implementation(libs.compose.lucide.icons)
+
     // coroutines
     implementation(libs.kotlinx.coroutines.android)
 

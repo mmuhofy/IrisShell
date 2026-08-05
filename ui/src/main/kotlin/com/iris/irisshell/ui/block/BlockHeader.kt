@@ -15,11 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.Copy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -137,15 +136,15 @@ private fun NetworkLabel(delta: NetworkDelta) {
 private fun CopyButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(26.dp)
+            .size(28.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Outlined.ContentCopy,
+            imageVector = Icons.Lucide.Copy,
             contentDescription = "Copy",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
-            modifier = Modifier.size(13.dp),
+            modifier = Modifier.size(15.dp),
         )
     }
 }
@@ -154,16 +153,16 @@ private fun CopyButton(onClick: () -> Unit) {
 private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(26.dp)
+            .size(28.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Outlined.KeyboardArrowDown,
+            imageVector = Icons.Lucide.ChevronDown,
             contentDescription = if (isCollapsed) "Expand" else "Collapse",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier
-                .size(16.dp)
+                .size(18.dp)
                 .rotate(if (isCollapsed) -90f else 0f),
         )
     }
