@@ -74,10 +74,14 @@ class BlockEngineWire(
 
         if (linesAfterEcho.isEmpty()) return
 
-        val lastLine = linesAfterEcho.last()
-        val promptSuffix = PROMPT_SUFFIX_REGEX.find(lastLine)
-        if (promptSuffix != null) {
-            val promptText = lastLine.substring(0, promptSuffix.range.first).trimEnd()
+        val lastLineOfAppended = linesAfterEcho.last()
+        val promptSuffix = PROMPT_SUFFIX_REGEX.find(lastLineOfAppended)
+        val completeAppended = promptSuffix != null
+        val promptText = if (completeAppended) {
+            lastLineOfAppended.substring(0, promptSuffix!!.range.first).trimEnd()
+        } else ""
+
+        if (completeAppended) {
             val outputLines = if (promptText.isEmpty()) {
                 linesAfterEcho.dropLast(1)
             } else {
@@ -89,8 +93,23 @@ class BlockEngineWire(
             lastPrompt = promptText.ifBlank { DEFAULT_PROMPT }
             pendingEcho = null
             blockRepository.onCommandCompleted(exitCode = 0)
-        } else {
-            blockRepository.onOutputChunk(linesAfterEcho.joinToString("\n"))
+            return
+        }
+
+        blockRepository.onOutputChunk(linesAfterEcho.joinToString("\n"))
+
+        val lastVisibleLine = current.substringAfterLast('\n').trimEnd('\r')
+        if (linesAfterEcho.size == 1 && lastLineOfAppended != lastVisibleLine) {
+            val visibleSuffix = PROMPT_SUFFIX_REGEX.find(lastVisibleLine)
+            if (visibleSuffix != null) {
+                val visiblePromptText = lastVisibleLine.substring(0, visibleSuffix.range.first).trimEnd()
+                if (visiblePromptText.isNotEmpty()) {
+                    blockRepository.onOutputChunk(visiblePromptText)
+                }
+                lastPrompt = visiblePromptText.ifBlank { DEFAULT_PROMPT }
+                pendingEcho = null
+                blockRepository.onCommandCompleted(exitCode = 0)
+            }
         }
     }
 
