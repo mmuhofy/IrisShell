@@ -1,5 +1,6 @@
 package com.iris.irisshell.terminal
 
+import android.util.Log
 import com.iris.irisshell.domain.block.BlockEngineState
 import com.iris.irisshell.domain.block.BlockRepository
 import com.termux.terminal.TerminalEmulator
@@ -41,6 +42,7 @@ class BlockEngineWire(
         val emulator: TerminalEmulator = session.emulator ?: return
         val raw = emulator.getScreen().getTranscriptTextWithoutJoinedLines()
         val current = AnsiStripper.strip(raw)
+        Log.d(TAG, "tick: raw.len=${raw.length} stripped.len=${current.length} prevLen=${previousTranscript.length} lastLine='${current.substringAfterLast("\n").take(80)}'")
         if (current.isEmpty()) {
             previousTranscript = ""
             return
@@ -119,6 +121,7 @@ class BlockEngineWire(
     }
 
     private companion object {
+        const val TAG = "BlockEngineWire"
         const val DEFAULT_PROMPT = "muhofy@iris-shell:~/IrisShell$"
         const val MIN_ANCHOR_BYTES = 16
         const val MAX_ANCHOR_BYTES = 8192
