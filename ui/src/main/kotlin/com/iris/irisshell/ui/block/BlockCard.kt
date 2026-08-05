@@ -39,9 +39,8 @@ fun BlockCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .background(IrisSurface, RoundedCornerShape(4.dp))
-            .padding(start = 14.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+            .background(IrisSurface, RoundedCornerShape(6.dp))
+            .padding(start = 12.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(
@@ -50,7 +49,7 @@ fun BlockCard(
                     .fillMaxHeight()
                     .background(accentColor.copy(alpha = if (isActive) 0.8f else 0.6f)),
             )
-            Column(modifier = Modifier.fillMaxWidth().padding(start = 12.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(start = 10.dp)) {
                 BlockHeader(
                     block = block,
                     onCopy = onCopy,

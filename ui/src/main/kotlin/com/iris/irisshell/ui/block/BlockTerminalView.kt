@@ -46,8 +46,9 @@ fun BlockTerminalView(
 
     Column(modifier = modifier.fillMaxSize().background(IrisBackground)) {
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 8.dp),
+            modifier = Modifier.fillMaxWidth().weight(1f),
             state = listState,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
         ) {
             items(list, key = { it.id }) { block ->
                 val isActive = block.id == list.lastOrNull()?.id
@@ -65,12 +66,12 @@ fun BlockTerminalView(
                         clipboard.setText(AnnotatedString(text))
                     },
                     onToggleCollapse = { onToggleCollapsed(block.id) },
-                    modifier = Modifier.padding(vertical = 4.dp),
+                    modifier = Modifier.padding(vertical = 2.dp),
                 )
             }
         }
         BlockInputField(onSubmit = { cmd ->
-            onCommandSubmitted("iris$", cmd)
+            onCommandSubmitted("", cmd)
         })
     }
 }
