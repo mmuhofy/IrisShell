@@ -133,6 +133,7 @@ private fun NetworkLabel(delta: NetworkDelta) {
 
 @Composable
 private fun CopyButton(onClick: () -> Unit) {
+    val copyIcon = with(Lucide) { Copy }
     Box(
         modifier = Modifier
             .size(28.dp)
@@ -140,7 +141,7 @@ private fun CopyButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Lucide.Copy,
+            imageVector = copyIcon,
             contentDescription = "Copy",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier.size(15.dp),
@@ -150,6 +151,7 @@ private fun CopyButton(onClick: () -> Unit) {
 
 @Composable
 private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
+    val chevronIcon = with(Lucide) { ChevronDown }
     Box(
         modifier = Modifier
             .size(28.dp)
@@ -157,7 +159,7 @@ private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Lucide.ChevronDown,
+            imageVector = chevronIcon,
             contentDescription = if (isCollapsed) "Expand" else "Collapse",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier

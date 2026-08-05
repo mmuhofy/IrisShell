@@ -132,6 +132,7 @@ fun BlockInputField(
                 )
             }
             if (text.isNotBlank() && enabled) {
+                val arrowUp = with(Lucide) { ArrowUp }
                 IconButton(
                     onClick = {
                         onSubmit(text)
@@ -140,7 +141,7 @@ fun BlockInputField(
                     modifier = Modifier.size(32.dp),
                 ) {
                     Icon(
-                        imageVector = Lucide.ArrowUp,
+                        imageVector = arrowUp,
                         contentDescription = "Send",
                         tint = IrisPrimary,
                         modifier = Modifier.size(16.dp),
