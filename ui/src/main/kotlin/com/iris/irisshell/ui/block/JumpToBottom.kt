@@ -18,8 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.design.system.IrisBuild
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
+import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.ui.R
 import kotlinx.coroutines.launch
 
@@ -40,7 +42,7 @@ internal fun JumpToBottom(
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(IrisSurface, CircleShape)
+                .background(IrisBuild, CircleShape)
                 .clickable {
                     scope.launch { listState.animateScrollToItem(targetIndex) }
                 },
@@ -49,7 +51,7 @@ internal fun JumpToBottom(
             Icon(
                 painter = painterResource(R.drawable.lucide_arrow_down),
                 contentDescription = "Jump to bottom",
-                tint = IrisPrimary,
+                tint = IrisText,
                 modifier = Modifier.size(18.dp),
             )
         }
