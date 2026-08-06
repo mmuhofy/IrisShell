@@ -1,14 +1,13 @@
 package com.iris.irisshell.ui.block
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
@@ -62,12 +61,6 @@ fun BlockCard(
         modifier = modifier
             .fillMaxWidth()
             .background(IrisSurface, RoundedCornerShape(6.dp))
-            .combinedClickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = {},
-                onLongClick = { contextOpen = true },
-            )
             .padding(start = 12.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -83,27 +76,61 @@ fun BlockCard(
                     onCopy = onCopy,
                     onToggleCollapse = onToggleCollapse,
                 )
-                BlockBody(block = block)
+                BlockBody(block = block, onLongClick = { contextOpen = true })
             }
         }
         DropdownMenu(
             expanded = contextOpen,
             onDismissRequest = { contextOpen = false },
+            modifier = Modifier
+                .background(IrisSurface, RoundedCornerShape(12.dp))
+                .padding(vertical = 6.dp),
         ) {
+            MenuSectionHeader("Komut satırı")
             MenuItem(iconRes = R.drawable.lucide_copy, label = "Komutu kopyala", onClick = { onCopyCommand(); contextOpen = false })
             MenuItem(iconRes = R.drawable.lucide_play, label = "Tekrar çalıştır", onClick = { onRerun(); contextOpen = false })
             MenuItem(iconRes = R.drawable.lucide_pencil, label = "Komutu düzenle", onClick = { onEdit(); contextOpen = false })
+            MenuSeparator()
+            MenuSectionHeader("Output")
             MenuItem(iconRes = R.drawable.lucide_copy, label = "Output'u kopyala", onClick = { onCopyOutput(); contextOpen = false })
             MenuItem(iconRes = R.drawable.lucide_download, label = "Dışa aktar", onClick = { onExport(); contextOpen = false })
-            MenuItem(iconRes = R.drawable.lucide_trash_2, label = "Block'u sil", onClick = { onDelete(); contextOpen = false })
+            MenuSeparator()
+            MenuItem(
+                iconRes = R.drawable.lucide_trash_2,
+                label = "Block'u sil",
+                tint = IrisError,
+                onClick = { onDelete(); contextOpen = false },
+            )
         }
     }
+}
+
+@Composable
+private fun MenuSectionHeader(text: String) {
+    Text(
+        text = text.uppercase(),
+        color = IrisTextSecondary.copy(alpha = 0.6f),
+        fontFamily = FontFamily.Monospace,
+        fontSize = 10.sp,
+        letterSpacing = 1.sp,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+    )
+}
+
+@Composable
+private fun MenuSeparator() {
+    androidx.compose.material3.HorizontalDivider(
+        thickness = 0.5.dp,
+        color = IrisOutline.copy(alpha = 0.4f),
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+    )
 }
 
 @Composable
 private fun MenuItem(
     iconRes: Int,
     label: String,
+    tint: androidx.compose.ui.graphics.Color = IrisTextSecondary,
     onClick: () -> Unit,
 ) {
     DropdownMenuItem(
@@ -111,18 +138,19 @@ private fun MenuItem(
             androidx.compose.material3.Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                tint = IrisTextSecondary,
-                modifier = Modifier.width(16.dp),
+                tint = tint,
+                modifier = Modifier.size(15.dp),
             )
         },
         text = {
             Text(
                 text = label,
-                color = IrisText,
+                color = if (tint == IrisError) IrisError else IrisText,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
             )
         },
         onClick = onClick,
+        modifier = Modifier.padding(horizontal = 4.dp),
     )
 }

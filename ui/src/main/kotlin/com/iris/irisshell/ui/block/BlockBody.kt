@@ -1,5 +1,8 @@
 package com.iris.irisshell.ui.block
 
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +11,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -25,7 +29,11 @@ import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockState
 
 @Composable
-fun BlockBody(block: Block, modifier: Modifier = Modifier) {
+fun BlockBody(
+    block: Block,
+    onLongClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
     val prompt = block.prompt
     val command = block.command
     val showPrompt = !isLikelyPrompt(prompt)
@@ -40,16 +48,43 @@ fun BlockBody(block: Block, modifier: Modifier = Modifier) {
     }
 
     Column(modifier = modifier) {
-        SelectionContainer(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = inputAnnotated,
-                style = LocalTextStyle.current.copy(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp,
-                    textAlign = TextAlign.Start,
-                ),
-            )
+        // Input line: long-press opens context menu. Selection is
+        // available too — combinedClickable handles both.
+        if (onLongClick != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                        onLongClick = onLongClick,
+                    ),
+            ) {
+                SelectionContainer {
+                    Text(
+                        text = inputAnnotated,
+                        style = LocalTextStyle.current.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                            textAlign = TextAlign.Start,
+                        ),
+                    )
+                }
+            }
+        } else {
+            SelectionContainer(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = inputAnnotated,
+                    style = LocalTextStyle.current.copy(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp,
+                        textAlign = TextAlign.Start,
+                    ),
+                )
+            }
         }
         if (!block.isCollapsed) {
             if (block.outputLines.isNotEmpty()) {
