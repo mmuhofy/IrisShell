@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -69,7 +70,7 @@ fun BlockInputField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp)
+                .defaultMinSize(minHeight = 44.dp)
                 .background(
                     color = IrisSurface.copy(alpha = surfaceAlpha),
                     shape = RoundedCornerShape(10.dp),
@@ -79,7 +80,7 @@ fun BlockInputField(
                     color = IrisPrimary.copy(alpha = borderColor),
                     shape = RoundedCornerShape(10.dp),
                 )
-                .padding(start = 14.dp, end = 6.dp),
+                .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -104,12 +105,14 @@ fun BlockInputField(
                         color = IrisText,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 13.sp,
+                        lineHeight = 19.sp,
                     ),
                     cursorBrush = SolidColor(IrisPrimary),
                     modifier = Modifier
                         .fillMaxWidth()
                         .onFocusChanged { focused = it.isFocused },
-                    singleLine = true,
+                    minLines = 1,
+                    maxLines = 6,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(
                         onSend = {
