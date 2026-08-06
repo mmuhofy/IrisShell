@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -174,10 +175,49 @@ private fun ReadyScreen(
             modifier = Modifier.fillMaxSize(),
         ) {
             if (useBlockEngine) {
+                val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+                val hiddenIds by blockEngineViewModel.hiddenIds.collectAsState()
+                val exportRequest by blockEngineViewModel.exportRequest.collectAsState()
+                val clipboardEvent by blockEngineViewModel.clipboardRequest.collectAsState()
+                val pendingEdit by blockEngineViewModel.pendingEdit.collectAsState()
+
+                androidx.compose.runtime.LaunchedEffect(exportRequest) {
+                    if (exportRequest != null) {
+                        // v1: file export not wired — clear marker. Future:
+                        // FileProvider via Intent.ACTION_CREATE_DOCUMENT.
+                        blockEngineViewModel.consumeExportRequest()
+                    }
+                }
+                androidx.compose.runtime.LaunchedEffect(clipboardEvent) {
+                    val event = clipboardEvent ?: return@LaunchedEffect
+                    val text = when (event) {
+                        is BlockEngineViewModel.ClipboardEvent.Command ->
+                            "${event.prompt} ${event.command}"
+                        is BlockEngineViewModel.ClipboardEvent.Output -> event.text
+                    }
+                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(text))
+                    blockEngineViewModel.consumeClipboardRequest()
+                }
+
+                val visibleBlocks = remember { kotlinx.coroutines.flow.MutableStateFlow(emptyList<com.iris.irisshell.domain.block.Block>()) }
+                val blocksRaw by blockEngineViewModel.blocks.collectAsState()
+                androidx.compose.runtime.LaunchedEffect(blocksRaw, hiddenIds) {
+                    visibleBlocks.value = blocksRaw.filterNot { it.id in hiddenIds }
+                }
+
                 BlockTerminalView(
-                    blocks = blockEngineViewModel.blocks,
+                    blocks = visibleBlocks,
                     onToggleCollapsed = blockEngineViewModel::onToggleCollapsed,
                     onCommandSubmitted = blockEngineViewModel::onCommandSubmitted,
+                    onCopyCommand = blockEngineViewModel::onCopyCommand,
+                    onCopyOutput = blockEngineViewModel::onCopyOutput,
+                    onRerunCommand = blockEngineViewModel::onRerunCommand,
+                    onEditCommand = { cmd ->
+                        blockEngineViewModel.onEditCommand(cmd)
+                        blockEngineViewModel.consumePendingEdit()
+                    },
+                    onExportOutput = blockEngineViewModel::onExportOutput,
+                    onDeleteBlock = blockEngineViewModel::onDeleteBlock,
                 )
             } else {
                 TerminalViewHost(

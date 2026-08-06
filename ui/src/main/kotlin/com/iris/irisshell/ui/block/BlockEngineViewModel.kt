@@ -47,6 +47,18 @@ class BlockEngineViewModel @Inject constructor(
     private val _networkEnabled = MutableStateFlow(false)
     val networkEnabled: StateFlow<Boolean> = _networkEnabled.asStateFlow()
 
+    private val _hiddenIds = MutableStateFlow<Set<String>>(emptySet())
+    val hiddenIds: StateFlow<Set<String>> = _hiddenIds.asStateFlow()
+
+    private val _pendingEdit = MutableStateFlow<String?>(null)
+    val pendingEdit: StateFlow<String?> = _pendingEdit.asStateFlow()
+
+    private val _exportRequest = MutableStateFlow<String?>(null)
+    val exportRequest: StateFlow<String?> = _exportRequest.asStateFlow()
+
+    fun consumePendingEdit() { _pendingEdit.value = null }
+    fun consumeExportRequest() { _exportRequest.value = null }
+
     private var networkJob: Job? = null
 
     init {
@@ -106,6 +118,44 @@ class BlockEngineViewModel @Inject constructor(
 
     fun onOutputChunk(chunk: String) {
         blockRepository.onOutputChunk(chunk)
+    }
+
+    fun onRerunCommand(command: String) {
+        onCommandSubmitted("", command)
+    }
+
+    fun onEditCommand(command: String) {
+        // Trigger via state flag the screen collects.
+        pendingEdit.value = command
+    }
+
+    fun onDeleteBlock(blockId: String) {
+        // Repository has no remove; in v1, hide client-side via a
+        // hiddenIds set. Future: Room delete.
+        _hiddenIds.value = _hiddenIds.value + blockId
+    }
+
+    fun onCopyCommand(block: Block) {
+        // Emit clipboard event with the formatted text; the screen
+        // consumes it (LocalClipboardManager is composable-scoped).
+        _clipboardRequest.value = ClipboardEvent.Command(block.prompt, block.command)
+    }
+
+    fun onCopyOutput(block: Block) {
+        _clipboardRequest.value = ClipboardEvent.Output(block.outputLines.joinToString("\n"))
+    }
+
+    fun onExportOutput(block: Block) {
+        _exportRequest.value = block.id
+    }
+
+    private val _clipboardRequest = MutableStateFlow<ClipboardEvent?>(null)
+    val clipboardRequest: StateFlow<ClipboardEvent?> = _clipboardRequest.asStateFlow()
+    fun consumeClipboardRequest() { _clipboardRequest.value = null }
+
+    sealed interface ClipboardEvent {
+        data class Command(val prompt: String, val command: String) : ClipboardEvent
+        data class Output(val text: String) : ClipboardEvent
     }
 
     override fun onCleared() {
