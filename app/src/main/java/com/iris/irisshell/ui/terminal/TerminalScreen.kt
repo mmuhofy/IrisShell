@@ -205,6 +205,8 @@ private fun ReadyScreen(
                     visibleBlocks.value = blocksRaw.filterNot { it.id in hiddenIds }
                 }
 
+                val lastDir by blockEngineViewModel.lastDir.collectAsState()
+
                 BlockTerminalView(
                     blocks = visibleBlocks,
                     onToggleCollapsed = blockEngineViewModel::onToggleCollapsed,
@@ -218,6 +220,7 @@ private fun ReadyScreen(
                     },
                     onExportOutput = blockEngineViewModel::onExportOutput,
                     onDeleteBlock = blockEngineViewModel::onDeleteBlock,
+                    promptLabel = lastDir,
                 )
             } else {
                 TerminalViewHost(

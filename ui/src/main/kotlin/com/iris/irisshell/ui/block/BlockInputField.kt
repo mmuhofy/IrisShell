@@ -45,6 +45,7 @@ import com.iris.irisshell.design.system.IrisTextMuted
 fun BlockInputField(
     onSubmit: (String) -> Unit,
     enabled: Boolean = true,
+    promptLabel: String = "iris",
     modifier: Modifier = Modifier,
 ) {
     var text by remember { mutableStateOf("") }
@@ -55,16 +56,10 @@ fun BlockInputField(
         animationSpec = tween(durationMillis = 180),
         label = "input-border-alpha",
     )
-    val surfaceAlpha by animateFloatAsState(
-        targetValue = if (focused) 1f else 0.92f,
-        animationSpec = tween(durationMillis = 180),
-        label = "input-surface-alpha",
-    )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(IrisSurface.copy(alpha = 0.6f))
             .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         Row(
@@ -72,7 +67,7 @@ fun BlockInputField(
                 .fillMaxWidth()
                 .defaultMinSize(minHeight = 44.dp)
                 .background(
-                    color = IrisSurface.copy(alpha = surfaceAlpha),
+                    color = IrisSurface,
                     shape = RoundedCornerShape(10.dp),
                 )
                 .border(
@@ -90,7 +85,7 @@ fun BlockInputField(
                     .background(IrisPrimary),
             )
             Text(
-                text = if (focused) "iris ▸" else "iris$",
+                text = if (focused) "$promptLabel ▸" else "$promptLabel$",
                 color = IrisPrimary,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
