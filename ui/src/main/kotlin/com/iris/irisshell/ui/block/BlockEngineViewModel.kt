@@ -56,8 +56,17 @@ class BlockEngineViewModel @Inject constructor(
     private val _exportRequest = MutableStateFlow<String?>(null)
     val exportRequest: StateFlow<String?> = _exportRequest.asStateFlow()
 
+    private val _clipboardRequest = MutableStateFlow<ClipboardEvent?>(null)
+    val clipboardRequest: StateFlow<ClipboardEvent?> = _clipboardRequest.asStateFlow()
+
     fun consumePendingEdit() { _pendingEdit.value = null }
     fun consumeExportRequest() { _exportRequest.value = null }
+    fun consumeClipboardRequest() { _clipboardRequest.value = null }
+
+    sealed interface ClipboardEvent {
+        data class Command(val prompt: String, val command: String) : ClipboardEvent
+        data class Output(val text: String) : ClipboardEvent
+    }
 
     private var networkJob: Job? = null
 
@@ -125,8 +134,7 @@ class BlockEngineViewModel @Inject constructor(
     }
 
     fun onEditCommand(command: String) {
-        // Trigger via state flag the screen collects.
-        pendingEdit.value = command
+        _pendingEdit.value = command
     }
 
     fun onDeleteBlock(blockId: String) {
@@ -147,15 +155,6 @@ class BlockEngineViewModel @Inject constructor(
 
     fun onExportOutput(block: Block) {
         _exportRequest.value = block.id
-    }
-
-    private val _clipboardRequest = MutableStateFlow<ClipboardEvent?>(null)
-    val clipboardRequest: StateFlow<ClipboardEvent?> = _clipboardRequest.asStateFlow()
-    fun consumeClipboardRequest() { _clipboardRequest.value = null }
-
-    sealed interface ClipboardEvent {
-        data class Command(val prompt: String, val command: String) : ClipboardEvent
-        data class Output(val text: String) : ClipboardEvent
     }
 
     override fun onCleared() {
