@@ -59,6 +59,16 @@ class BlockEngineViewModel @Inject constructor(
     private val _clipboardRequest = MutableStateFlow<ClipboardEvent?>(null)
     val clipboardRequest: StateFlow<ClipboardEvent?> = _clipboardRequest.asStateFlow()
 
+    /** Last directory inferred from the prompt. */
+    val lastDir: StateFlow<String> = MutableStateFlow(blockEngineState.lastDir).also { sf ->
+        viewModelScope.launch {
+            while (true) {
+                sf.value = blockEngineState.lastDir
+                delay(500L)
+            }
+        }
+    }.asStateFlow()
+
     fun consumePendingEdit() { _pendingEdit.value = null }
     fun consumeExportRequest() { _exportRequest.value = null }
     fun consumeClipboardRequest() { _clipboardRequest.value = null }
@@ -127,6 +137,15 @@ class BlockEngineViewModel @Inject constructor(
 
     fun onOutputChunk(chunk: String) {
         blockRepository.onOutputChunk(chunk)
+    }
+
+    /**
+     * Drops all rendered blocks. The user runs `clear` from the terminal
+     * — when the shell prompt re-emits with an empty buffer the wire
+     * detects a clean state and the screen empties.
+     */
+    fun onClearBlocks() {
+        blockRepository.clear()
     }
 
     fun onRerunCommand(command: String) {

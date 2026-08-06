@@ -18,4 +18,7 @@ package com.iris.irisshell.domain.block
 interface BlockEngineState {
     /** Most recently seen prompt text, sans the trailing suffix. */
     val lastPrompt: String
+
+    /** Last directory inferred from the prompt (e.g. `~/IrisShell` → `IrisShell`). */
+    val lastDir: String
 }
