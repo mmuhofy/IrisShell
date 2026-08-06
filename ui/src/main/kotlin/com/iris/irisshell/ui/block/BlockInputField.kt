@@ -16,7 +16,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import com.composables.icons.lucide.Lucide
+import androidx.compose.ui.res.painterResource
+import com.iris.irisshell.ui.R
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -132,7 +133,6 @@ fun BlockInputField(
                 )
             }
             if (text.isNotBlank() && enabled) {
-                val arrowUp = with(Lucide) { ArrowUp }
                 IconButton(
                     onClick = {
                         onSubmit(text)
@@ -141,7 +141,7 @@ fun BlockInputField(
                     modifier = Modifier.size(32.dp),
                 ) {
                     Icon(
-                        imageVector = arrowUp,
+                        painter = painterResource(R.drawable.lucide_arrow_up),
                         contentDescription = "Send",
                         tint = IrisPrimary,
                         modifier = Modifier.size(16.dp),

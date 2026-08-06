@@ -33,7 +33,6 @@ androidxNavigation = "2.9.5"
 composeBom = "2026.04.01"
 composeMaterial3 = "1.4.0-alpha02"
 composeMaterialIcons = "1.7.8"
-composeIconsLucide = "2.2.1"
 
 # DI
 hilt = "2.57"
@@ -111,7 +110,6 @@ compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "composeMaterialIcons" }
-compose-icons-lucide = { group = "com.composables", name = "icons-lucide-cmp", version.ref = "composeIconsLucide" }
 compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 

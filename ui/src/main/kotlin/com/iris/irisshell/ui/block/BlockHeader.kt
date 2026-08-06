@@ -17,7 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import com.composables.icons.lucide.Lucide
+import androidx.compose.ui.res.painterResource
+import com.iris.irisshell.ui.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -133,7 +134,6 @@ private fun NetworkLabel(delta: NetworkDelta) {
 
 @Composable
 private fun CopyButton(onClick: () -> Unit) {
-    val copyIcon = with(Lucide) { Copy }
     Box(
         modifier = Modifier
             .size(28.dp)
@@ -141,7 +141,7 @@ private fun CopyButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = copyIcon,
+            painter = painterResource(R.drawable.lucide_copy),
             contentDescription = "Copy",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier.size(15.dp),
@@ -151,7 +151,6 @@ private fun CopyButton(onClick: () -> Unit) {
 
 @Composable
 private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
-    val chevronIcon = with(Lucide) { ChevronDown }
     Box(
         modifier = Modifier
             .size(28.dp)
@@ -159,7 +158,7 @@ private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = chevronIcon,
+            painter = painterResource(R.drawable.lucide_chevron_down),
             contentDescription = if (isCollapsed) "Expand" else "Collapse",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier
