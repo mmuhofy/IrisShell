@@ -1,5 +1,9 @@
 package com.iris.irisshell.ui.block
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +45,7 @@ fun BlockTerminalView(
     onEditCommand: (String) -> Unit = {},
     onExportOutput: (Block) -> Unit = {},
     onDeleteBlock: (String) -> Unit = {},
+    promptLabel: String = "iris",
     modifier: Modifier = Modifier,
 ) {
     val list by blocks.collectAsStateWithLifecycle()
@@ -90,15 +95,23 @@ fun BlockTerminalView(
                     )
                 }
             }
-            SimpleScrollbar(
-                listState = listState,
-                itemCount = list.size,
+            val isScrolling = listState.isScrollInProgress
+            AnimatedVisibility(
+                visible = isScrolling && list.size > 4,
+                enter = fadeIn(tween(120)),
+                exit = fadeOut(tween(220)),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = 3.dp)
                     .fillMaxHeight()
                     .width(3.dp),
-            )
+            ) {
+                SimpleScrollbar(
+                    listState = listState,
+                    itemCount = list.size,
+                    modifier = Modifier.fillMaxHeight(),
+                )
+            }
             JumpToBottom(
                 visible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 < list.size - 2,
                 listState = listState,
@@ -108,9 +121,12 @@ fun BlockTerminalView(
                     .padding(end = 14.dp, bottom = 14.dp),
             )
         }
-        BlockInputField(onSubmit = { cmd ->
-            onCommandSubmitted("", cmd)
-        })
+        BlockInputField(
+            onSubmit = { cmd ->
+                onCommandSubmitted("", cmd)
+            },
+            promptLabel = promptLabel,
+        )
     }
 }
 
