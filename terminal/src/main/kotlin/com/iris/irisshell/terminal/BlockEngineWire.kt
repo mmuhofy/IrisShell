@@ -35,7 +35,15 @@ class BlockEngineWire(
     override var lastPrompt: String = DEFAULT_PROMPT
         private set
 
+    /** Last directory inferred from the prompt's path component. */
+    @Volatile
+    override var lastDir: String = "~"
+        private set
+
     private var pendingEcho: String? = null
+
+    /** True while we are waiting for the echo of a `clear` command. */
+    private var pendingEchoWasClear: Boolean = false
 
     fun onSessionTextChanged(session: TerminalSession) {
         val emulator: TerminalEmulator = session.emulator ?: return
@@ -70,6 +78,13 @@ class BlockEngineWire(
         if (firstIsEcho) pendingEcho = null
         val linesAfterEcho = if (firstIsEcho) nonEmpty.drop(1) else nonEmpty
 
+        // `clear` command — drop all blocks and skip output.
+        if (pendingEchoWasClear) {
+            pendingEchoWasClear = false
+            blockRepository.clear()
+            return
+        }
+
         if (linesAfterEcho.isEmpty()) return
 
         val lastLineOfAppended = linesAfterEcho.last()
@@ -87,12 +102,13 @@ class BlockEngineWire(
                 blockRepository.onOutputChunk(outputLines.joinToString("\n"))
             }
             lastPrompt = promptText.ifBlank { DEFAULT_PROMPT }
+            updateDirFromPrompt(lastPrompt)
             pendingEcho = null
             blockRepository.onCommandCompleted(exitCode = 0)
             return
         }
 
-        blockRepository.onOutputChunk(linesAfterEcho.joinToString("\n"))
+        blockRepository.onBootOutput(linesAfterEcho.joinToString("\n"))
 
         val lastVisibleLine = current.substringAfterLast('\n').trimEnd('\r')
         if (linesAfterEcho.size == 1 && lastLineOfAppended != lastVisibleLine) {
@@ -100,6 +116,7 @@ class BlockEngineWire(
             if (visibleSuffix != null) {
                 val visiblePromptText = lastVisibleLine.substring(0, visibleSuffix.range.first).trimEnd()
                 lastPrompt = visiblePromptText.ifBlank { DEFAULT_PROMPT }
+                updateDirFromPrompt(lastPrompt)
                 pendingEcho = null
                 blockRepository.onCommandCompleted(exitCode = 0)
             }
@@ -108,6 +125,7 @@ class BlockEngineWire(
 
     fun onCommandSubmitted(command: String) {
         pendingEcho = command
+        if (command.trim() == "clear") pendingEchoWasClear = true
     }
 
     fun reset() {
@@ -137,5 +155,15 @@ class BlockEngineWire(
         const val MIN_ANCHOR_BYTES = 16
         const val MAX_ANCHOR_BYTES = 8192
         val PROMPT_SUFFIX_REGEX = Regex("""[#$❯➜]\s*$""")
+        // Last `:`..suffix segment is the path: `user@host:~/path`.
+        val PROMPT_DIR_REGEX = Regex(""":([^:$#❯➜]*)$""")
+    }
+
+    private fun updateDirFromPrompt(prompt: String) {
+        val match = PROMPT_DIR_REGEX.find(prompt) ?: return
+        val path = match.groupValues[1]
+        if (path.isBlank()) return
+        val tail = path.trimEnd('/').substringAfterLast('/').ifBlank { "~" }
+        lastDir = tail
     }
 }

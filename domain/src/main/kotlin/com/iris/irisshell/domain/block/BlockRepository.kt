@@ -36,6 +36,15 @@ interface BlockRepository {
     fun onOutputChunk(chunk: String)
 
     /**
+     * Append output to a shell-only "boot" block that has no command.
+     * Used when the wire receives terminal output before any command
+     * was submitted — typically the welcome message printed by .zshrc
+     * or .bashrc. The block lives until [onCommandCompleted] or
+     * [clear].
+     */
+    fun onBootOutput(chunk: String)
+
+    /**
      * Mark the running block as completed with the given exit code.
      * Idempotent — calling twice has no effect.
      */

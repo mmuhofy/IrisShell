@@ -80,6 +80,30 @@ class BlockRepositoryImpl @Inject constructor() : BlockRepository {
         replaceBlock(updated)
     }
 
+    override fun onBootOutput(chunk: String) {
+        if (chunk.isEmpty()) return
+        // Lazily create a boot-only block the first time we see
+        // pre-command output (e.g. .zshrc welcome message).
+        val current = _runningBlock.value
+        if (current == null) {
+            val boot = Block(
+                id = java.util.UUID.randomUUID().toString(),
+                prompt = "",
+                command = "",
+                outputLines = chunk.split('\n'),
+                state = BlockState.Success(exitCode = 0),
+                startedAtMs = System.currentTimeMillis(),
+                completedAtMs = System.currentTimeMillis(),
+                startRxBytes = 0,
+                startTxBytes = 0,
+            )
+            appendBlock(boot)
+            return
+        }
+        // Already in a running block — defer to normal path.
+        onOutputChunk(chunk)
+    }
+
     override fun onCommandCompleted(exitCode: Int) {
         val running = _runningBlock.value ?: return
         // Flush any trailing partial line into the output.
