@@ -59,8 +59,8 @@ fun ExtraKeyBar(
             ) {
                 row.forEach { key ->
                     val stuck = when (key) {
-                        is ExtraKey.Special.CTRL -> ctrlStuck
-                        is ExtraKey.Special.ALT -> altStuck
+                        ExtraKey.Special.CTRL -> ctrlStuck
+                        ExtraKey.Special.ALT -> altStuck
                         else -> false
                     }
                     ExtraKeyButton(

@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.awaitFirstDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
@@ -58,9 +59,9 @@ fun ExtraKeyButton(
             .defaultMinSize(minWidth = 44.dp, minHeight = 36.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(if (stuckActive) IrisSurface else IrisBackground)
+            .ripple()
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(bounded = true, radius = 24.dp),
                 role = Role.Button,
                 onClick = onTap,
             )
@@ -79,7 +80,7 @@ fun ExtraKeyButton(
                                 longPressed = true
                                 onLongPress()
                             }
-                            if (event.changes.firstOrNull()?.consumed == true) break
+                            if (event.changes.firstOrNull()?.isConsumed == true) break
                             delay(LONG_PRESS_POLL_MS)
                         }
                     }

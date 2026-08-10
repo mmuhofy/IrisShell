@@ -21,7 +21,7 @@ class ExtraKeyState : StickyModifierState {
     var altActive: Boolean = false
     var altLocked: Boolean = false
 
-    fun tapCtrl() {
+    override fun tapCtrl() {
         if (ctrlLocked) {
             ctrlLocked = false
             ctrlActive = false
@@ -43,7 +43,7 @@ class ExtraKeyState : StickyModifierState {
         return true
     }
 
-    fun tapAlt() {
+    override fun tapAlt() {
         if (altLocked) {
             altLocked = false
             altActive = false

@@ -4,7 +4,7 @@ import android.view.KeyEvent
 import com.iris.irisshell.domain.input.ExtraKey
 import com.iris.irisshell.domain.input.InputIntent
 import com.iris.irisshell.terminal.ExtraKeyState
-import com.iris.irisshell.terminal.KeyHandler
+import com.termux.terminal.KeyHandler
 import com.termux.terminal.TerminalSession
 
 /**
