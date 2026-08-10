@@ -106,12 +106,18 @@ _Scope (revised 2026-07-28): TopBar modal session switcher only — no Home scre
 ## Phase 3 — Input System
 *Goal: The best terminal input experience on Android.*
 
-### Keyboard Handle & Extra Keys
-- [ ] `KeyboardHandle.kt` — thin handle above keyboard
-- [ ] Tap → toggle extra key bar
-- [ ] Extra key bar — ESC, TAB, CTRL, ALT, |, -, /, arrows, PgUp, PgDn, Home, End
-- [ ] Second tap → hide
-- [ ] Hidden by default
+### Keyboard Handle & Extra Keys (Sprint 1 — COMPLETED 2026-08-10)
+- [x] `KeyboardHandle.kt` — thin handle above keyboard
+- [x] Tap → toggle extra key bar
+- [x] Extra key bar — ESC, TAB, CTRL, ALT, ←, ↓, ↑, →, HOME, END, PGUP, PGDN, -, |
+- [x] Second tap → hide
+- [x] Hidden by default (DataStore persisted)
+- [x] Hardware keyboard detection → auto-hide bar
+- [x] Modifier sticky state: tap=sticky (one-shot), long-press=popup with combos
+- [x] Works in both Classic (TerminalView) and Block (Compose) modes
+- [x] Classic: TerminalViewClientImpl.readControlKey/readAltKey wired to ExtraKeyState
+- [x] Block: Ctrl+C/Z/D/X flush raw bytes to PTY via SubmitRawByteUseCase
+- [x] Settings toggle: "Extra Keys Bar" in SettingsScreen
 
 ### Ghost Text Autocomplete
 - [ ] `GhostTextEngine.kt` — inline ghost text
