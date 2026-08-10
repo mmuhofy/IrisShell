@@ -43,6 +43,7 @@ fun BlockTerminalView(
     onDeleteBlock: (String) -> Unit = {},
     promptLabel: String = "iris",
     modifier: Modifier = Modifier,
+    extraBar: @Composable () -> Unit = {},
 ) {
     val list by blocks.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
@@ -118,6 +119,7 @@ fun BlockTerminalView(
             },
             promptLabel = promptLabel,
         )
+        extraBar()
     }
 }
 

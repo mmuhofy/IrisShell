@@ -41,6 +41,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val useBlockEngine by viewModel.useBlockEngine.collectAsStateWithLifecycle()
+    val extraKeysBarVisible by viewModel.extraKeysBarVisible.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = IrisBackground,
@@ -75,6 +76,12 @@ fun SettingsScreen(
                 subtitle = "Render each command as a HUD-style card with exit code, duration, and network metrics.",
                 checked = useBlockEngine,
                 onCheckedChange = viewModel::setUseBlockEngine,
+            )
+            SettingsToggleRow(
+                title = "Extra Keys Bar",
+                subtitle = "Show an on-screen bar above the keyboard with ESC, TAB, CTRL, ALT, and arrow keys.",
+                checked = extraKeysBarVisible,
+                onCheckedChange = viewModel::setExtraKeysBarVisible,
             )
             HorizontalDivider(color = IrisOutline, modifier = Modifier.padding(vertical = 8.dp))
             SectionHeader("About")

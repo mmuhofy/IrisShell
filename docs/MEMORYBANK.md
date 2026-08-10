@@ -328,12 +328,16 @@ PTY → ANSI → Semantic → Rich Renderer → Compose UI
 
 ## 8. Input System
 
-### Keyboard Handle
-A thin drag handle sits above the system keyboard.
-- **Tap** → toggles extra key bar (Termux-style)
-- **Extra key bar visible:** ESC, TAB, CTRL, ALT, |, -, /, arrows, PgUp, PgDn, Home, End
-- **Second tap** → hides extra key bar
-- Bar is hidden by default — no permanent screen space consumed
+### Keyboard Handle & Extra Keys Bar (Phase 3 Sprint 1 — scope confirmed 2026-08-08)
+- **Layered architecture:** `domain/input/` (pure Kotlin models + use cases), `data/input/` (DataStore + PTY writer), `terminal/input/` (mode-aware dispatcher), `ui/input/` (Compose composables), `app` (integration seam).
+- **Trigger:** A thin Compose `KeyboardHandle` (4dp height, Material 3 `drawerHandle` styling) sits above the system keyboard. Tap → toggles `ExtraKeyBar`.
+- **Visibility:** Persisted in DataStore (`InputPreferencesRepository.extraKeysBarVisible`, default false). When a hardware `KEYBOARD_TYPE_ALPHABETIC` device is detected, bar is hidden automatically (Termux convention).
+- **Layout:** 2-row `FlowRow` — `ESC TAB CTRL ALT ← ↓ ↑ →` / `HOME END PGUP PGDN - |`. Mirrors TODO §"Keyboard Handle & Extra Keys".
+- **Modifier state machine:** `ExtraKeyState` (port already in tree, `terminal/ExtraKeyState.kt`) — single tap = sticky one-shot (next read consumes `isActive`), long-press = popup with preset combos (`CTRL+C/Z/X/V/L/A/E`, `ALT+B/F`). Reused as-is for CTRL/ALT; SHIFT and FN not exposed in v1.
+- **Key dispatch split:**
+  - **Classic mode:** `TerminalView.handleKeyCode()` / `inputCodePoint()` per the existing reference path. `TerminalViewClientImpl.extraKeyState` now wired to the shared `ExtraKeyState` (currently `null`), so `readControlKey()/readAltKey()` consult the sticky state.
+  - **Block mode:** text input flows through `BlockInputField` (existing `BasicTextField`). Modifier-injected bytes (`\u0003` for Ctrl+C, `\u001B` for ESC, `\u001A` for Ctrl+Z, `\u0004` for Ctrl+D) flush to PTY via new `SubmitRawByteUseCase`. `TAB` and arrow keys go into the text field (cursor move); `PgUp/PgDn` scroll the block list.
+- **Open follow-ups (tracked):** Ghost text autocomplete, Shortcut overlay, Voice input — deferred to Sprint 2+.
 
 ### Shortcut Overlay
 Triggered by a dedicated gesture or button (TBD — open decision).

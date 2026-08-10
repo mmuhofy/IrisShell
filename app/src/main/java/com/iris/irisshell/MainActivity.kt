@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.iris.irisshell.domain.terminal.ObserveFirstLaunchUseCase
 import com.iris.irisshell.domain.terminal.TriggerBootstrapUseCase
+import com.iris.irisshell.terminal.ExtraKeyState
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.UbuntuSetupState
 import com.iris.irisshell.ui.setup.BootstrapStepperScreen
@@ -58,6 +59,7 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var terminalManager: TerminalManager
     @Inject lateinit var firstLaunchUseCase: ObserveFirstLaunchUseCase
     @Inject lateinit var triggerBootstrap: TriggerBootstrapUseCase
+    @Inject lateinit var extraKeyState: ExtraKeyState
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,6 +110,7 @@ class MainActivity : ComponentActivity() {
             else -> TerminalNavHost(
                 terminalManager = terminalManager,
                 onRetry = { triggerBootstrap.retry() },
+                extraKeyState = extraKeyState,
             )
         }
     }
@@ -116,6 +119,7 @@ class MainActivity : ComponentActivity() {
     private fun TerminalNavHost(
         terminalManager: TerminalManager,
         onRetry: () -> Unit,
+        extraKeyState: ExtraKeyState,
     ) {
         val navController = rememberNavController()
         NavHost(
@@ -128,6 +132,7 @@ class MainActivity : ComponentActivity() {
                     ubuntuSetupState = UbuntuSetupState.Ready,
                     onRetry = onRetry,
                     onOpenSettings = { navController.navigate("settings") },
+                    extraKeyState = extraKeyState,
                 )
             }
             composable("settings") {

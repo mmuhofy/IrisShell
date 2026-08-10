@@ -1,5 +1,8 @@
 package com.iris.irisshell.data.di
 
+import com.iris.irisshell.data.input.HardwareKeyboardPresenceImpl
+import com.iris.irisshell.data.input.InputPreferencesRepositoryImpl
+import com.iris.irisshell.data.input.SubmitRawByteUseCaseImpl
 import com.iris.irisshell.data.session.ObserveActiveSessionUseCaseImpl
 import com.iris.irisshell.data.session.SessionRepositoryImpl
 import com.iris.irisshell.data.block.BlockRepositoryImpl
@@ -12,6 +15,9 @@ import com.iris.irisshell.data.terminal.SubmitBlockCommandUseCaseImpl
 import com.iris.irisshell.data.terminal.TriggerBootstrap
 import com.iris.irisshell.domain.block.BlockRepository
 import com.iris.irisshell.domain.block.NetworkMetricsCollector
+import com.iris.irisshell.domain.input.HardwareKeyboardPresence
+import com.iris.irisshell.domain.input.InputPreferencesRepository
+import com.iris.irisshell.domain.input.SubmitRawByteUseCase
 import com.iris.irisshell.domain.session.ObserveActiveSessionUseCase
 import com.iris.irisshell.domain.session.SessionRepository
 import com.iris.irisshell.domain.settings.SettingsRepository
@@ -96,4 +102,22 @@ abstract class BindingsModule {
     abstract fun bindSubmitBlockCommand(
         impl: SubmitBlockCommandUseCaseImpl,
     ): SubmitBlockCommandUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindInputPreferencesRepository(
+        impl: InputPreferencesRepositoryImpl,
+    ): InputPreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSubmitRawByte(
+        impl: SubmitRawByteUseCaseImpl,
+    ): SubmitRawByteUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindHardwareKeyboardPresence(
+        impl: HardwareKeyboardPresenceImpl,
+    ): HardwareKeyboardPresence
 }

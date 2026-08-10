@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,6 +33,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
+import com.iris.irisshell.ui.input.InputBarHost
+import com.iris.irisshell.ui.input.InputBarViewModel
 import com.iris.irisshell.ui.session.SessionSwitcherSheet
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.SessionSwitcherTopBar
@@ -68,6 +71,7 @@ fun TerminalScreen(
     onRetry: () -> Unit,
     onOpenSettings: () -> Unit = {},
     terminalViewModel: TerminalViewModel = hiltViewModel(),
+    extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     when (ubuntuSetupState) {
         UbuntuSetupState.Idle,
@@ -83,6 +87,7 @@ fun TerminalScreen(
                 terminalManager = terminalManager,
                 terminalViewModel = terminalViewModel,
                 onOpenSettings = onOpenSettings,
+                extraKeyState = extraKeyState,
             )
         }
         is UbuntuSetupState.Failed -> {
@@ -102,6 +107,8 @@ private fun ReadyScreen(
     onOpenSettings: () -> Unit,
     sessionSwitcherViewModel: SessionSwitcherViewModel = hiltViewModel(),
     blockEngineViewModel: BlockEngineViewModel = hiltViewModel(),
+    inputBarViewModel: InputBarViewModel = hiltViewModel(),
+    extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     var fullscreen by remember { mutableStateOf(false) }
     var switcherOpen by remember { mutableStateOf(false) }
@@ -168,84 +175,109 @@ private fun ReadyScreen(
                 onOpenSettings = onOpenSettings,
             )
         }
-        // Box no longer owns the pinch gesture — Termux's ScaleGestureDetector
-        // handles it through TerminalViewClient.onScale. The Box is just a
-        // container for the AndroidView + the optional fullscreen overlay.
-        Box(
-            modifier = Modifier.fillMaxSize(),
+        // IME-aware column — lifts everything above the system keyboard.
+        // The InputBarHost sits at the very bottom, just above the IME.
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding(),
         ) {
-            if (useBlockEngine) {
-                val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
-                val hiddenIds by blockEngineViewModel.hiddenIds.collectAsState()
-                val exportRequest by blockEngineViewModel.exportRequest.collectAsState()
-                val clipboardEvent by blockEngineViewModel.clipboardRequest.collectAsState()
-                val pendingEdit by blockEngineViewModel.pendingEdit.collectAsState()
+            // Box no longer owns the pinch gesture — Termux's ScaleGestureDetector
+            // handles it through TerminalViewClient.onScale. The Box is just a
+            // container for the AndroidView + the optional fullscreen overlay.
+            Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                if (useBlockEngine) {
+                    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+                    val hiddenIds by blockEngineViewModel.hiddenIds.collectAsState()
+                    val exportRequest by blockEngineViewModel.exportRequest.collectAsState()
+                    val clipboardEvent by blockEngineViewModel.clipboardRequest.collectAsState()
+                    val pendingEdit by blockEngineViewModel.pendingEdit.collectAsState()
 
-                androidx.compose.runtime.LaunchedEffect(exportRequest) {
-                    if (exportRequest != null) {
-                        // v1: file export not wired — clear marker. Future:
-                        // FileProvider via Intent.ACTION_CREATE_DOCUMENT.
-                        blockEngineViewModel.consumeExportRequest()
+                    androidx.compose.runtime.LaunchedEffect(exportRequest) {
+                        if (exportRequest != null) {
+                            // v1: file export not wired — clear marker. Future:
+                            // FileProvider via Intent.ACTION_CREATE_DOCUMENT.
+                            blockEngineViewModel.consumeExportRequest()
+                        }
+                    }
+                    androidx.compose.runtime.LaunchedEffect(clipboardEvent) {
+                        val event = clipboardEvent ?: return@LaunchedEffect
+                        val text = when (event) {
+                            is BlockEngineViewModel.ClipboardEvent.Command ->
+                                "${event.prompt} ${event.command}"
+                            is BlockEngineViewModel.ClipboardEvent.Output -> event.text
+                        }
+                        clipboard.setText(androidx.compose.ui.text.AnnotatedString(text))
+                        blockEngineViewModel.consumeClipboardRequest()
+                    }
+
+                    val visibleBlocks = remember {
+                        kotlinx.coroutines.flow.MutableStateFlow(
+                            emptyList<com.iris.irisshell.domain.block.Block>()
+                        )
+                    }
+                    val blocksRaw by blockEngineViewModel.blocks.collectAsState()
+                    androidx.compose.runtime.LaunchedEffect(blocksRaw, hiddenIds) {
+                        visibleBlocks.value = blocksRaw.filterNot { it.id in hiddenIds }
+                    }
+
+                    val lastDir by blockEngineViewModel.lastDir.collectAsState()
+
+                    BlockTerminalView(
+                        blocks = visibleBlocks,
+                        onToggleCollapsed = blockEngineViewModel::onToggleCollapsed,
+                        onCommandSubmitted = blockEngineViewModel::onCommandSubmitted,
+                        onCopyCommand = blockEngineViewModel::onCopyCommand,
+                        onCopyOutput = blockEngineViewModel::onCopyOutput,
+                        onRerunCommand = blockEngineViewModel::onRerunCommand,
+                        onEditCommand = { cmd ->
+                            blockEngineViewModel.onEditCommand(cmd)
+                            blockEngineViewModel.consumePendingEdit()
+                        },
+                        onExportOutput = blockEngineViewModel::onExportOutput,
+                        onDeleteBlock = blockEngineViewModel::onDeleteBlock,
+                        promptLabel = lastDir,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    TerminalViewHost(
+                        terminalManager = terminalManager,
+                        fontSizeSp = fontSizeSp,
+                        terminalViewModel = terminalViewModel,
+                        extraKeyState = extraKeyState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = appearScale.value
+                                scaleY = appearScale.value
+                                alpha = appearAlpha.value
+                            },
+                    )
+                }
+
+                if (fullscreen) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        contentAlignment = Alignment.TopStart,
+                    ) {
+                        CompactFullscreenExit {
+                            fullscreen = false
+                        }
                     }
                 }
-                androidx.compose.runtime.LaunchedEffect(clipboardEvent) {
-                    val event = clipboardEvent ?: return@LaunchedEffect
-                    val text = when (event) {
-                        is BlockEngineViewModel.ClipboardEvent.Command ->
-                            "${event.prompt} ${event.command}"
-                        is BlockEngineViewModel.ClipboardEvent.Output -> event.text
-                    }
-                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(text))
-                    blockEngineViewModel.consumeClipboardRequest()
-                }
-
-                val visibleBlocks = remember { kotlinx.coroutines.flow.MutableStateFlow(emptyList<com.iris.irisshell.domain.block.Block>()) }
-                val blocksRaw by blockEngineViewModel.blocks.collectAsState()
-                androidx.compose.runtime.LaunchedEffect(blocksRaw, hiddenIds) {
-                    visibleBlocks.value = blocksRaw.filterNot { it.id in hiddenIds }
-                }
-
-                val lastDir by blockEngineViewModel.lastDir.collectAsState()
-
-                BlockTerminalView(
-                    blocks = visibleBlocks,
-                    onToggleCollapsed = blockEngineViewModel::onToggleCollapsed,
-                    onCommandSubmitted = blockEngineViewModel::onCommandSubmitted,
-                    onCopyCommand = blockEngineViewModel::onCopyCommand,
-                    onCopyOutput = blockEngineViewModel::onCopyOutput,
-                    onRerunCommand = blockEngineViewModel::onRerunCommand,
-                    onEditCommand = { cmd ->
-                        blockEngineViewModel.onEditCommand(cmd)
-                        blockEngineViewModel.consumePendingEdit()
-                    },
-                    onExportOutput = blockEngineViewModel::onExportOutput,
-                    onDeleteBlock = blockEngineViewModel::onDeleteBlock,
-                    promptLabel = lastDir,
-                )
-            } else {
-                TerminalViewHost(
-                    terminalManager = terminalManager,
-                    fontSizeSp = fontSizeSp,
-                    terminalViewModel = terminalViewModel,
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = appearScale.value
-                        scaleY = appearScale.value
-                        alpha = appearAlpha.value
-                    },
-                )
             }
 
-            if (fullscreen) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    contentAlignment = Alignment.TopStart,
-                ) {
-                    CompactFullscreenExit {
-                        fullscreen = false
-                    }
-                }
+            // On-screen input bar — handle + extra keys, rendered above IME.
+            // Hidden in fullscreen mode (the user wants maximum space).
+            if (!fullscreen) {
+                val inputBarState by inputBarViewModel.uiState.collectAsState()
+                InputBarHost(
+                    uiState = inputBarState,
+                    onToggle = inputBarViewModel::toggleBarVisible,
+                    onIntent = inputBarViewModel::onIntent,
+                )
             }
         }
 
@@ -353,6 +385,7 @@ private fun TerminalViewHost(
     fontSizeSp: Int,
     terminalViewModel: TerminalViewModel,
     modifier: Modifier = Modifier,
+    extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     val terminalViewRef = remember {
         androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
@@ -363,13 +396,19 @@ private fun TerminalViewHost(
     // AndroidView's onTouchEvent consumes them — the Termux recogniser
     // fires before Compose does. So pinch has to go through
     // TerminalViewClient.onScale, which is the only thing Termux exposes.
-    val viewClient = remember(terminalViewModel) {
+    //
+    // `extraKeyState` is the SAME singleton shared by `InputDispatcher`
+    // (and the extra-keys bar) — wired in here so `readControlKey()` /
+    // `readAltKey()` see the sticky modifier state set by the on-screen
+    // bar buttons. See `docs/MEMORYBANK.md` §8.
+    val viewClient = remember(terminalViewModel, extraKeyState) {
         TerminalViewClientImpl(
             onScaleChange = { factor ->
                 terminalViewModel.bumpFontSize(factor)
                 terminalViewModel.showSlider()
                 factor
             },
+            extraKeyState = extraKeyState,
         )
     }
 

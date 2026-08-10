@@ -16,9 +16,11 @@ import javax.inject.Singleton
 /**
  * DataStore-backed implementation of [SettingsRepository].
  *
- * Block Mode flag lives at [KEY_USE_BLOCK_ENGINE]. Reads emit false on
- * first launch (the default), so Classic Terminal stays the user's
- * out-of-the-box experience — matching `docs/block-engine/PLAN.md` §2.
+ * Block Mode flag lives at [KEY_USE_BLOCK_ENGINE]; extra-keys bar
+ * visibility lives at [KEY_EXTRA_KEYS_BAR_VISIBLE]. Both default to
+ * false on first launch, so the user's out-of-the-box experience is
+ * Classic Terminal with no on-screen bar — matching
+ * `docs/block-engine/PLAN.md` §2 and `docs/MEMORYBANK.md` §8.
  */
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
@@ -34,8 +36,17 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_USE_BLOCK_ENGINE] = enabled }
     }
 
+    override val extraKeysBarVisible: Flow<Boolean> =
+        dataStore.data.map { prefs -> prefs[KEY_EXTRA_KEYS_BAR_VISIBLE] ?: DEFAULT_EXTRA_KEYS_BAR_VISIBLE }
+
+    override suspend fun setExtraKeysBarVisible(visible: Boolean) {
+        dataStore.edit { prefs -> prefs[KEY_EXTRA_KEYS_BAR_VISIBLE] = visible }
+    }
+
     private companion object {
         val KEY_USE_BLOCK_ENGINE = booleanPreferencesKey("use_block_engine")
         const val DEFAULT_USE_BLOCK_ENGINE: Boolean = false
+        val KEY_EXTRA_KEYS_BAR_VISIBLE = booleanPreferencesKey("extra_keys_bar_visible")
+        const val DEFAULT_EXTRA_KEYS_BAR_VISIBLE: Boolean = false
     }
 }
