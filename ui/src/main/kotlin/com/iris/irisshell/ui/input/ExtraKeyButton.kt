@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,7 +59,6 @@ fun ExtraKeyButton(
             .background(if (stuckActive) IrisSurface else IrisBackground)
             .clickable(
                 interactionSource = interactionSource,
-                indication = @Suppress("DEPRECATION") rememberRipple(bounded = true, radius = 24.dp),
                 role = Role.Button,
                 onClick = onTap,
             )
