@@ -101,9 +101,9 @@ class InputDispatcher(
         val keyMod = buildKeyHandlerMod(ctrlDown, altDown)
         val code = KeyHandler.getCode(
             keyCode = keyCode,
-            keyMod = keyMod,
-            applicationCursorKeys = false,
-            applicationKeypad = false,
+            keyMode = keyMod,
+            cursorApp = false,
+            keypadApplication = false,
         )
         code?.let { session.write(it) }
     }

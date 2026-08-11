@@ -2,21 +2,20 @@ package com.iris.irisshell.ui.input
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.awaitFirstDown
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -65,26 +64,11 @@ fun ExtraKeyButton(
                 role = Role.Button,
                 onClick = onTap,
             )
-            .pointerInput(key, longPressDelayMs) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        val deadline = down.uptimeMillis + longPressDelayMs
-                        var longPressed = false
-                        while (!longPressed) {
-                            val event = awaitPointerEvent()
-                            val elapsed = event.changes.firstOrNull()?.uptimeMillis
-                                ?: down.uptimeMillis
-                            if (event.changes.firstOrNull()?.pressed != true) break
-                            if (elapsed >= deadline) {
-                                longPressed = true
-                                onLongPress()
-                            }
-                            if (event.changes.firstOrNull()?.isConsumed == true) break
-                            delay(LONG_PRESS_POLL_MS)
-                        }
-                    }
-                }
+            .pointerInput(key) {
+                detectTapGestures(
+                    onLongPress = onLongPress,
+                    onTap = onTap
+                )
             },
         contentAlignment = Alignment.Center,
     ) {
