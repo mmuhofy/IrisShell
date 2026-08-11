@@ -3,13 +3,14 @@ package com.iris.irisshell.ui.input
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.pointerInput
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -53,21 +54,20 @@ fun ExtraKeyButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
-    Box(
+Box(
         modifier = modifier
             .defaultMinSize(minWidth = 44.dp, minHeight = 36.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(if (stuckActive) IrisSurface else IrisBackground)
-            .ripple()
             .clickable(
                 interactionSource = interactionSource,
+                indication = rememberRipple(bounded = true, radius = 24.dp),
                 role = Role.Button,
                 onClick = onTap,
             )
             .pointerInput(key) {
                 detectTapGestures(
-                    onLongPress = onLongPress,
-                    onTap = onTap
+                    onLongPress = onLongPress
                 )
             },
         contentAlignment = Alignment.Center,
