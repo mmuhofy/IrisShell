@@ -53,7 +53,12 @@ class HardwareKeyboardPresenceImpl @Inject constructor(
         val ids = InputDevice.getDeviceIds()
         ids.forEach { id ->
             val device = InputDevice.getDevice(id) ?: return@forEach
-            if (device.keyboardType == InputDevice.KEYBOARD_TYPE_ALPHABETIC) return true
+            if (!device.isVirtual &&
+                device.sources and InputDevice.SOURCE_KEYBOARD != 0 &&
+                device.keyboardType == InputDevice.KEYBOARD_TYPE_ALPHABETIC
+            ) {
+                return true
+            }
         }
         return false
     }

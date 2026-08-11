@@ -16,10 +16,10 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     val useBlockEngine: StateFlow<Boolean> = settings.useBlockEngine
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val extraKeysBarVisible: StateFlow<Boolean> = settings.extraKeysBarVisible
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun setUseBlockEngine(enabled: Boolean) {
         viewModelScope.launch { settings.setUseBlockEngine(enabled) }
