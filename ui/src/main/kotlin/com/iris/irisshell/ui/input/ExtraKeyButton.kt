@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple.rememberRipple
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -58,9 +58,9 @@ fun ExtraKeyButton(
             .defaultMinSize(minWidth = 44.dp, minHeight = 36.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(if (stuckActive) IrisSurface else IrisBackground)
+            .ripple()
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(bounded = true, radius = 24.dp),
                 role = Role.Button,
                 onClick = onTap,
             )
