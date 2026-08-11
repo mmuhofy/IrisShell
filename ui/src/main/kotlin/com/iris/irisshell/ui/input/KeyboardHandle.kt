@@ -49,7 +49,7 @@ fun KeyboardHandle(
             .background(IrisSurfaceVariant)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(bounded = false, radius = 18.dp),
+                indication = @Suppress("DEPRECATION") rememberRipple(bounded = false, radius = 18.dp),
                 role = Role.Switch,
                 onClick = onToggle,
             )

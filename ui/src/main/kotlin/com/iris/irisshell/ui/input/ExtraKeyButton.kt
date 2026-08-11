@@ -60,7 +60,7 @@ fun ExtraKeyButton(
             .background(if (stuckActive) IrisSurface else IrisBackground)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(bounded = true, radius = 24.dp),
+                indication = @Suppress("DEPRECATION") rememberRipple(bounded = true, radius = 24.dp),
                 role = Role.Button,
                 onClick = onTap,
             )
