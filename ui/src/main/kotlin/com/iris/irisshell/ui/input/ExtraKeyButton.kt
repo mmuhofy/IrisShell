@@ -58,7 +58,6 @@ fun ExtraKeyButton(
             .defaultMinSize(minWidth = 44.dp, minHeight = 36.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(if (stuckActive) IrisSurface else IrisBackground)
-            .ripple()
             .clickable(
                 interactionSource = interactionSource,
                 indication = @Suppress("DEPRECATION") rememberRipple(bounded = true, radius = 24.dp),

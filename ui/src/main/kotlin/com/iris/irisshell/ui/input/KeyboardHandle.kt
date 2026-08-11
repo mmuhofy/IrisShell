@@ -47,7 +47,6 @@ fun KeyboardHandle(
             .fillMaxWidth()
             .height(20.dp)
             .background(IrisSurfaceVariant)
-            .ripple()
             .clickable(
                 interactionSource = interactionSource,
                 indication = @Suppress("DEPRECATION") rememberRipple(bounded = false, radius = 18.dp),
