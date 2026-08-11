@@ -53,7 +53,7 @@ fun ExtraKeyButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
-Box(
+    Box(
         modifier = modifier
             .defaultMinSize(minWidth = 44.dp, minHeight = 36.dp)
             .clip(RoundedCornerShape(8.dp))
@@ -66,7 +66,7 @@ Box(
             )
             .pointerInput(key) {
                 detectTapGestures(
-                    onLongPress = onLongPress
+                    onLongPress = { _ -> onLongPress() }
                 )
             },
         contentAlignment = Alignment.Center,
