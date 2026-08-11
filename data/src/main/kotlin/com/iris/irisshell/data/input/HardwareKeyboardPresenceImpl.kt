@@ -1,5 +1,6 @@
 package com.iris.irisshell.data.input
 
+import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import android.view.InputDevice
@@ -33,8 +34,14 @@ class HardwareKeyboardPresenceImpl @Inject constructor(
 ) : HardwareKeyboardPresence {
 
     override val isPresent: Flow<Boolean> = callbackFlow {
-        val listener = android.content.ComponentCallbacks2 { _ ->
-            trySend(currentlyPresent())
+        val listener = object : ComponentCallbacks2 {
+            override fun onConfigurationChanged(newConfig: Configuration) {
+                trySend(currentlyPresent())
+            }
+
+            override fun onLowMemory() = Unit
+
+            override fun onTrimMemory(level: Int) = Unit
         }
         context.registerComponentCallbacks(listener)
         awaitClose { context.unregisterComponentCallbacks(listener) }
@@ -50,8 +57,4 @@ class HardwareKeyboardPresenceImpl @Inject constructor(
         }
         return false
     }
-
-    @Suppress("unused")
-    private fun isLandscape(configuration: Configuration): Boolean =
-        configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 }
