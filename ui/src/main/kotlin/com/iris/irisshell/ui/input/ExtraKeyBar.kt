@@ -21,15 +21,14 @@ import com.iris.irisshell.domain.input.ExtraKey
 import com.iris.irisshell.domain.input.ExtraKeyBarLayout
 import com.iris.irisshell.domain.input.InputIntent
 
+private val BAR_SHAPE = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+
 /**
- * The 2-row on-screen bar — see [ExtraKeyBarLayout] for the default
- * layout. Keys are flush against one another (no gaps, iOS-keyboard
- * style); a per-key rounded highlight is painted by [ExtraKeyButton]
- * on press/sticky armed.
- *
- * The bar uses a translucent surface with a soft drop-shadow and
- * rounded top corners so it reads as a "liquid glass" overlay surface
- * floating above the terminal — rather than a heavy opaque slab.
+ * The 2-row on-screen bar sized to mirror Termux's `ExtraKeysView`
+ * — compact keys, edge-to-edge with no inter-key gaps. The bar uses a
+ * translucent "liquid glass" surface with rounded top corners so it
+ * floats over the IME like an overlay rather than reading as a heavy
+ * slab.
  *
  * UNTESTED — verify on device.
  */
@@ -43,24 +42,19 @@ fun ExtraKeyBar(
 ) {
     var activePopup: ExtraKey.Special? by remember { mutableStateOf(null) }
 
-    val barShape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
-
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(barShape)
+            .clip(BAR_SHAPE)
             .background(IrisSurfaceVariant.copy(alpha = 0.78f))
-            .padding(vertical = 6.dp),
+            .padding(vertical = 4.dp),
     ) {
-        ExtraKeyBarLayout.rows.forEachIndexed { index, row ->
+        ExtraKeyBarLayout.rows.forEach { row ->
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = 4.dp,
-                        vertical = if (index == 0) 2.dp else 2.dp,
-                    ),
-                horizontalArrangement = Arrangement.spacedBy(0.dp),
+                    .padding(horizontal = 2.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.Start,
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 maxItemsInEachRow = row.size,
             ) {

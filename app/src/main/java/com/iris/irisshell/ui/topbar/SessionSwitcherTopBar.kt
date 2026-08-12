@@ -58,6 +58,8 @@ import com.iris.irisshell.ui.theme.IrisTextSecondary
 fun SessionSwitcherTopBar(
     viewModel: SessionSwitcherViewModel,
     isFullscreen: Boolean,
+    keyboardFocused: Boolean = true,
+    onToggleKeyboard: () -> Unit = {},
     onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onClose: () -> Unit,
@@ -120,6 +122,18 @@ fun SessionSwitcherTopBar(
             }
         },
         actions = {
+            IconButton(onClick = onToggleKeyboard) {
+                Icon(
+                    painter = androidx.compose.ui.res.painterResource(
+                        if (keyboardFocused) com.iris.irisshell.ui.R.drawable.lucide_keyboard_off
+                        else com.iris.irisshell.ui.R.drawable.lucide_keyboard
+                    ),
+                    contentDescription =
+                        if (keyboardFocused) "Hide keyboard" else "Show keyboard",
+                    tint = IrisTextSecondary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
             MoreActionsMenu(
                 isFullscreen = isFullscreen,
                 onRefresh = onRefresh,

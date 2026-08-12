@@ -118,6 +118,28 @@ private fun ReadyScreen(
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
 
+    // Keyboard focus / IME visibility is owned here so the TopBar
+    // button and the TerminalView's touch handler can both toggle it.
+    // Termux's TerminalView doesn't auto-show the IME on tap — we
+    // bridge that gap by detecting taps on the AndroidView surface
+    // and calling `requestFocus()` + `show()` ourselves.
+    var keyboardFocused by remember { androidx.compose.runtime.mutableStateOf(true) }
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+
+    fun showKeyboard() {
+        keyboardController?.show()
+        keyboardFocused = true
+    }
+
+    fun hideKeyboard() {
+        keyboardController?.hide()
+        keyboardFocused = false
+    }
+
+    fun toggleKeyboard() {
+        if (keyboardFocused) hideKeyboard() else showKeyboard()
+    }
+
     // Session-switch entry animation. When activeId changes, snap the
     // terminal view to (scale 0.92, alpha 0) then animate back to (1, 1).
     // The chosen card in the session switcher thus "explodes forward"
@@ -164,6 +186,8 @@ private fun ReadyScreen(
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
+                keyboardFocused = keyboardFocused,
+                onToggleKeyboard = ::toggleKeyboard,
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
                     terminalManager.addTab()
@@ -246,6 +270,7 @@ private fun ReadyScreen(
                         fontSizeSp = fontSizeSp,
                         terminalViewModel = terminalViewModel,
                         extraKeyState = extraKeyState,
+                        onTapToFocusKeyboard = ::showKeyboard,
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
@@ -387,6 +412,7 @@ private fun TerminalViewHost(
     terminalViewModel: TerminalViewModel,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
+    onTapToFocusKeyboard: () -> Unit = {},
 ) {
     val terminalViewRef = remember {
         androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
@@ -440,6 +466,7 @@ private fun TerminalViewHost(
                 terminalManager.currentSession?.let { session -> attachSession(session) }
                 terminalManager.registerTerminalView(this, ctx)
                 terminalViewRef.value = this
+                setOnClickListener { onTapToFocusKeyboard() }
             }
         },
         update = { view ->
