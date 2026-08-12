@@ -7,14 +7,15 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.domain.input.ExtraKey
 import com.iris.irisshell.domain.input.ExtraKeyBarLayout
@@ -22,14 +23,13 @@ import com.iris.irisshell.domain.input.InputIntent
 
 /**
  * The 2-row on-screen bar — see [ExtraKeyBarLayout] for the default
- * layout. Renders one [ExtraKeyButton] per key, dispatching [onIntent]
- * on tap (translated from the key) and showing a [ModifierPopup] on
- * long-press of CTRL/ALT.
+ * layout. Keys are flush against one another (no gaps, iOS-keyboard
+ * style); a per-key rounded highlight is painted by [ExtraKeyButton]
+ * on press/sticky armed.
  *
- * The bar announces [ctrlStuck]/[altStuck] so modifier buttons render
- * the sticky highlight — these come from the owning
- * [InputBarViewModel], which reads them off `ExtraKeyState` (the
- * shared modifier container).
+ * The bar uses a translucent surface with a soft drop-shadow and
+ * rounded top corners so it reads as a "liquid glass" overlay surface
+ * floating above the terminal — rather than a heavy opaque slab.
  *
  * UNTESTED — verify on device.
  */
@@ -43,18 +43,25 @@ fun ExtraKeyBar(
 ) {
     var activePopup: ExtraKey.Special? by remember { mutableStateOf(null) }
 
+    val barShape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(IrisSurfaceVariant),
+            .clip(barShape)
+            .background(IrisSurfaceVariant.copy(alpha = 0.78f))
+            .padding(vertical = 6.dp),
     ) {
-        ExtraKeyBarLayout.rows.forEach { row ->
+        ExtraKeyBarLayout.rows.forEachIndexed { index, row ->
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                    .padding(
+                        horizontal = 4.dp,
+                        vertical = if (index == 0) 2.dp else 2.dp,
+                    ),
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
                 maxItemsInEachRow = row.size,
             ) {
                 row.forEach { key ->

@@ -3,22 +3,27 @@ package com.iris.irisshell.ui.input
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.domain.input.InputIntent
 
 /**
  * Combines the [KeyboardHandle] with (optionally) an [ExtraKeyBar] in a
- * single column. The bar only renders when [uiState] shows
- * `renderBar = true` — see [InputBarUiState.renderBar].
+ * single column. Layout when the bar is open:
  *
- * Designed to sit above the IME keyboard, just below the block-style
- * input field (block mode) or directly below the TerminalView (classic
- * mode). The host should apply `Modifier.imePadding()` on a parent so
- * the whole stack lifts above the system keyboard.
+ * ```
+ * ┌─────────────────────────────┐
+ * │   ExtraKeyBar (rounded top) │  ← liquid-glass surface
+ * ├─────────────────────────────┤
+ * │   KeyboardHandle (thin pill) │  ← toggle affordance
+ * └─────────────────────────────┘
+ * ```
+ *
+ * When closed, only [KeyboardHandle] renders. The host is meant to sit
+ * directly above the IME keyboard; the parent should apply
+ * `Modifier.imePadding()` so the whole stack lifts above the soft
+ * keyboard.
  *
  * UNTESTED — verify on device.
  */
@@ -32,8 +37,7 @@ fun InputBarHost(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(IrisBackground)
-            .navigationBarsPadding(),
+            .background(IrisBackground),
     ) {
         if (uiState.renderBar) {
             ExtraKeyBar(
