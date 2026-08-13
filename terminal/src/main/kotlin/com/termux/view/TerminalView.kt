@@ -775,9 +775,10 @@ class TerminalView(context: Context, attributes: AttributeSet?) : View(context, 
      * This is called during layout when the size of this view has changed. If you were just added to the view
      * hierarchy, you're called with the old values of 0.
      */
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        updateSize()
-    }
+override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+    if (w == 0 || h == 0) return
+    updateSize()
+}
 
     /** Check if the terminal size in rows and columns should be updated. */
     fun updateSize() {
