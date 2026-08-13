@@ -42,6 +42,7 @@ import com.iris.irisshell.ui.topbar.SessionSwitcherTopBar
 import com.iris.irisshell.ui.block.BlockEngineViewModel
 import com.iris.irisshell.ui.block.BlockTerminalView
 import com.termux.view.TerminalView
+import android.view.MotionEvent
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
