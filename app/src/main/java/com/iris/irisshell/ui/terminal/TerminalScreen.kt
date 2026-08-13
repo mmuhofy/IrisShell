@@ -467,6 +467,13 @@ private fun TerminalViewHost(
                 terminalManager.registerTerminalView(this, ctx)
                 terminalViewRef.value = this
                 setOnClickListener { onTapToFocusKeyboard() }
+                // Also set a touch listener as fallback in case click is swallowed
+                setOnTouchListener { v, event ->
+                    if (event.action == MotionEvent.ACTION_DOWN) {
+                        onTapToFocusKeyboard()
+                    }
+                    false // let the event be handled by the view
+                }
             }
         },
         update = { view ->
