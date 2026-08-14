@@ -126,7 +126,7 @@ fun SessionSwitcherTopBar(
                 onClick = onToggleKeyboard,
                 modifier = Modifier
                     .size(48.dp)
-                    .defaultMinSizeConstraints(minWidth = 48.dp, minHeight = 48.dp)
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             ) {
                 Icon(
                     painter = androidx.compose.ui.res.painterResource(
