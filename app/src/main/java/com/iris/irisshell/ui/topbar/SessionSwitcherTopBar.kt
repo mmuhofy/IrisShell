@@ -1,8 +1,6 @@
 package com.iris.irisshell.ui.topbar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,12 +12,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -123,15 +121,9 @@ fun SessionSwitcherTopBar(
             }
         },
         actions = {
-            val interactionSource = remember { MutableInteractionSource() }
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = rememberRipple(),
-                        onClick = onToggleKeyboard
-                    )
+            IconButton(
+                onClick = onToggleKeyboard,
+                modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     painter = androidx.compose.ui.res.painterResource(
@@ -141,9 +133,7 @@ fun SessionSwitcherTopBar(
                     contentDescription =
                         if (keyboardFocused) "Hide keyboard" else "Show keyboard",
                     tint = IrisTextSecondary,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.Center),
+                    modifier = Modifier.size(24.dp),
                 )
             }
             MoreActionsMenu(
