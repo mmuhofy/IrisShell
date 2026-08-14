@@ -122,20 +122,25 @@ fun SessionSwitcherTopBar(
             }
         },
         actions = {
-            IconButton(
-                onClick = onToggleKeyboard,
-                modifier = Modifier.size(48.dp)
+            Box(
+                modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    painter = androidx.compose.ui.res.painterResource(
-                        if (keyboardFocused) com.iris.irisshell.ui.R.drawable.lucide_keyboard_off
-                        else com.iris.irisshell.ui.R.drawable.lucide_keyboard
-                    ),
-                    contentDescription =
-                        if (keyboardFocused) "Hide keyboard" else "Show keyboard",
-                    tint = IrisTextSecondary,
-                    modifier = Modifier.size(24.dp),
-                )
+                IconButton(
+                    onClick = onToggleKeyboard,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        painter = androidx.compose.ui.res.painterResource(
+                            if (keyboardFocused) com.iris.irisshell.ui.R.drawable.lucide_keyboard_off
+                            else com.iris.irisshell.ui.R.drawable.lucide_keyboard
+                        ),
+                        contentDescription =
+                            if (keyboardFocused) "Hide keyboard" else "Show keyboard",
+                        tint = IrisTextSecondary,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
             }
             MoreActionsMenu(
                 isFullscreen = isFullscreen,
