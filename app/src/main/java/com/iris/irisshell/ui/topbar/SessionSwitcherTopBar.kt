@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.requiredSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -125,7 +124,9 @@ fun SessionSwitcherTopBar(
         actions = {
             IconButton(
                 onClick = onToggleKeyboard,
-                modifier = Modifier.requiredSize(48.dp)
+                modifier = Modifier
+                    .size(48.dp)
+                    .defaultMinSizeConstraints(minWidth = 48.dp, minHeight = 48.dp)
             ) {
                 Icon(
                     painter = androidx.compose.ui.res.painterResource(
