@@ -2,6 +2,7 @@ package com.iris.irisshell.ui.topbar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,12 +14,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -31,8 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.requiredHeight
-import androidx.compose.ui.layout.requiredWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -124,11 +123,15 @@ fun SessionSwitcherTopBar(
             }
         },
         actions = {
-            IconButton(
-                onClick = onToggleKeyboard,
+            val interactionSource = remember { MutableInteractionSource() }
+            Box(
                 modifier = Modifier
-                    .requiredWidth(48.dp)
-                    .requiredHeight(48.dp)
+                    .size(48.dp)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = rememberRipple(),
+                        onClick = onToggleKeyboard
+                    )
             ) {
                 Icon(
                     painter = androidx.compose.ui.res.painterResource(
@@ -138,7 +141,9 @@ fun SessionSwitcherTopBar(
                     contentDescription =
                         if (keyboardFocused) "Hide keyboard" else "Show keyboard",
                     tint = IrisTextSecondary,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.Center),
                 )
             }
             MoreActionsMenu(
