@@ -158,18 +158,21 @@ private fun MoreActionsMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier.size(48.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                imageVector = Icons.Filled.MoreVert,
-                contentDescription = "More actions",
-                modifier = Modifier.size(24.dp),
-                tint = IrisTextSecondary,
-            )
-        }
+Box(
+            modifier = Modifier.size(48.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            IconButton(
+                onClick = { expanded = true },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = "More actions",
+                    modifier = Modifier.size(24.dp),
+                    tint = IrisTextSecondary,
+                )
+            }
 
         DropdownMenu(
             expanded = expanded,
