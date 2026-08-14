@@ -74,6 +74,16 @@ fun TerminalScreen(
     terminalViewModel: TerminalViewModel = hiltViewModel(),
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
+    var showProgress by remember { mutableStateOf(false) }
+    LaunchedEffect(ubuntuSetupState) {
+        if (ubuntuSetupState is UbuntuSetupState.Ready) {
+            showProgress = false
+        } else {
+            delay(300)
+            showProgress = true
+        }
+    }
+
     when (ubuntuSetupState) {
         UbuntuSetupState.Idle,
         UbuntuSetupState.Extracting,
@@ -81,7 +91,9 @@ fun TerminalScreen(
         is UbuntuSetupState.InstallingPackages,
         is UbuntuSetupState.InstallingOhMyZsh,
         UbuntuSetupState.Optimizing -> {
-            SetupProgress(state = ubuntuSetupState)
+            if (showProgress) {
+                SetupProgress(state = ubuntuSetupState)
+            }
         }
         UbuntuSetupState.Ready -> {
             ReadyScreen(
