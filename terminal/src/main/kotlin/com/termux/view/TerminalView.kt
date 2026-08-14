@@ -30,6 +30,7 @@ import android.view.autofill.AutofillValue
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputMethodManager
 import android.widget.Scroller
 
 import androidx.annotation.RequiresApi
@@ -529,6 +530,12 @@ class TerminalView(context: Context, attributes: AttributeSet?) : View(context, 
         if (mEmulator == null) return true
         val action = event.action
 
+        if (action == MotionEvent.ACTION_DOWN) {
+            requestFocusFromTouch()
+            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+        }
+
         if (isSelectingText) {
             updateFloatingToolbarVisibility(event)
             mGestureRecognizer.onTouchEvent(event)
@@ -776,7 +783,8 @@ class TerminalView(context: Context, attributes: AttributeSet?) : View(context, 
      * hierarchy, you're called with the old values of 0.
      */
 override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-    if (w == 0 || h == 0) return
+    super.onSizeChanged(w, h, oldw, oldh)
+    if (w <= 0 || h <= 0) return
     updateSize()
 }
 
@@ -1203,6 +1211,17 @@ override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> showFloatingToolbar()
             }
         }
+    }
+
+    fun showKeyboard() {
+        requestFocus()
+        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+    }
+
+    fun hideKeyboard() {
+        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(windowToken, 0)
     }
 
     companion object {

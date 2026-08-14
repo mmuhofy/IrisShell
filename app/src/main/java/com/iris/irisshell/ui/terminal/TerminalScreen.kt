@@ -42,7 +42,6 @@ import com.iris.irisshell.ui.topbar.SessionSwitcherTopBar
 import com.iris.irisshell.ui.block.BlockEngineViewModel
 import com.iris.irisshell.ui.block.BlockTerminalView
 import com.termux.view.TerminalView
-import android.view.MotionEvent
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -121,19 +120,17 @@ private fun ReadyScreen(
 
     // Keyboard focus / IME visibility is owned here so the TopBar
     // button and the TerminalView's touch handler can both toggle it.
-    // Termux's TerminalView doesn't auto-show the IME on tap — we
-    // bridge that gap by detecting taps on the AndroidView surface
-    // and calling `requestFocus()` + `show()` ourselves.
+    // TerminalView now handles IME via InputMethodManager directly.
     var keyboardFocused by remember { androidx.compose.runtime.mutableStateOf(true) }
-    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val terminalViewRef = remember { androidx.compose.runtime.mutableStateOf<TerminalView?>(null) }
 
     fun showKeyboard() {
-        keyboardController?.show()
+        terminalViewRef.value?.showKeyboard()
         keyboardFocused = true
     }
 
     fun hideKeyboard() {
-        keyboardController?.hide()
+        terminalViewRef.value?.hideKeyboard()
         keyboardFocused = false
     }
 
@@ -413,7 +410,6 @@ private fun TerminalViewHost(
     terminalViewModel: TerminalViewModel,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
-    onTapToFocusKeyboard: () -> Unit = {},
 ) {
     val terminalViewRef = remember {
         androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
@@ -467,14 +463,8 @@ private fun TerminalViewHost(
                 terminalManager.currentSession?.let { session -> attachSession(session) }
                 terminalManager.registerTerminalView(this, ctx)
                 terminalViewRef.value = this
-                setOnClickListener { onTapToFocusKeyboard() }
-                // Also set a touch listener as fallback in case click is swallowed
-                setOnTouchListener { v, event ->
-                    if (event.action == MotionEvent.ACTION_DOWN) {
-                        onTapToFocusKeyboard()
-                    }
-                    false // let the event be handled by the view
-                }
+                // TerminalView now handles tap-to-focus and IME internally
+                // via its onTouchEvent and showKeyboard/hideKeyboard methods
             }
         },
         update = { view ->
