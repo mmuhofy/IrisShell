@@ -268,7 +268,6 @@ private fun ReadyScreen(
                         fontSizeSp = fontSizeSp,
                         terminalViewModel = terminalViewModel,
                         extraKeyState = extraKeyState,
-                        onTapToFocusKeyboard = ::showKeyboard,
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {

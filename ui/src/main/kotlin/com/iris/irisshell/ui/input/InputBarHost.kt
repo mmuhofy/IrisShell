@@ -1,11 +1,9 @@
 package com.iris.irisshell.ui.input
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.domain.input.InputIntent
 
 /**
@@ -37,8 +35,7 @@ fun InputBarHost(
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .background(IrisBackground),
+            .fillMaxWidth(),
     ) {
         if (uiState.renderBar) {
             KeyboardHandle(

@@ -1,6 +1,5 @@
 package com.iris.irisshell.ui.input
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -19,20 +18,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisPrimary
 
 /**
- * Mini grab-handle that toggles the extra-keys bar. Visible affordance
- * is a short 56×4 pill, centred horizontally with rounded ends. When the
- * bar is open, the pill takes the gold accent; when closed, it sits dim
- * grey so it doesn't compete with the terminal content.
- *
- * The tappable area is the full width of the host — generous hit
- * target, tiny visual footprint (iOS-style grabber).
- *
- * UNTESTED — verify on device.
+ * Mini grab-handle that toggles the extra-keys bar. Just a simple pill (56×4)
+ * centred horizontally. No background container - just the pill itself.
+ * Gold when bar is open, subtle grey when closed.
  */
 @Composable
 fun KeyboardHandle(
@@ -45,7 +37,6 @@ fun KeyboardHandle(
         modifier = modifier
             .fillMaxWidth()
             .height(16.dp)
-            .background(IrisBackground)
             .clickable(
                 interactionSource = interactionSource,
                 role = Role.Switch,
