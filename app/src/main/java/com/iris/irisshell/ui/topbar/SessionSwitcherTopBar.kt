@@ -122,7 +122,10 @@ fun SessionSwitcherTopBar(
             }
         },
         actions = {
-            IconButton(onClick = onToggleKeyboard) {
+            IconButton(
+                onClick = onToggleKeyboard,
+                modifier = Modifier.size(48.dp)
+            ) {
                 Icon(
                     painter = androidx.compose.ui.res.painterResource(
                         if (keyboardFocused) com.iris.irisshell.ui.R.drawable.lucide_keyboard_off
@@ -131,7 +134,7 @@ fun SessionSwitcherTopBar(
                     contentDescription =
                         if (keyboardFocused) "Hide keyboard" else "Show keyboard",
                     tint = IrisTextSecondary,
-                    modifier = Modifier.size(22.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
             MoreActionsMenu(
