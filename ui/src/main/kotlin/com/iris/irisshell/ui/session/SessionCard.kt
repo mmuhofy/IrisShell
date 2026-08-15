@@ -16,12 +16,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +38,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.awaitPointerEventScope
+import androidx.compose.ui.input.pointer.awaitPointerEvent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,27 +53,17 @@ import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.domain.session.SessionState
 
 /**
- * One card in the [SessionSwitcherSheet]'s HorizontalPager.
+ * One card in the session switcher list.
  *
- * iOS-App-Switcher inspired layout:
+ * Layout:
+ *   ┌─────────────────────────────────────────────────────┐
+ *   │ ● shell-1          Running · 2h 14m        [Active] │
+ *   │ ~/projects/iris $ git status                       │
+ *   │                              ✏️  🗑️               │
+ *   └─────────────────────────────────────────────────────┘
  *
- *   ┌─────────────────────────────────────┐
- *   │  ● shell                          ⓘ │   ← dot + name + info badge
- *   │  Running · 2m ago                   │   ← subtitle: state + freshness
- *   │                                     │
- *   │  ┌───────────────────────────────┐  │
- *   │  │  $ ls -la                     │  │   ← transcript preview
- *   │  │  total 12                     │  │     (mono, 3 lines)
- *   │  └───────────────────────────────┘  │
- *   └─────────────────────────────────────┘
- *
- * Visual states:
- *   - **Default**: 14dp radius, soft shadow, no border.
- *   - **Active**: gold corner badge + 1.5dp gold ring + slightly larger.
- *   - **Pressed**: 0.96× scale, brief press feedback.
- *   - **Committing**: 1.06× scale + gold glow ring, played when the user
- *     taps the card — the card "explodes forward" for ~120ms before the
- *     sheet collapses.
+ * Active card: gold left bar + gold border + subtle glow.
+ * Inline rename/delete icons on the right.
  */
 @Composable
 fun SessionCard(
@@ -81,11 +73,11 @@ fun SessionCard(
     onRename: () -> Unit,
     onDelete: () -> Unit,
     isCommitting: Boolean = false,
-    previewLineCount: Int = 3,
     modifier: Modifier = Modifier,
 ) {
     val dotColor = stateDotColor(snapshot.state)
-    val preview = previewLines(snapshot, previewLineCount)
+    val runtime = sessionRuntime(snapshot)
+    val preview = lastCommandPreview(snapshot)
     val freshness = remember(snapshot.lastUsedAtMs) {
         relativeTime(snapshot.lastUsedAtMs)
     }
@@ -162,14 +154,14 @@ fun SessionCard(
                     Modifier
                 },
             )
-            .clickable(enabled = !isCommitting, onClick = onActivate),
+            .clickable(enabled = !isCommitting, onClick = onActivate)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            // ---- Top row: dot + name + corner badge + overflow menu ----
+            // ---- Top row: dot + name + state+runtime + active badge + actions ----
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -181,127 +173,82 @@ fun SessionCard(
                         .background(dotColor),
                 )
                 Spacer(Modifier.size(8.dp))
-                Text(
-                    text = snapshot.name,
-                    color = IrisText,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                if (isActive) {
-                    ActiveCornerBadge()
-                }
-                OverflowMenu(
-                    onRename = onRename,
-                    onDelete = onDelete,
-                    enabled = !isCommitting,
-                )
-            }
-
-            // ---- Subtitle: state label · freshness ----
-            Text(
-                text = "${stateLabel(snapshot.state)} · $freshness",
-                color = IrisTextMuted,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.Normal,
-                ),
-                modifier = Modifier.padding(top = 2.dp, start = 18.dp),
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            // ---- Live preview block ----
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(IrisSurface.copy(alpha = 0.5f))
-                    .padding(10.dp),
-            ) {
-                if (preview.isEmpty()) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "no output yet",
-                        color = IrisTextMuted,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = snapshot.name,
+                        color = IrisText,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        preview.forEach { line ->
-                            Text(
-                                text = line,
-                                color = IrisText.copy(alpha = 0.85f),
-                                fontSize = 11.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                    // Subtitle: state + runtime
+                    Text(
+                        text = "${stateLabel(snapshot.state)} · ${sessionRuntime(snapshot)}",
+                        color = IrisTextMuted,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Normal,
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (isActive) {
+                    ActiveBadge()
+                }
+                // Inline actions
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(onClick = onRename) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = "Rename",
+                            tint = IrisTextMuted,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Delete",
+                            tint = IrisTextMuted,
+                            modifier = Modifier.size(20.dp),
+                        )
                     }
                 }
             }
+
+            // ---- Last command preview ----
+            if (snapshot.liveSnapshotLines.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                val lastLine = snapshot.liveSnapshotLines.lastOrNull { it.isNotBlank() } ?: ""
+                Text(
+                    text = lastLine,
+                    color = IrisText.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = "JetBrains Mono",
+                        fontSize = 11.sp,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp),
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ActiveCornerBadge() {
+private fun ActiveBadge() {
     Box(
         modifier = Modifier
-            .size(8.dp)
-            .clip(CircleShape)
+            .size(6.dp, 20.dp)
+            .clip(RoundedCornerShape(3.dp))
             .background(IrisPrimary)
-            .border(1.dp, IrisSurface, CircleShape),
+            .padding(start = 4.dp),
     )
-}
-
-@Composable
-private fun OverflowMenu(
-    onRename: () -> Unit,
-    onDelete: () -> Unit,
-    enabled: Boolean,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(
-            onClick = { expanded = true },
-            enabled = enabled,
-            modifier = Modifier.size(32.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.MoreVert,
-                contentDescription = "Session options",
-                tint = IrisTextMuted,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.background(IrisSurfaceVariant),
-        ) {
-            DropdownMenuItem(
-                text = {
-                    Text("Rename", color = IrisText, fontSize = 14.sp)
-                },
-                onClick = {
-                    expanded = false
-                    onRename()
-                },
-            )
-            DropdownMenuItem(
-                text = {
-                    Text("Delete", color = IrisPrimary, fontSize = 14.sp)
-                },
-                onClick = {
-                    expanded = false
-                    onDelete()
-                },
-            )
-        }
-    }
 }
 
 private fun stateDotColor(state: SessionState): Color = when (state) {
@@ -316,11 +263,19 @@ private fun stateLabel(state: SessionState): String = when (state) {
     SessionState.Closed  -> "Closed"
 }
 
-private fun previewLines(snapshot: SessionSnapshot, max: Int): List<String> {
-    val live = snapshot.liveSnapshotLines
+private fun sessionRuntime(snapshot: SessionSnapshot): String {
+    val now = System.currentTimeMillis()
+    val diff = when (snapshot.state) {
+        SessionState.Running -> now - snapshot.createdAtMs
+        else -> (snapshot.lastUsedAtMs - snapshot.createdAtMs).coerceAtLeast(0)
+    }
+    val s = (diff / 1000).coerceAtLeast(0)
     return when {
-        live.isNotEmpty() -> live.takeLast(max)
-        else              -> emptyList()
+        s < 60       -> "just now"
+        s < 3600     -> "${s / 60}m"
+        s < 86_400   -> "${s / 3600}h ${(s % 3600) / 60}m"
+        s < 604_800  -> "${s / 86_400}d ${(s % 86_400) / 3600}h"
+        else         -> "${s / 604_800}w"
     }
 }
 
