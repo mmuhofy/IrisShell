@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,84 +20,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.iris.irisshell.design.system.IrisPrimary
-import com.iris.irisshell.design.system.IrisSurface
-import com.iris.irisshell.design.system.IrisSurfaceVariant
-import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextMuted
-import com.iris.irisshell.domain.session.SessionSnapshot
-import com.iris.irisshell.ui.util.BlurDialogWindow
-import android.view.Window
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -126,7 +56,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -178,23 +107,6 @@ fun SessionSwitcherSheet(
     var deletingId by remember { mutableStateOf<String?>(null) }
     var pendingDelete by remember { mutableStateOf<DeletedSession?>(null) }
     var renameNewName by remember { mutableStateOf("") }
-    var searchText by remember { mutableStateOf("") }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    // Own scope for snackbar dispatch — survives recomposition so the
-    // Snackbar doesn't get cancelled mid-dispatch when the dialog content
-    // recomposes (which previously crashed with CancellationException
-    // bubbling out of showSnackbar).
-    val snackbarScope = rememberCoroutineScope()
-
-    // Filter sessions based on search text
-    val filteredSessions = remember(sessions, searchText) {
-        if (searchText.isBlank()) {
-            sessions
-        } else {
-            sessions.filter { it.name.contains(searchText, ignoreCase = true) }
-        }
-    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     // Own scope for snackbar dispatch — survives recomposition so the
@@ -256,16 +168,14 @@ fun SessionSwitcherSheet(
                     SwitcherTopBar(
                         onClose = onDismiss,
                         onCreate = { showCreateDialog = true },
-                        searchText = searchText,
-                        onSearchTextChange = { searchText = it },
                     )
 
                     Box(modifier = Modifier.fillMaxSize()) {
-                        if (filteredSessions.isEmpty()) {
-                            EmptyState(onCreate = { showCreateDialog = true }, searchText = searchText)
+                        if (sessions.isEmpty()) {
+                            EmptyState(onCreate = { showCreateDialog = true })
                         } else {
-                            ListContent(
-                                sessions = filteredSessions,
+                            PagerContent(
+                                sessions = sessions,
                                 activeId = activeId,
                                 committingId = committingId,
                                 onCommit = { id ->
@@ -404,7 +314,7 @@ fun SessionSwitcherSheet(
 }
 
 @Composable
-private fun ListContent(
+private fun PagerContent(
     sessions: List<SessionSnapshot>,
     activeId: String?,
     committingId: String?,
@@ -412,27 +322,48 @@ private fun ListContent(
     onRename: (SessionSnapshot) -> Unit,
     onDelete: (SessionSnapshot) -> Unit,
 ) {
+    val activeIndex = sessions.indexOfFirst { it.id == activeId }.coerceAtLeast(0)
+    val pagerState = rememberPagerState(initialPage = activeIndex) {
+        sessions.size
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        androidx.compose.foundation.lazy.LazyColumn(
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
                 .weight(1f)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            pageSpacing = 12.dp,
+        ) { pageIndex ->
+            val snapshot = sessions[pageIndex]
+            val isCommitting = committingId != null && committingId == snapshot.id
+            SessionCard(
+                snapshot = snapshot,
+                isActive = snapshot.id == activeId,
+                isCommitting = isCommitting,
+                onActivate = { onCommit(snapshot.id) },
+                onRename = { onRename(snapshot) },
+                onDelete = { onDelete(snapshot) },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        Row(
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
-            verticalArrangement = androidx.compose.foundation.lazy.Arrangement.spacedBy(8.dp),
+                .padding(top = 8.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            items(sessions) { snapshot ->
-                val isActive = snapshot.id == activeId
-                val isCommitting = committingId != null && committingId == snapshot.id
-                SessionCard(
-                    snapshot = snapshot,
-                    isActive = isActive,
-                    isCommitting = isCommitting,
-                    onActivate = { onCommit(snapshot.id) },
-                    onRename = { onRename(snapshot) },
-                    onDelete = { onDelete(snapshot) },
-                    isCommitting = isCommitting,
-                    modifier = Modifier.fillMaxWidth(),
+            sessions.forEachIndexed { i, _ ->
+                val active = pagerState.currentPage == i
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 3.dp)
+                        .size(if (active) 7.dp else 5.dp)
+                        .clip(CircleShape)
+                        .background(if (active) IrisPrimary else IrisTextMuted.copy(alpha = 0.5f)),
                 )
             }
         }
@@ -461,68 +392,42 @@ private fun findHostWindow(ctx: android.content.Context): Window? {
 private fun SwitcherTopBar(
     onClose: () -> Unit,
     onCreate: () -> Unit,
-    searchText: String,
-    onSearchTextChange: (String) -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onClose) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = "Close switcher",
-                    tint = IrisText,
-                )
-            }
-            Text(
-                text = "Sessions",
-                color = IrisText,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 4.dp),
+        IconButton(onClick = onClose) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "Close switcher",
+                tint = IrisText,
             )
-            FilledIconButton(
-                onClick = onCreate,
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = IrisPrimary,
-                    contentColor = IrisSurface,
-                ),
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "New session")
-            }
         }
-        // Search field
-        OutlinedTextField(
-            value = searchText,
-            onValueChange = onSearchTextChange,
+        Text(
+            text = "Sessions",
+            color = IrisText,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            singleLine = true,
-            placeholder = { Text("Search sessions…", color = IrisTextMuted) },
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                containerColor = IrisSurface,
-                focusedContainerColor = IrisSurface,
-                unfocusedBorderColor = IrisOutline,
-                focusedBorderColor = IrisPrimary,
-                textColor = IrisText,
-                placeholderColor = IrisTextMuted,
-            ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { /* handled by onValueChange */ }),
+                .weight(1f)
+                .padding(start = 4.dp),
         )
+        FilledIconButton(
+            onClick = onCreate,
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = IrisPrimary,
+                contentColor = IrisSurface,
+            ),
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "New session")
+        }
     }
 }
 
 @Composable
-private fun EmptyState(onCreate: () -> Unit, searchText: String = "") {
+private fun EmptyState(onCreate: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -530,31 +435,17 @@ private fun EmptyState(onCreate: () -> Unit, searchText: String = "") {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        if (searchText.isNotBlank()) {
-            Text(
-                text = "No sessions match \"$searchText\"",
-                color = IrisText,
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                text = "Try a different search or create a new session",
-                color = IrisTextMuted,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 6.dp),
-            )
-        } else {
-            Text(
-                text = "No sessions yet",
-                color = IrisText,
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                text = "Tap + to spawn your first terminal",
-                color = IrisTextMuted,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 6.dp),
-            )
-        }
+        Text(
+            text = "No sessions yet",
+            color = IrisText,
+            style = MaterialTheme.typography.titleLarge,
+        )
+        Text(
+            text = "Tap + to spawn your first terminal",
+            color = IrisTextMuted,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 6.dp),
+        )
         FilledIconButton(
             onClick = onCreate,
             colors = IconButtonDefaults.filledIconButtonColors(
