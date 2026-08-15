@@ -38,8 +38,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.awaitPointerEventScope
-import androidx.compose.ui.input.pointer.awaitPointerEvent
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -77,7 +76,7 @@ fun SessionCard(
 ) {
     val dotColor = stateDotColor(snapshot.state)
     val runtime = sessionRuntime(snapshot)
-    val preview = lastCommandPreview(snapshot)
+    val preview = snapshot.liveSnapshotLines.lastOrNull { it.isNotBlank() } ?: ""
     val freshness = remember(snapshot.lastUsedAtMs) {
         relativeTime(snapshot.lastUsedAtMs)
     }
@@ -226,7 +225,7 @@ fun SessionCard(
                     text = lastLine,
                     color = IrisText.copy(alpha = 0.7f),
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = "JetBrains Mono",
+                        fontFamily = FontFamily("JetBrains Mono"),
                         fontSize = 11.sp,
                     ),
                     maxLines = 1,
