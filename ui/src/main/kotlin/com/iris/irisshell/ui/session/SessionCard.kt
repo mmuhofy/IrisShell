@@ -225,7 +225,7 @@ fun SessionCard(
                     text = lastLine,
                     color = IrisText.copy(alpha = 0.7f),
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = FontFamily("JetBrains Mono"),
+                        fontFamily = FontFamily.Monospace,
                         fontSize = 11.sp,
                     ),
                     maxLines = 1,
