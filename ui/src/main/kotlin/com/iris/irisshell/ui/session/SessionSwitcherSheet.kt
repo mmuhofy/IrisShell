@@ -12,7 +12,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,13 +19,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -40,6 +42,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -52,10 +55,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -68,30 +73,22 @@ import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.ui.util.BlurDialogWindow
 import android.view.Window
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxDefaults
+import androidx.compose.material3.SwipeToDismissBoxState
+import androidx.compose.runtime.rememberSwipeToDismissBoxState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
- * Centred popup dialog over the terminal screen — swipeable pager with
- * rename/delete actions.
- *
- * Visual:
- *   - **No scrim/dim** — the dialog's window dim amount is forced to 0.
- *   - **Blur background on Android 12+** — terminal still composited, blurred.
- *   - **Spring enter/leave** — scale 0.88 → 1.0 + alpha 0 → 1 over 280ms.
- *
- * Interaction:
- *   - **Swipe** pages left/right via HorizontalPager.
- *   - **Tap a card** → activate + dismiss (commit flash animation).
- *   - **⋮ overflow menu on each card** → Rename / Delete.
- *   - **× button** → dismiss without activating.
- *   - **Snackbar with Undo** → appears after Delete.
- *
- * Selection animation:
- *   When the user taps a card, the tapped card scales to 1.06× + gold
- *   glow for ~120ms, then the sheet collapses over 200ms — the chosen
- *   card "explodes forward" into the terminal beneath.
+ * Centre-bottom sheet that lists all sessions in a vertical list with search.
+ * Features:
+ *  - Search filter (name + last command)
+ *  - Active session highlighted with gold accent line + glow
+ *  - Swipe-to-delete with undo snackbar
+ *  - Inline rename via trailing edit icon
+ *  - New session button in header
  */
 @Composable
 fun SessionSwitcherSheet(
@@ -104,24 +101,32 @@ fun SessionSwitcherSheet(
     var showCreateDialog by remember { mutableStateOf(false) }
     var committingId by remember { mutableStateOf<String?>(null) }
     var renamingId by remember { mutableStateOf<String?>(null) }
-    var deletingId by remember { mutableStateOf<String?>(null) }
-    var pendingDelete by remember { mutableStateOf<DeletedSession?>(null) }
     var renameNewName by remember { mutableStateOf("") }
+    var pendingDelete by remember { mutableStateOf<DeletedSession?>(null) }
+    var searchText by remember { mutableStateOf("") }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    // Own scope for snackbar dispatch — survives recomposition so the
-    // Snackbar doesn't get cancelled mid-dispatch when the dialog content
-    // recomposes (which previously crashed with CancellationException
-    // bubbling out of showSnackbar).
     val snackbarScope = rememberCoroutineScope()
 
     DisableDialogScrim()
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        BlurDialogWindow(radiusDp = 22f, enabled = !showCreateDialog && renamingId == null && deletingId == null)
+        BlurDialogWindow(
+            radiusDp = 22f,
+            enabled = !showCreateDialog && renamingId == null
+        )
     }
 
     val inCommit = committingId != null
+
+    // Filter sessions locally for instant feedback
+    val filteredSessions = remember(sessions, searchText) {
+        if (searchText.isBlank()) sessions
+        else sessions.filter { s ->
+            s.name.contains(searchText, ignoreCase = true) ||
+                s.liveSnapshotLines.any { it.contains(searchText, ignoreCase = true) }
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -157,7 +162,7 @@ fun SessionSwitcherSheet(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth(0.92f)
-                    .height(540.dp)
+                    .height(560.dp) // slightly taller for list + search
                     .systemBarsPadding()
                     .graphicsLayer { shadowElevation = 24f },
                 shape = RoundedCornerShape(12.dp),
@@ -168,14 +173,19 @@ fun SessionSwitcherSheet(
                     SwitcherTopBar(
                         onClose = onDismiss,
                         onCreate = { showCreateDialog = true },
+                        searchText = searchText,
+                        onSearchChange = { searchText = it },
                     )
 
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        if (sessions.isEmpty()) {
-                            EmptyState(onCreate = { showCreateDialog = true })
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        if (filteredSessions.isEmpty()) {
+                            EmptyState(
+                                searchText = searchText,
+                                onCreate = { showCreateDialog = true },
+                            )
                         } else {
-                            PagerContent(
-                                sessions = sessions,
+                            SessionList(
+                                sessions = filteredSessions,
                                 activeId = activeId,
                                 committingId = committingId,
                                 onCommit = { id ->
@@ -189,7 +199,13 @@ fun SessionSwitcherSheet(
                                     renamingId = snapshot.id
                                 },
                                 onDelete = { snapshot ->
-                                    deletingId = snapshot.id
+                                    // Swipe-to-delete will call this; we keep for compatibility
+                                    pendingDelete = DeletedSession(
+                                        snapshot = snapshot,
+                                        wasActive = snapshot.id == activeId,
+                                        fallbackName = null,
+                                    )
+                                    viewModel.delete(snapshot.id)
                                 },
                             )
                         }
@@ -206,24 +222,18 @@ fun SessionSwitcherSheet(
         }
     }
 
-    // Fire dismiss once the commit animation has played.
+    // Commit animation then dismiss
     LaunchedEffect(committingId) {
         val id = committingId ?: return@LaunchedEffect
         delay(220)
         onDismiss()
         committingId = null
-        @Suppress("UNUSED_EXPRESSION") id
     }
 
-    // After the Room deletion propagates and the sessions flow updates,
-    // figure out which session became active (if any) so the Snackbar can
-    // label it correctly. We re-read both activeId and the sessions list
-    // here because the onConfirm snapshot only had `fallbackName = null`.
-    LaunchedEffect(sessions, activeId) {
+    // Prepare undo snackbar after deletion
+    LaunchedEffect(pendingDelete, sessions, activeId) {
         val pd = pendingDelete ?: return@LaunchedEffect
         if (pd.fallbackName == null && !sessions.any { it.id == pd.snapshot.id }) {
-            // The deleted session is gone from the list — pick the new
-            // most-recent as the fallback name.
             val fallback = sessions.firstOrNull { it.id == activeId }?.name
             pendingDelete = pd.copy(
                 wasActive = pd.wasActive || pd.snapshot.id == activeId,
@@ -232,10 +242,6 @@ fun SessionSwitcherSheet(
         }
     }
 
-    // Show the snackbar whenever pendingDelete becomes non-null. UNDO
-    // re-inserts via repository.restoreSession. Runs on a separate
-    // scope so the snackbar dispatch isn't cancelled by recomposition
-    // of the Dialog content (which was the cause of the previous crash).
     LaunchedEffect(pendingDelete) {
         val pd = pendingDelete ?: return@LaunchedEffect
         val msg = if (pd.wasActive && pd.fallbackName != null) {
@@ -252,7 +258,6 @@ fun SessionSwitcherSheet(
                     duration = androidx.compose.material3.SnackbarDuration.Short,
                 )
             } catch (e: kotlinx.coroutines.CancellationException) {
-                // Parent scope was cancelled (e.g. sheet closed) — give up.
                 SnackbarResult.Dismissed
             }
             when (result) {
@@ -286,35 +291,75 @@ fun SessionSwitcherSheet(
             onDismiss = { renamingId = null },
         )
     }
+}
 
-    deletingId?.let { id ->
-        val target = sessions.firstOrNull { it.id == id }
-        if (target != null) {
-            DeleteConfirmDialog(
-                snapshot = target,
-                onConfirm = {
-                    // Stash the snapshot up-front so the snackbar effect can
-                    // pick it up the moment we close the confirm dialog.
-                    // fallbackName starts null; the post-deletion effect
-                    // below fills it in once the sessions flow updates.
-                    pendingDelete = DeletedSession(
-                        snapshot = target,
-                        wasActive = target.id == activeId,
-                        fallbackName = null,
-                    )
-                    viewModel.delete(target.id)
-                    deletingId = null
-                },
-                onDismiss = { deletingId = null },
+/* -------------------------------------------------------------------------- */
+/*                                    UI                                      */
+/* -------------------------------------------------------------------------- */
+
+@Composable
+private fun SwitcherTopBar(
+    onClose: () -> Unit,
+    onCreate: () -> Unit,
+    searchText: String,
+    onSearchChange: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Close switcher",
+                    tint = IrisText,
+                )
+            }
+            Text(
+                text = "Sessions",
+                color = IrisText,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp),
             )
-        } else {
-            deletingId = null
+            FilledIconButton(
+                onClick = onCreate,
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = IrisPrimary,
+                    contentColor = IrisSurface,
+                ),
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "New session")
+            }
         }
+
+        // Search field
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = onSearchChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            singleLine = true,
+            placeholder = { Text("Search sessions…", color = IrisTextMuted) },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = IrisTextMuted) },
+            colors = androidx.compose.material3.TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = IrisPrimary,
+                unfocusedBorderColor = IrisOutline,
+                backgroundColor = IrisSurfaceVariant.copy(alpha = 0.6f),
+            ),
+        )
     }
 }
 
 @Composable
-private fun PagerContent(
+private fun SessionList(
     sessions: List<SessionSnapshot>,
     activeId: String?,
     committingId: String?,
@@ -322,48 +367,49 @@ private fun PagerContent(
     onRename: (SessionSnapshot) -> Unit,
     onDelete: (SessionSnapshot) -> Unit,
 ) {
-    val activeIndex = sessions.indexOfFirst { it.id == activeId }.coerceAtLeast(0)
-    val pagerState = rememberPagerState(initialPage = activeIndex) {
-        sessions.size
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 24.dp),
-            pageSpacing = 12.dp,
-        ) { pageIndex ->
-            val snapshot = sessions[pageIndex]
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 16.dp),
+    ) {
+        items(sessions) { snapshot ->
+            val isActive = snapshot.id == activeId
             val isCommitting = committingId != null && committingId == snapshot.id
-            SessionCard(
-                snapshot = snapshot,
-                isActive = snapshot.id == activeId,
-                isCommitting = isCommitting,
-                onActivate = { onCommit(snapshot.id) },
-                onRename = { onRename(snapshot) },
-                onDelete = { onDelete(snapshot) },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+            val swipeState = rememberSwipeToDismissBoxState()
+            val swipeDirection = if (snapshot.id == activeId) SwipeToDismissBoxDefaults.DismissDirection.EndToStart else SwipeToDismissBoxDefaults.DismissDirection.EndToStart
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 12.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            sessions.forEachIndexed { i, _ ->
-                val active = pagerState.currentPage == i
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(if (active) 7.dp else 5.dp)
-                        .clip(CircleShape)
-                        .background(if (active) IrisPrimary else IrisTextMuted.copy(alpha = 0.5f)),
+            SwipeToDismissBox(
+                state = swipeState,
+                directions = setOf(swipeDirection),
+                onDismissed = { onDelete(snapshot) },
+                modifier = Modifier.fillMaxWidth(),
+                background = { progress ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Red),
+                        contentAlignment = Alignment.CenterEnd,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Delete",
+                            tint = IrisSurface,
+                            modifier = Modifier.padding(end = 20.dp)
+                        )
+                    }
+                },
+                dismissThresholds = { fraction -> fraction > 0.5f },
+            ) {
+                SessionCard(
+                    snapshot = snapshot,
+                    isActive = isActive,
+                    isCommitting = isCommitting,
+                    onActivate = { onCommit(snapshot.id) },
+                    onRename = { onRename(snapshot) },
+                    onDelete = { }, // delete handled by swipe-to-dismiss
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
@@ -371,63 +417,10 @@ private fun PagerContent(
 }
 
 @Composable
-private fun DisableDialogScrim() {
-    val view = LocalView.current
-    SideEffect {
-        val w = findHostWindow(view.context)
-        w?.setDimAmount(0f)
-    }
-}
-
-private fun findHostWindow(ctx: android.content.Context): Window? {
-    var c: android.content.Context? = ctx
-    while (c is android.content.ContextWrapper) {
-        if (c is android.app.Activity) return c.window
-        c = c.baseContext
-    }
-    return null
-}
-
-@Composable
-private fun SwitcherTopBar(
-    onClose: () -> Unit,
+private fun EmptyState(
+    searchText: String,
     onCreate: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onClose) {
-            Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "Close switcher",
-                tint = IrisText,
-            )
-        }
-        Text(
-            text = "Sessions",
-            color = IrisText,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 4.dp),
-        )
-        FilledIconButton(
-            onClick = onCreate,
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = IrisPrimary,
-                contentColor = IrisSurface,
-            ),
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = "New session")
-        }
-    }
-}
-
-@Composable
-private fun EmptyState(onCreate: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -436,12 +429,15 @@ private fun EmptyState(onCreate: () -> Unit) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "No sessions yet",
+            text = if (searchText.isNotBlank()) "No matching session" else "No sessions yet",
             color = IrisText,
             style = MaterialTheme.typography.titleLarge,
         )
         Text(
-            text = "Tap + to spawn your first terminal",
+            text = if (searchText.isNotBlank())
+                "Try a different search term"
+            else
+                "Tap + to spawn your first terminal",
             color = IrisTextMuted,
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 6.dp),
@@ -462,6 +458,10 @@ private fun EmptyState(onCreate: () -> Unit) {
         }
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/*                              Dialogs (unchanged)                           */
+/* -------------------------------------------------------------------------- */
 
 @Composable
 private fun CreateSessionDialog(
@@ -560,3 +560,35 @@ private fun DeleteConfirmDialog(
         containerColor = IrisSurface,
     )
 }
+
+/* -------------------------------------------------------------------------- */
+/*                                 Helpers                                    */
+/* -------------------------------------------------------------------------- */
+
+@Composable
+private fun DisableDialogScrim() {
+    val view = LocalView.current
+    SideEffect {
+        val w = findHostWindow(view.context)
+        w?.setDimAmount(0f)
+    }
+}
+
+private fun findHostWindow(ctx: android.content.Context): Window? {
+    var c: android.content.Context? = ctx
+    while (c is android.content.ContextWrapper) {
+        if (c is android.app.Activity) return c.window
+        c = c.baseContext
+    }
+    return null
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              Data class for undo                           */
+/* -------------------------------------------------------------------------- */
+
+private data class DeletedSession(
+    val snapshot: SessionSnapshot,
+    val wasActive: Boolean,
+    val fallbackName: String?,
+)
