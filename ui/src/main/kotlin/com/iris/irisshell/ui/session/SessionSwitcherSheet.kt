@@ -898,7 +898,7 @@ private fun SwitcherTopBar(
         // Search field
         OutlinedTextField(
             value = searchText,
-            onValueChange = { searchText = it; onFocusReset() },
+            onValueChange = { it -> onSearchChange(it); onFocusReset() },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),
