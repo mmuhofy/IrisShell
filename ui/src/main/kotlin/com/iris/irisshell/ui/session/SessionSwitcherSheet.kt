@@ -1,5 +1,6 @@
 package com.iris.irisshell.ui.session
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
@@ -239,6 +240,7 @@ private fun DeleteConfirmDialog(
 /* -------------------------------------------------------------------------- */
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun SessionSwitcherSheet(
     onDismiss: () -> Unit,
     viewModel: SessionSwitcherViewModel = hiltViewModel(),
