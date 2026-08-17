@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,12 +25,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +36,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,24 +47,8 @@ import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.ui.R
-import android.view.Window
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-/* -------------------------------------------------------------------------- */
-/*                              Helper Functions                              */
-/* -------------------------------------------------------------------------- */
-
-private fun findHostWindow(ctx: android.content.Context): Window? {
-    var c: android.content.Context? = ctx
-    while (c is android.content.ContextWrapper) {
-        if (c is android.app.Activity) return c.window
-        c = c.baseContext
-    }
-    return null
-}
-
-
 
 /* -------------------------------------------------------------------------- */
 /*                              Data class for undo                           */
@@ -83,15 +63,6 @@ private data class DeletedSession(
 /* -------------------------------------------------------------------------- */
 /*                              Composable Helpers                            */
 /* -------------------------------------------------------------------------- */
-
-@Composable
-private fun DisableDialogScrim() {
-    val view = LocalView.current
-    SideEffect {
-        val w = findHostWindow(view.context)
-        w?.setDimAmount(0f)
-    }
-}
 
 @Composable
 private fun EmptyState(
@@ -258,9 +229,6 @@ fun SessionSwitcherSheet(
     val snackbarHostState = remember { SnackbarHostState() }
     val snackbarScope = rememberCoroutineScope()
 
-
-    val inCommit = committingId != null
-
     // Filter sessions locally for instant feedback
     val filteredSessions = remember(sessions, searchText) {
         if (searchText.isBlank()) sessions
@@ -281,69 +249,59 @@ fun SessionSwitcherSheet(
         containerColor = IrisSurface,
         tonalElevation = 6.dp,
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(),
-            shape = RoundedCornerShape(
-                topStart = 28.dp,
-                topEnd = 28.dp,
-                bottomStart = 0.dp,
-                bottomEnd = 0.dp,
-            ),
-            color = IrisSurface.copy(alpha = 0.92f),
-            tonalElevation = 0.dp,
-        ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    SwitcherTopBar(
-                        onClose = onDismiss,
-                        onCreate = { showCreateDialog = true },
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SwitcherTopBar(
+                onClose = onDismiss,
+                onCreate = { showCreateDialog = true },
+                searchText = searchText,
+                onSearchChange = { searchText = it },
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
+            ) {
+                if (filteredSessions.isEmpty()) {
+                    EmptyState(
                         searchText = searchText,
-                        onSearchChange = { searchText = it },
+                        onCreate = { showCreateDialog = true },
                     )
-
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        if (filteredSessions.isEmpty()) {
-                            EmptyState(
-                                searchText = searchText,
-                                onCreate = { showCreateDialog = true },
+                } else {
+                    SessionList(
+                        sessions = filteredSessions,
+                        activeId = activeId,
+                        committingId = committingId,
+                        onCommit = { id ->
+                            if (committingId == null) {
+                                committingId = id
+                                viewModel.activate(id)
+                            }
+                        },
+                        onRename = { snapshot ->
+                            renameNewName = snapshot.name
+                            renamingId = snapshot.id
+                        },
+                        onDelete = { snapshot ->
+                            pendingDelete = DeletedSession(
+                                snapshot = snapshot,
+                                wasActive = snapshot.id == activeId,
+                                fallbackName = null,
                             )
-                        } else {
-                            SessionList(
-                                sessions = filteredSessions,
-                                activeId = activeId,
-                                committingId = committingId,
-                                onCommit = { id ->
-                                    if (committingId == null) {
-                                        committingId = id
-                                        viewModel.activate(id)
-                                    }
-                                },
-                                onRename = { snapshot ->
-                                    renameNewName = snapshot.name
-                                    renamingId = snapshot.id
-                                },
-                                onDelete = { snapshot ->
-                                    pendingDelete = DeletedSession(
-                                        snapshot = snapshot,
-                                        wasActive = snapshot.id == activeId,
-                                        fallbackName = null,
-                                    )
-                                    viewModel.delete(snapshot.id)
-                                },
-                            )
-                        }
-
-                        SnackbarHost(
-                            hostState = snackbarHostState,
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 8.dp),
-                        )
-                    }
+                            viewModel.delete(snapshot.id)
+                        },
+                    )
                 }
+
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp),
+                )
             }
         }
+    }
 
     // Commit animation then dismiss
     LaunchedEffect(committingId) {

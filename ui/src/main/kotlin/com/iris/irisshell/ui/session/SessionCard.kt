@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -91,6 +92,7 @@ fun SessionCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .wrapContentHeight()
             .graphicsLayer {
                 translationX = -swipeOffset.value
                 scaleX = cardScale
@@ -101,14 +103,17 @@ fun SessionCard(
                     detectDragGestures(
                         onDrag = { change, dragAmount ->
                             change.consume()
-                            val next = (swipeOffset.value + dragAmount.x)
+                            // dragAmount.x < 0 = sola sürükleme (delete yönü)
+                            // offset pozitif tutulur; translationX = -offset kartı sola taşır
+                            val next = (swipeOffset.value - dragAmount.x)
                                 .coerceIn(0f, deleteThreshold * 1.5f)
-                            if (dragAmount.x > 0f || swipeOffset.value > 0f) {
+                            if (dragAmount.x < 0f || swipeOffset.value > 0f) {
                                 launch { swipeOffset.snapTo(next) }
                             }
                         },
                         onDragEnd = {
                             val shouldDelete = swipeOffset.value >= deleteThreshold
+                            pressed = false // WARN-12: reset stuck pressed state
                             launch {
                                 swipeOffset.animateTo(
                                     targetValue = 0f,
@@ -121,6 +126,7 @@ fun SessionCard(
                             }
                         },
                         onDragCancel = {
+                            pressed = false // WARN-12: reset stuck pressed state
                             launch {
                                 swipeOffset.animateTo(
                                     targetValue = 0f,
