@@ -220,7 +220,16 @@ fun SessionSwitcherSheet(
         onDismissRequest = onDismiss,
         containerColor = IrisSurface,
     ) {
-    	// test
+    	Column(modifier = Modifier.fillMaxWidth()) {
+            SessionList(
+                sessions = sessions,
+                activeId = activeId,
+                committingId = null,
+                onCommit = {},
+                onRename = {},
+                onDelete = {},
+            )
+        }
     }
 }
 
