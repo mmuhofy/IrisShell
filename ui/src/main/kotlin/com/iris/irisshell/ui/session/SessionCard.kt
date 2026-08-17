@@ -1,11 +1,13 @@
 package com.iris.irisshell.ui.session
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,14 +18,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +37,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,21 +52,19 @@ import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.domain.session.SessionSnapshot
-import com.iris.irisshell.domain.session.SessionState
 
-/**
- * One card in the session switcher list.
- *
- * Layout:
- *   ┌─────────────────────────────────────────────────────┐
- *   │ ● shell-1          Running · 2h 14m        [Active] │
- *   │ ~/projects/iris $ git status                       │
- *   │                              ✏️  🗑️               │
- *   └─────────────────────────────────────────────────────┘
- *
- * Active card: gold left bar + gold border + subtle glow.
- * Inline rename/delete icons on the right.
- */
+@Composable
+private fun lucidePainter(name: String) = painterResource(
+    LocalContext.current.resources.getIdentifier(
+        "lucide_$name",
+        "drawable",
+        LocalContext.current.packageName,
+    )
+)
+
+private val SwipeDeleteSurface = Color(0xFF8F4650)
+private val CardShape = RoundedCornerShape(14.dp)
+
 @Composable
 fun SessionCard(
     snapshot: SessionSnapshot,
@@ -74,23 +75,21 @@ fun SessionCard(
     isCommitting: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    val dotColor = stateDotColor(snapshot.state)
-    val runtime = sessionRuntime(snapshot)
-    val preview = snapshot.liveSnapshotLines.lastOrNull { it.isNotBlank() } ?: ""
-    val freshness = remember(snapshot.lastUsedAtMs) {
-        relativeTime(snapshot.lastUsedAtMs)
-    }
+    val swipeOffset = remember(snapshot.id) { Animatable(0f) }
+    var pressed by remember(snapshot.id) { mutableStateOf(false) }
 
-    // Press feedback on the card itself.
-    var pressed by remember { mutableStateOf(false) }
-    val targetScale = when {
-        isCommitting -> 1.06f
-        pressed      -> 0.96f
-        isActive     -> 1.02f
-        else         -> 1f
+    val deleteThreshold = 120f
+    val swipeProgress = (swipeOffset.value / deleteThreshold).coerceIn(0f, 1f)
+    val deleteAlpha = ((swipeProgress - 0.18f) / 0.82f).coerceIn(0f, 1f)
+    val deleteIconScale = 0.82f + (0.18f * deleteAlpha)
+
+    val cardScaleTarget = when {
+        isCommitting -> 1.025f
+        pressed -> 0.985f
+        else -> 1f
     }
-    val scale by animateFloatAsState(
-        targetValue = targetScale,
+    val cardScale by animateFloatAsState(
+        targetValue = cardScaleTarget,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMediumLow,
@@ -98,196 +97,219 @@ fun SessionCard(
         label = "session-card-scale",
     )
 
-    // Glow alpha ramp — jumps to 1 when committing, fades back if reset.
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (isCommitting) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessHigh,
-        ),
-        label = "session-card-glow",
-    )
-
     Box(
         modifier = modifier
+            .fillMaxWidth()
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
+                translationX = -swipeOffset.value
+                scaleX = cardScale
+                scaleY = cardScale
             }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val ev = awaitPointerEvent()
-                        pressed = ev.changes.any { it.pressed }
-                    }
+            .pointerInput(snapshot.id) {
+                coroutineScope {
+                    detectDragGestures(
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        val next = (swipeOffset.value + dragAmount.x)
+                            .coerceIn(0f, deleteThreshold * 1.5f)
+                        if (dragAmount.x > 0f || swipeOffset.value > 0f) {
+                            launch { swipeOffset.snapTo(next) }
+                        }
+                    },
+                    onDragEnd = {
+                        val shouldDelete = swipeOffset.value >= deleteThreshold
+                        launch {
+                            swipeOffset.animateTo(
+                                targetValue = 0f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            )
+                            if (shouldDelete) onDelete()
+                        }
+                    },
+                    onDragCancel = {
+                        launch {
+                            swipeOffset.animateTo(
+                                targetValue = 0f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            )
+                        }
+                    },
+                    )
                 }
-            }
-            .then(
-                if (isCommitting || isActive) {
-                    val elev = if (isCommitting) 24.dp else 10.dp
-                    val ambient = if (isCommitting) IrisPrimary.copy(alpha = 0.5f * glowAlpha + 0.1f)
-                                  else IrisPrimary.copy(alpha = 0f)
-                    Modifier.shadow(
-                        elevation = elev,
-                        shape = RoundedCornerShape(14.dp),
-                        ambientColor = ambient,
-                        spotColor = ambient,
-                    )
-                } else {
-                    Modifier.shadow(
-                        elevation = 6.dp,
-                        shape = RoundedCornerShape(14.dp),
-                    )
-                },
-            )
-            .clip(RoundedCornerShape(14.dp))
-            .background(IrisSurfaceVariant.copy(alpha = 0.85f))
-            .then(
-                if (isCommitting || isActive) {
-                    Modifier.border(
-                        width = if (isCommitting) 2.5.dp else 1.5.dp,
-                        color = IrisPrimary.copy(alpha = if (isCommitting) glowAlpha.coerceAtLeast(0.6f) else 1f),
-                        shape = RoundedCornerShape(14.dp),
-                    )
-                } else {
-                    Modifier
-                },
-            )
-            .clickable(enabled = !isCommitting, onClick = onActivate)
+            },
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .clip(CardShape)
+                .background(SwipeDeleteSurface.copy(alpha = deleteAlpha * 0.92f)),
+            contentAlignment = Alignment.CenterEnd,
         ) {
-            // ---- Top row: dot + name + state+runtime + active badge + actions ----
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(dotColor),
-                )
-                Spacer(Modifier.size(8.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = snapshot.name,
-                        color = IrisText,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    // Subtitle: state + runtime
-                    Text(
-                        text = "${stateLabel(snapshot.state)} · ${sessionRuntime(snapshot)}",
-                        color = IrisTextMuted,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Normal,
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (isActive) {
-                    ActiveBadge()
-                }
-                // Inline actions
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconButton(onClick = onRename) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = "Rename",
-                            tint = IrisTextMuted,
-                            modifier = Modifier.size(20.dp),
-                        )
+            Icon(
+                painter = lucidePainter("trash_2"),
+                contentDescription = "Delete",
+                tint = IrisSurface,
+                modifier = Modifier
+                    .padding(end = 18.dp)
+                    .graphicsLayer {
+                        alpha = deleteAlpha
+                        scaleX = deleteIconScale
+                        scaleY = deleteIconScale
                     }
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = "Delete",
-                            tint = IrisTextMuted,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-            }
+                    .size(21.dp),
+            )
+        }
 
-            // ---- Last command preview ----
-            if (snapshot.liveSnapshotLines.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                val lastLine = snapshot.liveSnapshotLines.lastOrNull { it.isNotBlank() } ?: ""
-                Text(
-                    text = lastLine,
-                    color = IrisText.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 11.sp,
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 2.dp),
+        val background = if (isActive) {
+            IrisPrimary.copy(alpha = 0.075f)
+        } else {
+            IrisSurfaceVariant.copy(alpha = 0.78f)
+        }
+
+        val borderColor = if (isActive) {
+            IrisPrimary.copy(alpha = 0.55f)
+        } else {
+            IrisTextMuted.copy(alpha = 0.08f)
+        }
+
+        val elevation = if (isActive) 7.dp else 3.dp
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    alpha = (1f - swipeProgress * 0.22f).coerceIn(0.78f, 1f)
+                }
+                .shadow(
+                    elevation = elevation,
+                    shape = CardShape,
+                    ambientColor = if (isActive) IrisPrimary.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.10f),
+                    spotColor = if (isActive) IrisPrimary.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.08f),
                 )
+                .clip(CardShape)
+                .background(background)
+                .border(1.dp, borderColor, CardShape)
+                .clickable(enabled = !isCommitting && swipeOffset.value == 0f) {
+                    onActivate()
+                }
+                .pointerInput(snapshot.id + ":press") {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            pressed = event.changes.any { it.pressed }
+                        }
+                    }
+                },
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        painter = lucidePainter("square_terminal"),
+                        contentDescription = null,
+                        tint = if (isActive) IrisPrimary else IrisTextMuted,
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .size(19.dp),
+                    )
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = snapshot.name,
+                            color = IrisText,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Medium,
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Spacer(Modifier.height(3.dp))
+                        Text(
+                            text = relativeTime(snapshot.lastUsedAtMs),
+                            color = IrisTextMuted,
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+
+                    var showActions by remember(snapshot.id) { mutableStateOf(false) }
+
+                    Box {
+                        IconButton(
+                            onClick = { showActions = true },
+                            enabled = !isCommitting,
+                        ) {
+                            Icon(
+                                painter = lucidePainter("ellipsis_vertical"),
+                                contentDescription = "Session actions",
+                                tint = if (isActive) IrisPrimary else IrisTextMuted,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showActions,
+                            onDismissRequest = { showActions = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Rename") },
+                                onClick = {
+                                    showActions = false
+                                    onRename()
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    showActions = false
+                                    onDelete()
+                                },
+                            )
+                        }
+                    }
+                }
+
+                val preview = snapshot.liveSnapshotLines.lastOrNull { it.isNotBlank() }
+                if (!preview.isNullOrBlank()) {
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = preview,
+                        color = IrisText.copy(alpha = 0.72f),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp,
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }
 }
 
-@Composable
-private fun ActiveBadge() {
-    Box(
-        modifier = Modifier
-            .size(6.dp, 20.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(IrisPrimary)
-            .padding(start = 4.dp),
-    )
-}
-
-private fun stateDotColor(state: SessionState): Color = when (state) {
-    SessionState.Running -> IrisPrimary
-    SessionState.Idle    -> IrisTextMuted
-    SessionState.Closed  -> IrisTextMuted.copy(alpha = 0.4f)
-}
-
-private fun stateLabel(state: SessionState): String = when (state) {
-    SessionState.Running -> "Running"
-    SessionState.Idle    -> "Idle"
-    SessionState.Closed  -> "Closed"
-}
-
-private fun sessionRuntime(snapshot: SessionSnapshot): String {
-    val now = System.currentTimeMillis()
-    val diff = when (snapshot.state) {
-        SessionState.Running -> now - snapshot.createdAtMs
-        else -> (snapshot.lastUsedAtMs - snapshot.createdAtMs).coerceAtLeast(0)
-    }
-    val s = (diff / 1000).coerceAtLeast(0)
-    return when {
-        s < 60       -> "just now"
-        s < 3600     -> "${s / 60}m"
-        s < 86_400   -> "${s / 3600}h ${(s % 3600) / 60}m"
-        s < 604_800  -> "${s / 86_400}d ${(s % 86_400) / 3600}h"
-        else         -> "${s / 604_800}w"
-    }
-}
-
 private fun relativeTime(thenMs: Long): String {
-    if (thenMs <= 0) return "—"
-    val now = System.currentTimeMillis()
-    val diff = (now - thenMs).coerceAtLeast(0)
-    val s = diff / 1000
+    if (thenMs <= 0L) return "—"
+    val diffSeconds = ((System.currentTimeMillis() - thenMs).coerceAtLeast(0L)) / 1000
     return when {
-        s < 60       -> "just now"
-        s < 3600     -> "${s / 60}m ago"
-        s < 86_400   -> "${s / 3600}h ago"
-        s < 604_800  -> "${s / 86_400}d ago"
-        else         -> "${s / 604_800}w ago"
+        diffSeconds < 60 -> "just now"
+        diffSeconds < 3_600 -> "${diffSeconds / 60}m ago"
+        diffSeconds < 86_400 -> "${diffSeconds / 3_600}h ago"
+        diffSeconds < 604_800 -> "${diffSeconds / 86_400}d ago"
+        else -> "${diffSeconds / 604_800}w ago"
     }
 }

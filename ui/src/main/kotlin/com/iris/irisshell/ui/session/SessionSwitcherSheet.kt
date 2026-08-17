@@ -9,33 +9,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -52,7 +39,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,33 +46,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
-import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
-import com.iris.irisshell.design.system.IrisOutline
 import com.iris.irisshell.domain.session.SessionSnapshot
-import com.iris.irisshell.domain.session.SessionState
 import com.iris.irisshell.ui.util.BlurDialogWindow
 import android.view.Window
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /* -------------------------------------------------------------------------- */
@@ -102,24 +76,14 @@ private fun findHostWindow(ctx: android.content.Context): Window? {
     return null
 }
 
-private fun formatDuration(ms: Long): String {
-    val s = (ms / 1000).coerceAtLeast(0)
-    return when {
-        s < 60 -> "just now"
-        s < 3600 -> "${s / 60}m"
-        s < 86_400 -> "${s / 3600}h ${(s % 3600) / 60}m"
-        s < 604_800 -> "${s / 86_400}d ${(s % 86_400) / 3600}h"
-        else -> "${s / 604_800}w"
-    }
-}
-
-private fun cardBackground(isActive: Boolean): Color {
-    return if (isActive) {
-        IrisPrimary.copy(alpha = 0.06f)
-    } else {
-        IrisSurfaceVariant.copy(alpha = 0.65f)
-    }
-}
+@Composable
+private fun lucidePainter(name: String) = painterResource(
+    LocalView.current.context.resources.getIdentifier(
+        "lucide_$name",
+        "drawable",
+        LocalView.current.context.packageName,
+    )
+)
 
 /* -------------------------------------------------------------------------- */
 /*                              Data class for undo                           */
@@ -141,27 +105,6 @@ private fun DisableDialogScrim() {
     SideEffect {
         val w = findHostWindow(view.context)
         w?.setDimAmount(0f)
-    }
-}
-
-@Composable
-private fun ActiveBadge() {
-    Box(
-        modifier = Modifier
-            .padding(start = 4.dp)
-            .height(18.dp)
-            .padding(horizontal = 6.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(IrisPrimary),
-    ) {
-        Text(
-            text = "ACTIVE",
-            color = Color.Black,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 0.04.sp,
-            modifier = Modifier.padding(vertical = 1.dp),
-        )
     }
 }
 
@@ -201,9 +144,9 @@ private fun EmptyState(
             modifier = Modifier.padding(top = 20.dp),
         ) {
             Icon(
-                Icons.Filled.Add,
+                painter = lucidePainter("plus"),
                 contentDescription = "New session",
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
     }
@@ -308,339 +251,6 @@ private fun DeleteConfirmDialog(
 }
 
 /* -------------------------------------------------------------------------- */
-/*                              Session Card                                  */
-/* -------------------------------------------------------------------------- */
-
-@Composable
-private fun SessionCard(
-    snapshot: SessionSnapshot,
-    isActive: Boolean,
-    isCommitting: Boolean,
-    isFocused: Boolean,
-    onActivate: () -> Unit,
-    onRename: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    var swipeOffset by remember { mutableStateOf(0f) }
-    val deleteThreshold = 120f
-
-    // Animation state for swipe back
-    var targetOffset by remember { mutableStateOf(0f) }
-    val animatedOffset = animateFloatAsState(
-        targetValue = targetOffset,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow,
-        ),
-    )
-
-    // Sync swipeOffset with animated value
-    LaunchedEffect(animatedOffset.value) {
-        swipeOffset = animatedOffset.value
-    }
-
-    // Check if we should trigger delete when animation completes
-    LaunchedEffect(swipeOffset, targetOffset) {
-        if (targetOffset == 0f && swipeOffset > deleteThreshold) {
-            onDelete()
-        }
-    }
-
-    val dotColor = when (snapshot.state) {
-        SessionState.Running -> Color(0xFF22C55E) // emerald
-        SessionState.Idle -> Color(0xFF71717A)   // zinc
-        else -> IrisTextMuted.copy(alpha = 0.4f)
-    }
-
-    val statusLabel = when (snapshot.state) {
-        SessionState.Running -> "Running"
-        SessionState.Idle -> "Idle"
-        else -> "Closed"
-    }
-
-    val runtime = when {
-        snapshot.state == SessionState.Running -> {
-            val diff = System.currentTimeMillis() - snapshot.createdAtMs
-            formatDuration(diff)
-        }
-        else -> {
-            val diff = (snapshot.lastUsedAtMs - snapshot.createdAtMs).coerceAtLeast(0)
-            formatDuration(diff)
-        }
-    }
-
-    val preview = snapshot.liveSnapshotLines.lastOrNull { it.isNotBlank() } ?: ""
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer { translationX = -swipeOffset }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { },
-                    onDrag = { change, dragAmount ->
-                        val dx = dragAmount.x
-                        if (dx > 0 || swipeOffset > 0) {
-                            swipeOffset = (swipeOffset + dx).coerceIn(0f, deleteThreshold * 1.5f)
-                        }
-                    },
-                    onDragEnd = {
-                        if (swipeOffset > deleteThreshold) {
-                            targetOffset = deleteThreshold * 1.5f
-                        } else {
-                            targetOffset = 0f
-                        }
-                    },
-                    onDragCancel = {
-                        targetOffset = 0f
-                    }
-                )
-            }
-            .then(Modifier.fillMaxWidth().clickable { onActivate() }),
-    ) {
-        val swipeProgress = (swipeOffset / deleteThreshold).coerceIn(0f, 1f)
-        val backgroundAlpha = swipeProgress
-        val iconScale = swipeProgress
-
-        // Delete background (red)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Red.copy(alpha = backgroundAlpha)),
-            contentAlignment = Alignment.CenterEnd,
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Delete,
-                contentDescription = "Delete",
-                tint = IrisSurface,
-                modifier = Modifier
-                    .padding(end = 20.dp)
-                    .graphicsLayer { scaleX = iconScale; scaleY = iconScale }
-            )
-        }
-
-        // Swipe hint text
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(end = 56.dp)
-                .graphicsLayer { alpha = backgroundAlpha },
-            contentAlignment = Alignment.CenterEnd,
-        ) {
-            Text(
-                text = "Swipe to delete",
-                color = Color.White,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-
-        // Foreground card
-        CardContent(
-            snapshot = snapshot,
-            isActive = isActive,
-            isCommitting = isCommitting,
-            isFocused = isFocused,
-            dotColor = dotColor,
-            statusLabel = statusLabel,
-            runtime = runtime,
-            preview = preview,
-            onRename = onRename,
-            onDelete = onDelete,
-        )
-    }
-}
-
-@Composable
-private fun CardContent(
-    snapshot: SessionSnapshot,
-    isActive: Boolean,
-    isCommitting: Boolean,
-    isFocused: Boolean,
-    dotColor: Color,
-    statusLabel: String,
-    runtime: String,
-    preview: String,
-    onRename: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    // Press feedback
-    var pressed by remember { mutableStateOf(false) }
-    val targetScale = when {
-        isCommitting -> 1.06f
-        pressed -> 0.98f
-        isActive -> 1.01f
-        else -> 1f
-    }
-    val scale by animateFloatAsState(
-        targetValue = targetScale,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow,
-        ),
-    )
-
-    // Glow for committing
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (isCommitting) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessHigh,
-        ),
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val ev = awaitPointerEvent()
-                        pressed = ev.changes.any { it.pressed }
-                    }
-                }
-            }
-            .background(cardBackground(isActive))
-            .clip(RoundedCornerShape(14.dp))
-            .then(
-                if (isActive) {
-                    Modifier
-                        .border(1.5.dp, IrisPrimary, RoundedCornerShape(14.dp))
-                        .shadow(
-                            elevation = 8.dp,
-                            shape = RoundedCornerShape(14.dp),
-                            ambientColor = IrisPrimary.copy(alpha = 0.15f),
-                            spotColor = IrisPrimary.copy(alpha = 0.1f),
-                        )
-                } else {
-                    Modifier.shadow(
-                        elevation = 4.dp,
-                        shape = RoundedCornerShape(14.dp),
-                    )
-                }
-            ),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        ) {
-            // Gold left accent bar for active card
-            if (isActive) {
-                Box(
-                    modifier = Modifier
-                        .width(3.dp)
-                        .height(IntrinsicSize.Max)
-                        .offset(x = -19.dp)
-                        .clip(RoundedCornerShape(0.dp, 3.dp, 3.dp, 0.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(IrisPrimary, IrisPrimary.copy(alpha = 0f)),
-                            )
-                        ),
-                )
-            }
-
-            // Top row: dot + name + state+runtime + active badge + actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Status dot
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(dotColor)
-                        .shadow(if (dotColor == Color(0xFF22C55E)) 6.dp else 0.dp, CircleShape, dotColor),
-                )
-                Spacer(Modifier.width(8.dp))
-
-                // Name + subtitle
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = snapshot.name,
-                            color = IrisText,
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (isActive) {
-                            ActiveBadge()
-                        }
-                    }
-                    // Subtitle: state + runtime
-                    Text(
-                        text = "$statusLabel · $runtime",
-                        color = IrisTextMuted,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Normal,
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                // Inline actions (visible on hover/focus)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer { alpha = if (isFocused) 1f else 0f },
-                    contentAlignment = Alignment.CenterEnd,
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                        IconButton(onClick = onRename) {
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = "Rename",
-                                tint = IrisTextMuted,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                        IconButton(onClick = onDelete) {
-                            Icon(
-                                imageVector = Icons.Filled.Delete,
-                                contentDescription = "Close session",
-                                tint = IrisTextMuted,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Last command preview
-            if (preview.isNotBlank()) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = preview,
-                    color = IrisText.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 11.sp,
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 2.dp),
-                )
-            }
-        }
-    }
-}
-
-/* -------------------------------------------------------------------------- */
 /*                              Main Sheet                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -658,7 +268,6 @@ fun SessionSwitcherSheet(
     var renameNewName by remember { mutableStateOf("") }
     var pendingDelete by remember { mutableStateOf<DeletedSession?>(null) }
     var searchText by remember { mutableStateOf("") }
-    var focusedIndex by remember { mutableStateOf(-1) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val snackbarScope = rememberCoroutineScope()
@@ -717,7 +326,8 @@ fun SessionSwitcherSheet(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth(0.92f)
-                    .height(560.dp)
+                    .heightIn(min = 420.dp, max = 560.dp)
+                    .fillMaxHeight(0.90f)
                     .systemBarsPadding()
                     .graphicsLayer { shadowElevation = 24f },
                 shape = RoundedCornerShape(12.dp),
@@ -730,7 +340,6 @@ fun SessionSwitcherSheet(
                         onCreate = { showCreateDialog = true },
                         searchText = searchText,
                         onSearchChange = { searchText = it },
-                        onFocusReset = { focusedIndex = -1 },
                     )
 
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -744,8 +353,6 @@ fun SessionSwitcherSheet(
                                 sessions = filteredSessions,
                                 activeId = activeId,
                                 committingId = committingId,
-                                focusedIndex = focusedIndex,
-                                onFocusChange = { focusedIndex = it },
                                 onCommit = { id ->
                                     if (committingId == null) {
                                         committingId = id
@@ -802,9 +409,9 @@ fun SessionSwitcherSheet(
     LaunchedEffect(pendingDelete) {
         val pd = pendingDelete ?: return@LaunchedEffect
         val msg = if (pd.wasActive && pd.fallbackName != null) {
-            "Deleted '${pd.snapshot.name}' • Switched to '${pd.fallbackName}'"
+            "${pd.snapshot.name} removed · now viewing ${pd.fallbackName}"
         } else {
-            "Deleted '${pd.snapshot.name}'"
+            "${pd.snapshot.name} removed"
         }
         snackbarScope.launch {
             val result = try {
@@ -860,7 +467,6 @@ private fun SwitcherTopBar(
     onCreate: () -> Unit,
     searchText: String,
     onSearchChange: (String) -> Unit,
-    onFocusReset: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -873,7 +479,7 @@ private fun SwitcherTopBar(
         ) {
             IconButton(onClick = onClose) {
                 Icon(
-                    imageVector = Icons.Filled.Close,
+                    painter = lucidePainter("x"),
                     contentDescription = "Close switcher",
                     tint = IrisText,
                 )
@@ -891,20 +497,31 @@ private fun SwitcherTopBar(
                     contentColor = IrisSurface,
                 ),
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "New session")
+                Icon(
+                    painter = lucidePainter("plus"),
+                    contentDescription = "New session",
+                    modifier = Modifier.size(22.dp),
+                )
             }
         }
 
         // Search field
         OutlinedTextField(
             value = searchText,
-            onValueChange = { it -> onSearchChange(it); onFocusReset() },
+            onValueChange = onSearchChange,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),
             singleLine = true,
             placeholder = { Text("Search sessions…", color = IrisTextMuted) },
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = IrisTextMuted) },
+            leadingIcon = {
+                Icon(
+                    painter = lucidePainter("search"),
+                    contentDescription = null,
+                    tint = IrisTextMuted,
+                    modifier = Modifier.size(19.dp),
+                )
+            },
         )
     }
 }
@@ -918,8 +535,6 @@ private fun SessionList(
     sessions: List<SessionSnapshot>,
     activeId: String?,
     committingId: String?,
-    focusedIndex: Int,
-    onFocusChange: (Int) -> Unit,
     onCommit: (String) -> Unit,
     onRename: (SessionSnapshot) -> Unit,
     onDelete: (SessionSnapshot) -> Unit,
@@ -929,18 +544,15 @@ private fun SessionList(
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
-        itemsIndexed(sessions) { index, snapshot ->
+        itemsIndexed(sessions, key = { _, snapshot -> snapshot.id }) { _, snapshot ->
             val isActive = snapshot.id == activeId
             val isCommitting = committingId != null && committingId == snapshot.id
-            val isFocused = index == focusedIndex
-
             SessionCard(
                 snapshot = snapshot,
                 isActive = isActive,
                 isCommitting = isCommitting,
-                isFocused = isFocused,
                 onActivate = { onCommit(snapshot.id) },
                 onRename = { onRename(snapshot) },
                 onDelete = { onDelete(snapshot) },
