@@ -212,9 +212,12 @@ private fun ReadyScreen(
         }
         // IME-aware column — lifts everything above the system keyboard.
         // The InputBarHost sits at the very bottom, just above the IME.
+        // weight(1f) instead of fillMaxSize() so the outer Column distributes
+        // remaining height after TopBar is measured — prevents height=0 crash.
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .imePadding(),
         ) {
             // Box no longer owns the pinch gesture — Termux's ScaleGestureDetector
