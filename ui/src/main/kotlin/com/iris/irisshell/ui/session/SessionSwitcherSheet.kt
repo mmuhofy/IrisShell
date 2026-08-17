@@ -1,27 +1,16 @@
 package com.iris.irisshell.ui.session
 
-import android.os.Build
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -31,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -50,11 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisSurface
@@ -62,7 +49,6 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.domain.session.SessionSnapshot
-import com.iris.irisshell.ui.util.BlurDialogWindow
 import android.view.Window
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -276,14 +262,6 @@ fun SessionSwitcherSheet(
     val snackbarHostState = remember { SnackbarHostState() }
     val snackbarScope = rememberCoroutineScope()
 
-    DisableDialogScrim()
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        BlurDialogWindow(
-            radiusDp = 22f,
-            enabled = !showCreateDialog && renamingId == null
-        )
-    }
 
     val inCommit = committingId != null
 
@@ -296,48 +274,33 @@ fun SessionSwitcherSheet(
         }
     }
 
-    Dialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
+        shape = RoundedCornerShape(
+            topStart = 28.dp,
+            topEnd = 28.dp,
+            bottomStart = 0.dp,
+            bottomEnd = 0.dp,
         ),
+        containerColor = IrisSurface,
+        tonalElevation = 6.dp,
+        dragHandle = {
+            androidx.compose.material3.BottomSheetDefaults.DragHandle()
+        },
     ) {
-        AnimatedVisibility(
-            visible = true,
-            enter = scaleIn(
-                initialScale = 0.88f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMediumLow,
-                ),
-            ) + fadeIn(
-                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            shape = RoundedCornerShape(
+                topStart = 28.dp,
+                topEnd = 28.dp,
+                bottomStart = 0.dp,
+                bottomEnd = 0.dp,
             ),
-            exit = scaleOut(
-                targetScale = if (inCommit) 0.94f else 0.92f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessHigh,
-                ),
-            ) + fadeOut(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessHigh,
-                ),
-            ),
+            color = IrisSurface.copy(alpha = 0.92f),
+            tonalElevation = 0.dp,
         ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth(0.92f)
-                    .heightIn(min = 420.dp, max = 560.dp)
-                    .fillMaxHeight(0.90f)
-                    .systemBarsPadding()
-                    .graphicsLayer { shadowElevation = 24f },
-                shape = RoundedCornerShape(12.dp),
-                color = IrisSurface.copy(alpha = 0.92f),
-                tonalElevation = 6.dp,
-            ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     SwitcherTopBar(
                         onClose = onDismiss,
@@ -388,7 +351,6 @@ fun SessionSwitcherSheet(
                 }
             }
         }
-    }
 
     // Commit animation then dismiss
     LaunchedEffect(committingId) {
