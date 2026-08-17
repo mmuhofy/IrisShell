@@ -730,6 +730,7 @@ fun SessionSwitcherSheet(
                         onCreate = { showCreateDialog = true },
                         searchText = searchText,
                         onSearchChange = { searchText = it },
+                        onFocusReset = { focusedIndex = -1 },
                     )
 
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -859,6 +860,7 @@ private fun SwitcherTopBar(
     onCreate: () -> Unit,
     searchText: String,
     onSearchChange: (String) -> Unit,
+    onFocusReset: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -896,7 +898,7 @@ private fun SwitcherTopBar(
         // Search field
         OutlinedTextField(
             value = searchText,
-            onValueChange = { searchText = it; focusedIndex = -1 },
+            onValueChange = { searchText = it; onFocusReset() },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),
