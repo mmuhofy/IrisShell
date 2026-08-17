@@ -278,9 +278,6 @@ fun SessionSwitcherSheet(
         ),
         containerColor = IrisSurface,
         tonalElevation = 6.dp,
-        dragHandle = {
-            androidx.compose.material3.BottomSheetDefaults.DragHandle()
-        },
     ) {
         Surface(
             modifier = Modifier
