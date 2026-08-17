@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -50,6 +49,7 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.domain.session.SessionSnapshot
+import com.iris.irisshell.ui.R
 import android.view.Window
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -67,14 +67,7 @@ private fun findHostWindow(ctx: android.content.Context): Window? {
     return null
 }
 
-@Composable
-private fun lucidePainter(name: String) = painterResource(
-    LocalView.current.context.resources.getIdentifier(
-        "lucide_$name",
-        "drawable",
-        LocalView.current.context.packageName,
-    )
-)
+
 
 /* -------------------------------------------------------------------------- */
 /*                              Data class for undo                           */
@@ -135,7 +128,7 @@ private fun EmptyState(
             modifier = Modifier.padding(top = 20.dp),
         ) {
             Icon(
-                painter = lucidePainter("plus"),
+                painter = painterResource(R.drawable.lucide_plus),
                 contentDescription = "New session",
                 modifier = Modifier.size(24.dp),
             )
@@ -246,7 +239,6 @@ private fun DeleteConfirmDialog(
 /* -------------------------------------------------------------------------- */
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun SessionSwitcherSheet(
     onDismiss: () -> Unit,
     viewModel: SessionSwitcherViewModel = hiltViewModel(),
@@ -447,7 +439,7 @@ private fun SwitcherTopBar(
         ) {
             IconButton(onClick = onClose) {
                 Icon(
-                    painter = lucidePainter("x"),
+                    painter = painterResource(R.drawable.lucide_x),
                     contentDescription = "Close switcher",
                     tint = IrisText,
                 )
@@ -466,7 +458,7 @@ private fun SwitcherTopBar(
                 ),
             ) {
                 Icon(
-                    painter = lucidePainter("plus"),
+                    painter = painterResource(R.drawable.lucide_plus),
                     contentDescription = "New session",
                     modifier = Modifier.size(22.dp),
                 )
@@ -484,7 +476,7 @@ private fun SwitcherTopBar(
             placeholder = { Text("Search sessions…", color = IrisTextMuted) },
             leadingIcon = {
                 Icon(
-                    painter = lucidePainter("search"),
+                    painter = painterResource(R.drawable.lucide_search),
                     contentDescription = null,
                     tint = IrisTextMuted,
                     modifier = Modifier.size(19.dp),

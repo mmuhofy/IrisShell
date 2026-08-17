@@ -39,7 +39,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -52,15 +51,7 @@ import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.domain.session.SessionSnapshot
-
-@Composable
-private fun lucidePainter(name: String) = painterResource(
-    LocalContext.current.resources.getIdentifier(
-        "lucide_$name",
-        "drawable",
-        LocalContext.current.packageName,
-    )
-)
+import com.iris.irisshell.ui.R
 
 private val SwipeDeleteSurface = Color(0xFF8F4650)
 private val CardShape = RoundedCornerShape(14.dp)
@@ -108,38 +99,38 @@ fun SessionCard(
             .pointerInput(snapshot.id) {
                 coroutineScope {
                     detectDragGestures(
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        val next = (swipeOffset.value + dragAmount.x)
-                            .coerceIn(0f, deleteThreshold * 1.5f)
-                        if (dragAmount.x > 0f || swipeOffset.value > 0f) {
-                            launch { swipeOffset.snapTo(next) }
-                        }
-                    },
-                    onDragEnd = {
-                        val shouldDelete = swipeOffset.value >= deleteThreshold
-                        launch {
-                            swipeOffset.animateTo(
-                                targetValue = 0f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMedium,
-                                ),
-                            )
-                            if (shouldDelete) onDelete()
-                        }
-                    },
-                    onDragCancel = {
-                        launch {
-                            swipeOffset.animateTo(
-                                targetValue = 0f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMedium,
-                                ),
-                            )
-                        }
-                    },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            val next = (swipeOffset.value + dragAmount.x)
+                                .coerceIn(0f, deleteThreshold * 1.5f)
+                            if (dragAmount.x > 0f || swipeOffset.value > 0f) {
+                                launch { swipeOffset.snapTo(next) }
+                            }
+                        },
+                        onDragEnd = {
+                            val shouldDelete = swipeOffset.value >= deleteThreshold
+                            launch {
+                                swipeOffset.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMedium,
+                                    ),
+                                )
+                                if (shouldDelete) onDelete()
+                            }
+                        },
+                        onDragCancel = {
+                            launch {
+                                swipeOffset.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMedium,
+                                    ),
+                                )
+                            }
+                        },
                     )
                 }
             },
@@ -152,7 +143,7 @@ fun SessionCard(
             contentAlignment = Alignment.CenterEnd,
         ) {
             Icon(
-                painter = lucidePainter("trash_2"),
+                painter = painterResource(R.drawable.lucide_trash_2),
                 contentDescription = "Delete",
                 tint = IrisSurface,
                 modifier = Modifier
@@ -217,7 +208,7 @@ fun SessionCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        painter = lucidePainter("square_terminal"),
+                        painter = painterResource(R.drawable.lucide_square_terminal),
                         contentDescription = null,
                         tint = if (isActive) IrisPrimary else IrisTextMuted,
                         modifier = Modifier
@@ -253,7 +244,7 @@ fun SessionCard(
                             enabled = !isCommitting,
                         ) {
                             Icon(
-                                painter = lucidePainter("ellipsis_vertical"),
+                                painter = painterResource(R.drawable.lucide_ellipsis_vertical),
                                 contentDescription = "Session actions",
                                 tint = if (isActive) IrisPrimary else IrisTextMuted,
                                 modifier = Modifier.size(20.dp),
