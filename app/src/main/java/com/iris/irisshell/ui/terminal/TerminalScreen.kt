@@ -336,7 +336,7 @@ private fun ReadyScreen(
     }
 
     if (switcherOpen) {
-        SessionSwitcherSheet(onDismiss = { switcherOpen = false })
+       // SessionSwitcherSheet(onDismiss = { switcherOpen = false })
     }
 }
 
