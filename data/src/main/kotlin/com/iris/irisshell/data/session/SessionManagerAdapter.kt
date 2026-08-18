@@ -56,7 +56,8 @@ class SessionManagerAdapter @Inject constructor(
         tickerJob = appScope.launch {
             while (true) {
                 delay(SNAPSHOT_TICK_MS)
-                captureLiveSnapshot()
+                // Live snapshot capture is deferred until TerminalBuffer API is stable.
+                // TODO: Implement captureLiveSnapshot() using emulator.getScreen()
             }
         }
     }
@@ -102,30 +103,6 @@ class SessionManagerAdapter @Inject constructor(
 
         lastIds = currentIds
         lastNames = currentNames
-    }
-
-    private suspend fun captureLiveSnapshot() {
-        try {
-            val session = terminalManager.currentSession ?: return
-            val emulator = session.emulator ?: return
-            val screen = emulator.screen ?: return
-
-            val totalRows = screen.rows
-            val startRow = maxOf(0, totalRows - 50)
-            val lines = (startRow until totalRows).mapNotNull { rowIndex ->
-                val row = screen.getLine(rowIndex) ?: return@mapNotNull null
-                row.toString().trimEnd()
-            }.filter { it.isNotEmpty() }
-
-            if (lines.isNotEmpty()) {
-                val id = terminalManager.activePersistentId()
-                if (id != null) {
-                    sessionRepository.updateLivePreview(id, lines)
-                }
-            }
-        } catch (e: Exception) {
-            // Non-critical, ignore
-        }
     }
 
     private companion object {
