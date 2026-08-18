@@ -225,7 +225,13 @@ fun SessionSwitcherSheet(
         containerColor = IrisSurface,
     ) {
     	Column(modifier = Modifier.fillMaxWidth()) {
-            SessionList(
+    		SwitcherTopBar(
+                onClose = onDismiss,
+                onCreate = {},
+                searchText = "",
+                onSearchChange = {},
+        )
+        SessionList(
                 sessions = sessions,
                 activeId = activeId,
                 committingId = null,
