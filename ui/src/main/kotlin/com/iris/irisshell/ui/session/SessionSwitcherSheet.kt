@@ -1,31 +1,40 @@
 package com.iris.irisshell.ui.session
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -38,16 +47,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.design.system.IrisBorderSubtle
+import com.iris.irisshell.design.system.IrisOnPrimary
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
+import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.ui.R
 import kotlinx.coroutines.delay
@@ -84,24 +101,34 @@ fun SessionSwitcherSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
-        shape            = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shape            = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
         containerColor   = IrisSurface,
-        tonalElevation   = 6.dp,
+        tonalElevation   = 0.dp,
+        // Subtle top border on the sheet itself
+        modifier = Modifier.border(
+            width = 1.dp,
+            brush = Brush.horizontalGradient(
+                colors = listOf(
+                    Color.White.copy(alpha = 0.02f),
+                    Color.White.copy(alpha = 0.05f),
+                    Color.White.copy(alpha = 0.02f),
+                )
+            ),
+            shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+        ),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            // Main scrollable content — verticalScroll on Column (not LazyColumn)
-            // to avoid height=0 measurement crash inside ModalBottomSheet.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 32.dp),
             ) {
                 SheetTopBar(
-                    onClose   = onDismiss,
-                    onCreate  = { showCreateDialog = true },
-                    searchText      = searchText,
-                    onSearchChange  = { searchText = it },
+                    onClose        = onDismiss,
+                    onCreate       = { showCreateDialog = true },
+                    searchText     = searchText,
+                    onSearchChange = { searchText = it },
                 )
 
                 if (filteredSessions.isEmpty()) {
@@ -111,41 +138,57 @@ fun SessionSwitcherSheet(
                     )
                 } else {
                     Column(
-                        modifier  = Modifier
+                        modifier            = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        filteredSessions.forEach { snapshot ->
-                            SessionCard(
-                                snapshot     = snapshot,
-                                isActive     = snapshot.id == activeId,
-                                isCommitting = committingId == snapshot.id,
-                                onActivate   = {
-                                    if (committingId == null) {
-                                        committingId = snapshot.id
-                                        viewModel.activate(snapshot.id)
-                                    }
-                                },
-                                onRename = {
-                                    renameNewName = snapshot.name
-                                    renamingId    = snapshot.id
-                                },
-                                onDelete = {
-                                    pendingDelete = DeletedSession(
-                                        snapshot     = snapshot,
-                                        wasActive    = snapshot.id == activeId,
-                                        fallbackName = null,
+                        filteredSessions.forEachIndexed { index, snapshot ->
+                            // Staggered slide-in animation per card
+                            AnimatedVisibility(
+                                visible = true,
+                                enter   = slideInVertically(
+                                    initialOffsetY = { it / 3 },
+                                    animationSpec  = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness    = Spring.StiffnessMediumLow,
+                                    ),
+                                ) + fadeIn(
+                                    animationSpec = tween(
+                                        durationMillis = 220,
+                                        delayMillis    = index * 40,
                                     )
-                                    viewModel.delete(snapshot.id)
-                                },
-                            )
+                                ),
+                            ) {
+                                SessionCard(
+                                    snapshot     = snapshot,
+                                    isActive     = snapshot.id == activeId,
+                                    isCommitting = committingId == snapshot.id,
+                                    onActivate   = {
+                                        if (committingId == null) {
+                                            committingId = snapshot.id
+                                            viewModel.activate(snapshot.id)
+                                        }
+                                    },
+                                    onRename = {
+                                        renameNewName = snapshot.name
+                                        renamingId    = snapshot.id
+                                    },
+                                    onDelete = {
+                                        pendingDelete = DeletedSession(
+                                            snapshot     = snapshot,
+                                            wasActive    = snapshot.id == activeId,
+                                            fallbackName = null,
+                                        )
+                                        viewModel.delete(snapshot.id)
+                                    },
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // Snackbar anchored to the bottom of the sheet
             SnackbarHost(
                 hostState = snackbarHostState,
                 modifier  = Modifier
@@ -155,7 +198,7 @@ fun SessionSwitcherSheet(
         }
     }
 
-    // Dismiss after commit animation
+    // Commit animation then dismiss
     LaunchedEffect(committingId) {
         val id = committingId ?: return@LaunchedEffect
         delay(220)
@@ -163,7 +206,7 @@ fun SessionSwitcherSheet(
         committingId = null
     }
 
-    // Resolve fallback name after deletion propagates
+    // Resolve fallback name after deletion
     LaunchedEffect(pendingDelete, sessions, activeId) {
         val pd = pendingDelete ?: return@LaunchedEffect
         if (pd.fallbackName == null && !sessions.any { it.id == pd.snapshot.id }) {
@@ -175,21 +218,20 @@ fun SessionSwitcherSheet(
         }
     }
 
-    // Show undo snackbar
+    // Undo snackbar
     LaunchedEffect(pendingDelete) {
         val pd = pendingDelete ?: return@LaunchedEffect
         val msg = if (pd.wasActive && pd.fallbackName != null)
             "${pd.snapshot.name} removed · now viewing ${pd.fallbackName}"
         else
             "${pd.snapshot.name} removed"
-
         snackbarScope.launch {
             val result = try {
                 snackbarHostState.showSnackbar(
-                    message         = msg,
-                    actionLabel     = "Undo",
+                    message           = msg,
+                    actionLabel       = "Undo",
                     withDismissAction = true,
-                    duration        = androidx.compose.material3.SnackbarDuration.Short,
+                    duration          = androidx.compose.material3.SnackbarDuration.Short,
                 )
             } catch (e: kotlinx.coroutines.CancellationException) {
                 SnackbarResult.Dismissed
@@ -203,10 +245,7 @@ fun SessionSwitcherSheet(
 
     if (showCreateDialog) {
         CreateSessionDialog(
-            onConfirm = { name ->
-                viewModel.createNew(name)
-                showCreateDialog = false
-            },
+            onConfirm = { name -> viewModel.createNew(name); showCreateDialog = false },
             onDismiss = { showCreateDialog = false },
         )
     }
@@ -214,10 +253,7 @@ fun SessionSwitcherSheet(
     renamingId?.let { id ->
         RenameSessionDialog(
             currentName = renameNewName,
-            onConfirm   = { newName ->
-                viewModel.rename(id, newName)
-                renamingId = null
-            },
+            onConfirm   = { newName -> viewModel.rename(id, newName); renamingId = null },
             onDismiss   = { renamingId = null },
         )
     }
@@ -234,65 +270,105 @@ private fun SheetTopBar(
     searchText: String,
     onSearchChange: (String) -> Unit,
 ) {
-    Column(
-        modifier = Modifier
+    // Header row
+    Row(
+        modifier          = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(start = 20.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+        Text(
+            text     = "Sessions",
+            color    = IrisText,
+            style    = MaterialTheme.typography.titleLarge.copy(
+                fontWeight    = FontWeight.Bold,
+                letterSpacing = (-0.5).sp,
+            ),
+            modifier = Modifier.weight(1f),
+        )
+
+        // New session button — pill shape, gold
+        Surface(
+            onClick = onCreate,
+            shape   = RoundedCornerShape(18.dp),
+            color   = IrisPrimary,
+            modifier = Modifier.height(36.dp),
         ) {
-            IconButton(onClick = onClose) {
-                Icon(
-                    painter           = painterResource(R.drawable.lucide_x),
-                    contentDescription = "Close",
-                    tint              = IrisText,
-                )
-            }
-            Text(
-                text     = "Sessions",
-                color    = IrisText,
-                style    = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                modifier = Modifier.weight(1f),
-            )
-            FilledIconButton(
-                onClick = onCreate,
-                colors  = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = IrisPrimary,
-                    contentColor   = IrisSurface,
-                ),
+            Row(
+                modifier          = Modifier.padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon(
-                    painter           = painterResource(R.drawable.lucide_plus),
-                    contentDescription = "New session",
-                    modifier          = Modifier.size(22.dp),
+                    painter            = painterResource(R.drawable.lucide_plus),
+                    contentDescription = null,
+                    tint               = IrisOnPrimary,
+                    modifier           = Modifier.size(13.dp),
+                )
+                Text(
+                    text       = "New",
+                    color      = IrisOnPrimary,
+                    fontSize   = 13.sp,
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
 
-        OutlinedTextField(
-            value         = searchText,
-            onValueChange = onSearchChange,
-            modifier      = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            singleLine    = true,
-            placeholder   = { Text("Search sessions…", color = IrisTextMuted) },
-            leadingIcon   = {
+        Spacer(Modifier.size(8.dp))
+
+        // Close button — subtle circle
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.03f))
+                .border(1.dp, IrisBorderSubtle, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            IconButton(onClick = onClose, modifier = Modifier.size(36.dp)) {
                 Icon(
-                    painter           = painterResource(R.drawable.lucide_search),
-                    contentDescription = null,
-                    tint              = IrisTextMuted,
-                    modifier          = Modifier.size(18.dp),
+                    painter            = painterResource(R.drawable.lucide_x),
+                    contentDescription = "Close",
+                    tint               = IrisTextSecondary,
+                    modifier           = Modifier.size(18.dp),
                 )
-            },
-        )
+            }
+        }
     }
+
+    // Search field
+    OutlinedTextField(
+        value         = searchText,
+        onValueChange = onSearchChange,
+        modifier      = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 12.dp),
+        singleLine    = true,
+        shape         = RoundedCornerShape(16.dp),
+        placeholder   = { Text("Search sessions…", color = IrisTextMuted, fontSize = 13.5.sp) },
+        leadingIcon   = {
+            Icon(
+                painter            = painterResource(R.drawable.lucide_search),
+                contentDescription = null,
+                tint               = IrisTextMuted,
+                modifier           = Modifier.size(15.dp),
+            )
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor   = IrisPrimary,
+            unfocusedBorderColor = IrisBorderSubtle,
+            focusedContainerColor   = IrisBackground.copy(alpha = 0.6f),
+            unfocusedContainerColor = IrisBackground.copy(alpha = 0.35f),
+            cursorColor          = IrisPrimary,
+            focusedTextColor     = IrisText,
+            unfocusedTextColor   = IrisText,
+        ),
+    )
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Empty state                                                                */
+/*  Empty state                                                               */
 /* -------------------------------------------------------------------------- */
 
 @Composable
@@ -301,40 +377,26 @@ private fun SheetEmptyState(
     onCreate: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
+        modifier            = Modifier
             .fillMaxWidth()
-            .padding(vertical = 48.dp, horizontal = 24.dp),
+            .padding(vertical = 56.dp, horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text  = if (searchText.isNotBlank()) "No matching session" else "No sessions yet",
+            text  = if (searchText.isNotBlank()) "No matching session" else "No active session",
             color = IrisText,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
         )
+        Spacer(Modifier.height(6.dp))
         Text(
-            text     = if (searchText.isNotBlank()) "Try a different search term"
-                       else "Tap + to spawn your first terminal",
-            color    = IrisTextMuted,
-            style    = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 6.dp),
+            text  = if (searchText.isNotBlank())
+                "Try a different search term"
+            else
+                "Tap New to spawn your first terminal",
+            color = IrisTextMuted,
+            style = MaterialTheme.typography.bodyMedium,
         )
-        if (searchText.isBlank()) {
-            FilledIconButton(
-                onClick = onCreate,
-                colors  = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = IrisPrimary,
-                    contentColor   = IrisSurface,
-                ),
-                modifier = Modifier.padding(top = 20.dp),
-            ) {
-                Icon(
-                    painter           = painterResource(R.drawable.lucide_plus),
-                    contentDescription = "New session",
-                    modifier          = Modifier.size(24.dp),
-                )
-            }
-        }
     }
 }
 
@@ -369,7 +431,7 @@ private fun CreateSessionDialog(
                 Text("Cancel", color = IrisTextMuted)
             }
         },
-        containerColor = IrisSurface,
+        containerColor = IrisSurfaceVariant,
     )
 }
 
@@ -394,8 +456,8 @@ private fun RenameSessionDialog(
         },
         confirmButton = {
             TextButton(
-                onClick  = { onConfirm(name.trim()) },
-                enabled  = name.isNotBlank(),
+                onClick = { onConfirm(name.trim()) },
+                enabled = name.isNotBlank(),
             ) {
                 Text("Save", color = IrisPrimary)
             }
@@ -405,6 +467,6 @@ private fun RenameSessionDialog(
                 Text("Cancel", color = IrisTextMuted)
             }
         },
-        containerColor = IrisSurface,
+        containerColor = IrisSurfaceVariant,
     )
 }

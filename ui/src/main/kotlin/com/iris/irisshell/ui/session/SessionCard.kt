@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,28 +39,37 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.design.system.IrisBorderSubtle
+import com.iris.irisshell.design.system.IrisError
+import com.iris.irisshell.design.system.IrisOnPrimary
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
+import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.domain.session.SessionState
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-private val CardShape = RoundedCornerShape(16.dp)
+private val CardShape    = RoundedCornerShape(16.dp)
 private val PreviewShape = RoundedCornerShape(10.dp)
-private const val DELETE_THRESHOLD_DP = 120f
+private const val DELETE_THRESHOLD_DP = 110f
 
 @Composable
 fun SessionCard(
@@ -71,71 +81,81 @@ fun SessionCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val deleteThresholdPx = with(density) { DELETE_THRESHOLD_DP.dp.toPx() }
     val swipeOffset = remember(snapshot.id) { Animatable(0f) }
-    val deleteThresholdPx = with(androidx.compose.ui.platform.LocalDensity.current) {
-        DELETE_THRESHOLD_DP.dp.toPx()
-    }
 
-    // Scale feedback
+    // Card scale: tap feedback + commit explode
     val targetScale = when {
-        isCommitting -> 1.04f
-        isActive     -> 1.01f
+        isCommitting -> 1.03f
+        isActive     -> 1.005f
         else         -> 1f
     }
     val scale by animateFloatAsState(
         targetValue = targetScale,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow,
+            stiffness    = Spring.StiffnessMediumLow,
         ),
         label = "card-scale",
     )
 
-    // Delete reveal alpha — appears as card slides left
-    val deleteAlpha = (swipeOffset.value / deleteThresholdPx).coerceIn(0f, 1f)
+    // Gold glow opacity when committing
+    val glowAlpha by animateFloatAsState(
+        targetValue   = if (isCommitting) 1f else 0f,
+        animationSpec = tween(120),
+        label         = "card-glow",
+    )
+
+    val deleteProgress = (swipeOffset.value / deleteThresholdPx).coerceIn(0f, 1f)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight(),
     ) {
-        // Delete background revealed on swipe
+        // Delete reveal — red tint + label slides in from right
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .clip(CardShape)
-                .background(
-                    androidx.compose.ui.graphics.Color(0xFFEF4444).copy(alpha = 0.12f + deleteAlpha * 0.18f)
-                ),
+                .background(IrisError.copy(alpha = 0.08f + deleteProgress * 0.22f)),
             contentAlignment = Alignment.CenterEnd,
         ) {
             Text(
-                text = "Delete",
-                color = androidx.compose.ui.graphics.Color(0xFFEF4444).copy(alpha = deleteAlpha),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                modifier = Modifier.padding(end = 20.dp),
+                text     = "Delete",
+                color    = IrisError.copy(alpha = deleteProgress),
+                style    = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier
+                    .padding(end = 20.dp)
+                    .graphicsLayer { translationX = (1f - deleteProgress) * 24f },
             )
         }
 
-        // Card surface
+        // Card
+        val shadowElevation = when {
+            isCommitting -> 20.dp
+            isActive     -> 10.dp
+            else         -> 4.dp
+        }
+        val shadowColor = if (isActive || isCommitting)
+            IrisPrimary.copy(alpha = 0.25f * glowAlpha + if (isActive) 0.12f else 0f)
+        else
+            Color.Black.copy(alpha = 0.4f)
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .offset { IntOffset(-swipeOffset.value.roundToInt(), 0) }
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                }
+                .graphicsLayer { scaleX = scale; scaleY = scale }
                 .pointerInput(snapshot.id) {
                     coroutineScope {
                         detectDragGestures(
                             onDrag = { change, dragAmount ->
                                 change.consume()
-                                // dragAmount.x < 0 = sola sürükleme (delete yönü)
                                 val next = (swipeOffset.value - dragAmount.x)
-                                    .coerceIn(0f, deleteThresholdPx * 1.5f)
+                                    .coerceIn(0f, deleteThresholdPx * 1.6f)
                                 if (dragAmount.x < 0f || swipeOffset.value > 0f) {
                                     launch { swipeOffset.snapTo(next) }
                                 }
@@ -144,10 +164,10 @@ fun SessionCard(
                                 val shouldDelete = swipeOffset.value >= deleteThresholdPx
                                 launch {
                                     swipeOffset.animateTo(
-                                        targetValue = 0f,
+                                        targetValue   = 0f,
                                         animationSpec = spring(
                                             dampingRatio = Spring.DampingRatioNoBouncy,
-                                            stiffness = Spring.StiffnessMedium,
+                                            stiffness    = Spring.StiffnessMedium,
                                         ),
                                     )
                                     if (shouldDelete) onDelete()
@@ -156,10 +176,10 @@ fun SessionCard(
                             onDragCancel = {
                                 launch {
                                     swipeOffset.animateTo(
-                                        targetValue = 0f,
+                                        targetValue   = 0f,
                                         animationSpec = spring(
                                             dampingRatio = Spring.DampingRatioNoBouncy,
-                                            stiffness = Spring.StiffnessMedium,
+                                            stiffness    = Spring.StiffnessMedium,
                                         ),
                                     )
                                 }
@@ -167,39 +187,62 @@ fun SessionCard(
                         )
                     }
                 }
+                .shadow(
+                    elevation    = shadowElevation,
+                    shape        = CardShape,
+                    ambientColor = shadowColor,
+                    spotColor    = shadowColor,
+                )
                 .clip(CardShape)
                 .background(
                     if (isActive)
-                        IrisPrimary.copy(alpha = 0.06f)
+                        Brush.linearGradient(
+                            colors = listOf(
+                                IrisPrimary.copy(alpha = 0.07f),
+                                IrisSurfaceVariant.copy(alpha = 0.55f),
+                            )
+                        )
                     else
-                        IrisSurfaceVariant.copy(alpha = 0.55f)
+                        Brush.linearGradient(
+                            colors = listOf(
+                                IrisSurfaceVariant.copy(alpha = 0.55f),
+                                IrisSurfaceVariant.copy(alpha = 0.55f),
+                            )
+                        )
                 )
-                .then(
-                    if (isActive || isCommitting) {
-                        Modifier.border(
-                            width = if (isCommitting) 2.dp else 1.5.dp,
-                            color = IrisPrimary.copy(alpha = if (isCommitting) 1f else 0.85f),
-                            shape = CardShape,
+                .border(
+                    width = if (isActive || isCommitting) 1.5.dp else 1.dp,
+                    brush = if (isActive || isCommitting)
+                        Brush.linearGradient(
+                            colors = listOf(
+                                IrisPrimary.copy(alpha = if (isCommitting) 1f else 0.85f),
+                                IrisPrimary.copy(alpha = if (isCommitting) 0.6f else 0.4f),
+                            )
                         )
-                    } else {
-                        Modifier.border(
-                            width = 1.dp,
-                            color = IrisText.copy(alpha = 0.05f),
-                            shape = CardShape,
-                        )
-                    }
+                    else
+                        Brush.linearGradient(
+                            colors = listOf(
+                                IrisBorderSubtle.copy(alpha = 0.8f),
+                                IrisBorderSubtle.copy(alpha = 0.8f),
+                            )
+                        ),
+                    shape = CardShape,
                 )
                 .clickable(enabled = !isCommitting && swipeOffset.value == 0f) { onActivate() },
         ) {
-            // Active left accent bar
+            // Active left pulse bar
             if (isActive) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .width(3.dp)
-                        .height(36.dp)
+                        .height(32.dp)
                         .clip(RoundedCornerShape(topEnd = 3.dp, bottomEnd = 3.dp))
-                        .background(IrisPrimary),
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(IrisPrimary, IrisPrimary.copy(alpha = 0.5f))
+                            )
+                        ),
                 )
             }
 
@@ -207,22 +250,23 @@ fun SessionCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = if (isActive) 19.dp else 16.dp,
-                        end = 8.dp,
-                        top = 12.dp,
+                        start  = if (isActive) 19.dp else 14.dp,
+                        end    = 6.dp,
+                        top    = 12.dp,
                         bottom = 12.dp,
                     ),
             ) {
-                // Top row: name + ACTIVE badge + overflow menu
+                // Top row: name + ACTIVE badge + overflow
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier          = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = snapshot.name,
-                        color = IrisText,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
+                        text     = snapshot.name,
+                        color    = IrisText,
+                        style    = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight    = FontWeight.SemiBold,
+                            letterSpacing = (-0.3).sp,
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -233,16 +277,16 @@ fun SessionCard(
                         Spacer(Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(3.dp))
+                                .clip(RoundedCornerShape(4.dp))
                                 .background(IrisPrimary)
-                                .padding(horizontal = 5.dp, vertical = 1.dp),
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
                         ) {
                             Text(
-                                text = "ACTIVE",
-                                color = IrisSurface,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 0.6.sp,
+                                text          = "ACTIVE",
+                                color         = IrisOnPrimary,
+                                fontSize      = 9.sp,
+                                fontWeight    = FontWeight.ExtraBold,
+                                letterSpacing = 0.8.sp,
                             )
                         }
                     }
@@ -250,42 +294,38 @@ fun SessionCard(
                     CardOverflowMenu(
                         onRename = onRename,
                         onDelete = onDelete,
-                        enabled = !isCommitting,
+                        enabled  = !isCommitting,
                     )
                 }
 
-                // Subtitle: state + freshness
+                // Subtitle: state · freshness
                 Text(
-                    text = "${stateLabel(snapshot.state)} · ${relativeTime(snapshot.lastUsedAtMs)}",
-                    color = IrisTextMuted,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Normal,
-                    ),
-                    modifier = Modifier.padding(top = 2.dp),
+                    text     = "${stateLabel(snapshot.state)} · ${relativeTime(snapshot.lastUsedAtMs)}",
+                    color    = IrisTextSecondary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(top = 3.dp),
                 )
 
-                // Terminal preview
-                val preview = snapshot.liveSnapshotLines
-                    .filter { it.isNotBlank() }
-                    .takeLast(1)
-                    .firstOrNull()
-
+                // Terminal preview — monospace, last non-blank line
+                val preview = snapshot.liveSnapshotLines.lastOrNull { it.isNotBlank() }
                 if (preview != null) {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(9.dp))
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(PreviewShape)
-                            .background(IrisSurface.copy(alpha = 0.38f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                            .background(IrisBackground.copy(alpha = 0.6f))
+                            .border(1.dp, IrisBorderSubtle.copy(alpha = 0.5f), PreviewShape)
+                            .padding(horizontal = 10.dp, vertical = 7.dp),
                     ) {
                         Text(
-                            text = preview,
-                            color = IrisTextMuted,
-                            fontSize = 11.5.sp,
+                            text       = preview,
+                            color      = IrisTextMuted,
+                            fontSize   = 11.5.sp,
                             fontFamily = FontFamily.Monospace,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            maxLines   = 1,
+                            overflow   = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -293,6 +333,10 @@ fun SessionCard(
         }
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Overflow menu                                                             */
+/* -------------------------------------------------------------------------- */
 
 @Composable
 private fun CardOverflowMenu(
@@ -303,45 +347,37 @@ private fun CardOverflowMenu(
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton(
-            onClick = { expanded = true },
-            enabled = enabled,
+            onClick  = { expanded = true },
+            enabled  = enabled,
             modifier = Modifier.size(36.dp),
         ) {
             Icon(
-                imageVector = Icons.Filled.MoreVert,
+                imageVector        = Icons.Filled.MoreVert,
                 contentDescription = "Session options",
-                tint = IrisTextMuted,
-                modifier = Modifier.size(18.dp),
+                tint               = IrisTextSecondary,
+                modifier           = Modifier.size(18.dp),
             )
         }
         DropdownMenu(
-            expanded = expanded,
+            expanded         = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(IrisSurfaceVariant),
+            modifier         = Modifier.background(IrisSurfaceVariant),
         ) {
             DropdownMenuItem(
-                text = { Text("Rename", color = IrisText, fontSize = 14.sp) },
-                onClick = {
-                    expanded = false
-                    onRename()
-                },
+                text    = { Text("Rename", color = IrisText, fontSize = 14.sp) },
+                onClick = { expanded = false; onRename() },
             )
             DropdownMenuItem(
-                text = {
-                    Text(
-                        "Delete",
-                        color = androidx.compose.ui.graphics.Color(0xFFEF4444),
-                        fontSize = 14.sp,
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    onDelete()
-                },
+                text    = { Text("Delete", color = IrisError, fontSize = 14.sp) },
+                onClick = { expanded = false; onDelete() },
             )
         }
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Helpers                                                                   */
+/* -------------------------------------------------------------------------- */
 
 private fun stateLabel(state: SessionState): String = when (state) {
     SessionState.Running -> "Running"
@@ -352,7 +388,7 @@ private fun stateLabel(state: SessionState): String = when (state) {
 private fun relativeTime(thenMs: Long): String {
     if (thenMs <= 0L) return "—"
     val diff = (System.currentTimeMillis() - thenMs).coerceAtLeast(0L)
-    val s = diff / 1000
+    val s    = diff / 1000
     return when {
         s < 60      -> "just now"
         s < 3_600   -> "${s / 60}m ago"
