@@ -275,7 +275,13 @@ private fun ReadyScreen(
                         onExportOutput = blockEngineViewModel::onExportOutput,
                         onDeleteBlock = blockEngineViewModel::onDeleteBlock,
                         promptLabel = lastDir,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = appearScale.value
+                                scaleY = appearScale.value
+                                alpha = appearAlpha.value
+                            },
                     )
                 } else {
                     TerminalViewHost(
