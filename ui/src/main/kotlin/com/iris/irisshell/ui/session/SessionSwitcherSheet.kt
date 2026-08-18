@@ -222,7 +222,14 @@ fun SessionSwitcherSheet(
 	
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(
+        topStart = 28.dp,
+        topEnd = 28.dp,
+        bottomStart = 0.dp,
+        bottomEnd = 0.dp,
+        ),
         containerColor = IrisSurface,
+        tonalElevation = 6.dp,
     ) {
     	Column(modifier = Modifier.fillMaxWidth()) {
     		SwitcherTopBar(
@@ -231,7 +238,12 @@ fun SessionSwitcherSheet(
                 searchText = "",
                 onSearchChange = {},
         )
-        SessionList(
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false),
+        ) {        
+            SessionList(
                 sessions = sessions,
                 activeId = activeId,
                 committingId = null,
