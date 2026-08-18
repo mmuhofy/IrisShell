@@ -5,14 +5,6 @@ import com.iris.irisshell.domain.session.SessionSnapshot
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-/**
- * Implementation that reads the active-session pointer owned by
- * [SessionRepositoryImpl] and re-emits it through the domain interface.
- *
- * `setActive` simply delegates — the actual PTY reattach happens
- * later in `:terminal` once `TerminalManager` is adapted to consume
- * the same pointer.
- */
 class ObserveActiveSessionUseCaseImpl @Inject constructor(
     private val sessionRepositoryImpl: SessionRepositoryImpl,
 ) : ObserveActiveSessionUseCase {

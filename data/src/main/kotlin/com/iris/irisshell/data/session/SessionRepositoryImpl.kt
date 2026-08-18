@@ -14,35 +14,17 @@ import com.iris.irisshell.domain.session.SessionState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.update
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Room-backed implementation of [SessionRepository].
- *
- * Two storage tiers:
- *  - **Room** (`sessions` table) — durable metadata: id, name, state,
- *    timestamps, last-will snapshot. Survives process death.
- *  - **DataStore Preferences** (`KEY_ACTIVE_SESSION_ID`) — pointer to
- *    the currently-active session id. Survives process death so the
- *    app re-opens on the last session.
- *
- * The data layer does NOT own the PTY process — that lives in
- * `:terminal`'s `TerminalManager`. This class merely tracks metadata;
- * the TerminalManager is adapted (Phase 2) to honour this repository's
- * active-session id and to feed live previews back through a callback.
- *
- * Live preview ticker is wired in a follow-up step. In this iteration
- * the repository only knows how to merge Room + DataStore; the UI sees
- * `liveSnapshotLines = emptyList()` until the TerminalManager feeds it.
- */
 @Singleton
 class SessionRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -53,14 +35,27 @@ class SessionRepositoryImpl @Inject constructor(
     private val dao: SessionDao = database.sessionDao()
     private val dataStore: DataStore<Preferences> = context.irisShellDataStore
 
+    private val _livePreviews = MutableStateFlow<Map<String, List<String>>>(emptyMap())
+    val livePreviews: StateFlow<Map<String, List<String>>> = _livePreviews.asStateFlow()
+
     override fun observeAll(): Flow<List<SessionSnapshot>> =
-        dao.observeAll()
-            .map { rows -> rows.map { it.toSnapshot(emptyList()) } }
+        combine(
+            dao.observeAll(),
+            _livePreviews
+        ) { rows, liveMap ->
+            rows.map { row ->
+                row.toSnapshot(liveMap[row.id] ?: emptyList())
+            }
+        }
             .distinctUntilChanged()
 
     override fun observe(id: String): Flow<SessionSnapshot?> =
-        dao.observe(id)
-            .map { row -> row?.toSnapshot(emptyList()) }
+        combine(
+            dao.observe(id),
+            _livePreviews
+        ) { row, liveMap ->
+            row?.toSnapshot(liveMap[row.id] ?: emptyList())
+        }
             .distinctUntilChanged()
 
     override suspend fun create(name: String): String {
@@ -76,10 +71,7 @@ class SessionRepositoryImpl @Inject constructor(
                 lastSnapshot = "",
             )
         )
-        // Default to activating the newly created session.
-        appScope.launch {
-            dataStore.edit { it[KEY_ACTIVE_SESSION_ID] = id }
-        }
+        dataStore.edit { it[KEY_ACTIVE_SESSION_ID] = id }
         return id
     }
 
@@ -88,13 +80,8 @@ class SessionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun delete(id: String) {
+        val activeId = dataStore.data.map { it[KEY_ACTIVE_SESSION_ID] }.first()
         dao.delete(id)
-        // If we just deleted the active one, clear the active pointer
-        // and fall back to most-recent so the user always lands on a
-        // valid session after closing the dialog.
-        val activeId = dataStore.data
-            .map { it[KEY_ACTIVE_SESSION_ID] }
-            .first()
         if (activeId == id) {
             dataStore.edit { it.remove(KEY_ACTIVE_SESSION_ID) }
             val remaining = dao.observeAll().first()
@@ -106,9 +93,6 @@ class SessionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun restoreSession(snapshot: SessionSnapshot, activate: Boolean) {
-        // Re-insert the row using the original id and metadata. The session
-        // is restored to Idle state (the previous PTY is gone). If the user
-        // asked for activation, flip the active pointer too.
         dao.upsert(
             SessionEntity(
                 id = snapshot.id,
@@ -134,22 +118,25 @@ class SessionRepositoryImpl @Inject constructor(
         )
     }
 
-    /** In-memory pointer to the active session id. */
+    override suspend fun updateLivePreview(id: String, lines: List<String>) {
+        _livePreviews.update { current ->
+            current + (id to lines)
+        }
+    }
+
+    override suspend fun updateState(id: String, state: SessionState) {
+        dao.updateState(id, state.name)
+    }
+
     fun observeActiveId(): Flow<String?> =
         dataStore.data.map { it[KEY_ACTIVE_SESSION_ID] }.distinctUntilChanged()
 
-    /**
-     * Hot stream of session ids only, ordered by `last_used_at_ms` desc.
-     * Used by [SessionManagerAdapter] to map session id → tab index.
-     */
     fun observeAllIds(): Flow<List<String>> =
         dao.observeAll().map { rows -> rows.map { it.id } }
 
-    /** Suspend getter for the active session id (or null). */
     suspend fun currentActiveId(): String? =
         dataStore.data.map { it[KEY_ACTIVE_SESSION_ID] }.first()
 
-    /** Updates the in-memory + persisted active pointer. */
     suspend fun setActiveId(id: String?) {
         dataStore.edit { prefs ->
             if (id == null) prefs.remove(KEY_ACTIVE_SESSION_ID)
@@ -157,11 +144,14 @@ class SessionRepositoryImpl @Inject constructor(
         }
     }
 
-    /** Combined flow: active id + every-session flow → active snapshot. */
     fun observeActive(): Flow<SessionSnapshot?> =
-        combine(observeActiveId(), dao.observeAll()) { activeId, rows ->
+        combine(
+            observeActiveId(),
+            dao.observeAll(),
+            _livePreviews
+        ) { activeId, rows, liveMap ->
             if (activeId == null) null
-            else rows.firstOrNull { it.id == activeId }?.toSnapshot(emptyList())
+            else rows.firstOrNull { it.id == activeId }?.toSnapshot(liveMap[activeId] ?: emptyList())
         }
             .distinctUntilChanged()
 

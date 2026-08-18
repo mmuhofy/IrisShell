@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SessionDao {
-
     @Query("SELECT * FROM sessions ORDER BY last_used_at_ms DESC")
     fun observeAll(): Flow<List<SessionEntity>>
 
@@ -23,6 +22,9 @@ interface SessionDao {
 
     @Query("UPDATE sessions SET last_used_at_ms = :nowMs, state = :state, last_snapshot = :snapshot WHERE id = :id")
     suspend fun updateRuntime(id: String, nowMs: Long, state: String, snapshot: String)
+
+    @Query("UPDATE sessions SET state = :state WHERE id = :id")
+    suspend fun updateState(id: String, state: String)
 
     @Query("DELETE FROM sessions WHERE id = :id")
     suspend fun delete(id: String)
