@@ -18,43 +18,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import com.iris.irisshell.design.system.IrisError
-import com.iris.irisshell.design.system.IrisOutline
-import com.iris.irisshell.design.system.IrisSurface
-import com.iris.irisshell.design.system.IrisSurfaceVariant
-import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextSecondary
-
-/**
- * Iris Shell design system dropdown menu.
- *
- * Usage:
- * ```
- * IrisDropdownMenu(
- *     expanded = expanded,
- *     onDismissRequest = { expanded = false },
- *     items = listOf(
- *         IrisMenuItem("Rename", icon = Lucide.Pencil),
- *         IrisMenuItem("Delete", icon = Lucide.Trash2, style = IrisMenuItemStyle.Destructive, dividerBefore = true),
- *     ),
- *     onItemClick = { item ->
- *         when (item.label) {
- *             "Rename" -> onRename()
- *             "Delete" -> onDelete()
- *         }
- *     },
- * )
- * ```
- */
 
 enum class IrisMenuItemStyle { Default, Destructive }
 
 data class IrisMenuItem(
     val label: String,
-    val icon: ImageVector? = null,
+    val icon: Painter? = null,
     val style: IrisMenuItemStyle = IrisMenuItemStyle.Default,
     val dividerBefore: Boolean = false,
     val enabled: Boolean = true,
@@ -79,20 +51,20 @@ fun IrisDropdownMenu(
         items.forEachIndexed { index, item ->
             if (item.dividerBefore && index != 0) {
                 HorizontalDivider(
-                    color     = IrisOutline.copy(alpha = 0.35f),
-                    modifier  = Modifier.padding(vertical = 4.dp),
+                    color    = IrisOutline.copy(alpha = 0.35f),
+                    modifier = Modifier.padding(vertical = 4.dp),
                 )
             }
 
             val textColor = when {
-                !item.enabled                          -> IrisTextSecondary.copy(alpha = 0.4f)
+                !item.enabled                               -> IrisTextSecondary.copy(alpha = 0.4f)
                 item.style == IrisMenuItemStyle.Destructive -> IrisError
-                else                                   -> IrisText
+                else                                        -> IrisText
             }
             val iconTint = when {
-                !item.enabled                          -> IrisTextSecondary.copy(alpha = 0.3f)
+                !item.enabled                               -> IrisTextSecondary.copy(alpha = 0.3f)
                 item.style == IrisMenuItemStyle.Destructive -> IrisError.copy(alpha = 0.85f)
-                else                                   -> IrisTextSecondary
+                else                                        -> IrisTextSecondary
             }
 
             Surface(
@@ -117,7 +89,7 @@ fun IrisDropdownMenu(
                 ) {
                     if (item.icon != null) {
                         Icon(
-                            imageVector        = item.icon,
+                            painter            = item.icon,
                             contentDescription = null,
                             tint               = iconTint,
                             modifier           = Modifier.size(17.dp),

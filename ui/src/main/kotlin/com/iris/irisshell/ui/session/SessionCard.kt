@@ -28,12 +28,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.Trash2
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
 import com.iris.irisshell.design.system.IrisDropdownMenu
 import com.iris.irisshell.design.system.IrisMenuItem
 import com.iris.irisshell.design.system.IrisMenuItemStyle
+import com.iris.irisshell.design.system.IrisSurfaceVariant
+import com.iris.irisshell.ui.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -355,10 +356,13 @@ private fun CardOverflowMenu(
             expanded         = expanded,
             onDismissRequest = { expanded = false },
             items = listOf(
-                IrisMenuItem("Rename", icon = Lucide.Pencil),
+                IrisMenuItem(
+                    label = "Rename",
+                    icon  = painterResource(R.drawable.lucide_pencil),
+                ),
                 IrisMenuItem(
                     label         = "Delete",
-                    icon          = Lucide.Trash2,
+                    icon          = painterResource(R.drawable.lucide_trash_2),
                     style         = IrisMenuItemStyle.Destructive,
                     dividerBefore = true,
                 ),

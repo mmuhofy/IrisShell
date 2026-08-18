@@ -21,17 +21,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Maximize2
-import com.composables.icons.lucide.Plus
-import com.composables.icons.lucide.Settings
+import com.iris.irisshell.design.system.IrisDropdownMenu
+import com.iris.irisshell.design.system.IrisMenuItem
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.design.system.IrisDropdownMenu
-import com.iris.irisshell.design.system.IrisMenuItem
+import com.iris.irisshell.ui.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,27 +58,27 @@ fun TerminalTopBar(
         title = {
             Column {
                 Text(
-                    text  = sessionTitle,
-                    color = IrisText,
+                    text     = sessionTitle,
+                    color    = IrisText,
                     fontSize = 20.sp,
-                    style = MaterialTheme.typography.titleLarge,
+                    style    = MaterialTheme.typography.titleLarge,
                 )
                 if (tabCount > 0) {
                     Text(
-                        text  = "Session ${activeTabIndex + 1} of $tabCount",
-                        color = IrisTextSecondary,
+                        text     = "Session ${activeTabIndex + 1} of $tabCount",
+                        color    = IrisTextSecondary,
                         fontSize = 12.sp,
-                        style = MaterialTheme.typography.bodySmall,
+                        style    = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
         },
         actions = {
             MoreActionsMenu(
-                isFullscreen      = isFullscreen,
+                isFullscreen       = isFullscreen,
                 onToggleFullscreen = onToggleFullscreen,
-                onOpenSettings    = onOpenSettings,
-                onNewSession      = onRefresh, // caller maps this to new session
+                onOpenSettings     = onOpenSettings,
+                onNewSession       = onRefresh,
             )
         },
     )
@@ -114,23 +112,23 @@ private fun MoreActionsMenu(
             items = listOf(
                 IrisMenuItem(
                     label = "New Session",
-                    icon  = Lucide.Plus,
+                    icon  = painterResource(R.drawable.lucide_plus),
                 ),
                 IrisMenuItem(
                     label = if (isFullscreen) "Exit Fullscreen" else "Enter Fullscreen",
-                    icon  = Lucide.Maximize2,
+                    icon  = painterResource(R.drawable.lucide_maximize),
                 ),
                 IrisMenuItem(
                     label         = "Settings",
-                    icon          = Lucide.Settings,
+                    icon          = painterResource(R.drawable.lucide_settings),
                     dividerBefore = true,
                 ),
             ),
             onItemClick = { item ->
                 when (item.label) {
-                    "New Session"                       -> onNewSession()
+                    "New Session"                         -> onNewSession()
                     "Enter Fullscreen", "Exit Fullscreen" -> onToggleFullscreen()
-                    "Settings"                          -> onOpenSettings()
+                    "Settings"                            -> onOpenSettings()
                 }
             },
         )
