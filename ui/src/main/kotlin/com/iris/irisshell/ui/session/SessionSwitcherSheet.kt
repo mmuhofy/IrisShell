@@ -219,87 +219,22 @@ fun SessionSwitcherSheet(
     val sessions by viewModel.allSessions.collectAsStateWithLifecycle()
     val activeId by viewModel.activeId.collectAsStateWithLifecycle()
 
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var committingId by remember { mutableStateOf<String?>(null) }
-    var renamingId by remember { mutableStateOf<String?>(null) }
-    var renameNewName by remember { mutableStateOf("") }
-    var pendingDelete by remember { mutableStateOf<DeletedSession?>(null) }
-    var searchText by remember { mutableStateOf("") }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    val snackbarScope = rememberCoroutineScope()
-
-    val filteredSessions = remember(sessions, searchText) {
-        if (searchText.isBlank()) sessions
-        else sessions.filter { s ->
-            s.name.contains(searchText, ignoreCase = true) ||
-                s.liveSnapshotLines.any { it.contains(searchText, ignoreCase = true) }
-        }
-    }
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(
-            topStart = 28.dp,
-            topEnd = 28.dp,
-            bottomStart = 0.dp,
-            bottomEnd = 0.dp,
-        ),
         containerColor = IrisSurface,
-        tonalElevation = 6.dp,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            SwitcherTopBar(
-                onClose = onDismiss,
-                onCreate = { showCreateDialog = true },
-                searchText = searchText,
-                onSearchChange = { searchText = it },
+            SessionList(
+                sessions = sessions,
+                activeId = activeId,
+                committingId = null,
+                onCommit = {},
+                onRename = {},
+                onDelete = {},
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, fill = false),
-            ) {
-                if (filteredSessions.isEmpty()) {
-                    EmptyState(
-                        searchText = searchText,
-                        onCreate = { showCreateDialog = true },
-                    )
-                } else {
-                    SessionList(
-                        sessions = filteredSessions,
-                        activeId = activeId,
-                        committingId = committingId,
-                        onCommit = { id ->
-                            if (committingId == null) {
-                                committingId = id
-                                viewModel.activate(id)
-                            }
-                        },
-                        onRename = { snapshot ->
-                            renameNewName = snapshot.name
-                            renamingId = snapshot.id
-                        },
-                        onDelete = { snapshot ->
-                            pendingDelete = DeletedSession(
-                                snapshot = snapshot,
-                                wasActive = snapshot.id == activeId,
-                                fallbackName = null,
-                            )
-                            viewModel.delete(snapshot.id)
-                        },
-                    )
-                }
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp),
-                )
-            }
         }
     }
-
+}
     LaunchedEffect(committingId) {
         val id = committingId ?: return@LaunchedEffect
         delay(220)
