@@ -176,7 +176,7 @@ private fun MoreActionsMenu(
                 ),
                 IrisMenuItem(
                     label = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
-                    icon = painterResource(if (isFullscreen) R.drawable.lucide_minimize_2 else R.drawable.lucide_maximize_2),
+                    icon = painterResource(if (isFullscreen) R.drawable.lucide_minimize else R.drawable.lucide_maximize),
                 ),
                 IrisMenuItem(
                     label = "Settings",
