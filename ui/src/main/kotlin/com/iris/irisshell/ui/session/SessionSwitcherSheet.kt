@@ -219,6 +219,24 @@ fun SessionSwitcherSheet(
     val sessions by viewModel.allSessions.collectAsStateWithLifecycle()
     val activeId by viewModel.activeId.collectAsStateWithLifecycle()
 
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var committingId by remember { mutableStateOf<String?>(null) }
+    var renamingId by remember { mutableStateOf<String?>(null) }
+    var renameNewName by remember { mutableStateOf("") }
+    var pendingDelete by remember { mutableStateOf<DeletedSession?>(null) }
+    var searchText by remember { mutableStateOf("") }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarScope = rememberCoroutineScope()
+
+    val filteredSessions = remember(sessions, searchText) {
+        if (searchText.isBlank()) sessions
+        else sessions.filter { s ->
+            s.name.contains(searchText, ignoreCase = true) ||
+                s.liveSnapshotLines.any { it.contains(searchText, ignoreCase = true) }
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(
@@ -233,25 +251,117 @@ fun SessionSwitcherSheet(
         Column(modifier = Modifier.fillMaxWidth()) {
             SwitcherTopBar(
                 onClose = onDismiss,
-                onCreate = {},
-                searchText = "",
-                onSearchChange = {},
+                onCreate = { showCreateDialog = true },
+                searchText = searchText,
+                onSearchChange = { searchText = it },
             )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false),
             ) {
-                SessionList(
-                    sessions = sessions,
-                    activeId = activeId,
-                    committingId = null,
-                    onCommit = {},
-                    onRename = {},
-                    onDelete = {},
+                if (filteredSessions.isEmpty()) {
+                    EmptyState(
+                        searchText = searchText,
+                        onCreate = { showCreateDialog = true },
+                    )
+                } else {
+                    SessionList(
+                        sessions = filteredSessions,
+                        activeId = activeId,
+                        committingId = committingId,
+                        onCommit = { id ->
+                            if (committingId == null) {
+                                committingId = id
+                                viewModel.activate(id)
+                            }
+                        },
+                        onRename = { snapshot ->
+                            renameNewName = snapshot.name
+                            renamingId = snapshot.id
+                        },
+                        onDelete = { snapshot ->
+                            pendingDelete = DeletedSession(
+                                snapshot = snapshot,
+                                wasActive = snapshot.id == activeId,
+                                fallbackName = null,
+                            )
+                            viewModel.delete(snapshot.id)
+                        },
+                    )
+                }
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp),
                 )
             }
         }
+    }
+
+    LaunchedEffect(committingId) {
+        val id = committingId ?: return@LaunchedEffect
+        delay(220)
+        onDismiss()
+        committingId = null
+    }
+
+    LaunchedEffect(pendingDelete, sessions, activeId) {
+        val pd = pendingDelete ?: return@LaunchedEffect
+        if (pd.fallbackName == null && !sessions.any { it.id == pd.snapshot.id }) {
+            val fallback = sessions.firstOrNull { it.id == activeId }?.name
+            pendingDelete = pd.copy(
+                wasActive = pd.wasActive || pd.snapshot.id == activeId,
+                fallbackName = fallback,
+            )
+        }
+    }
+
+    LaunchedEffect(pendingDelete) {
+        val pd = pendingDelete ?: return@LaunchedEffect
+        val msg = if (pd.wasActive && pd.fallbackName != null) {
+            "${pd.snapshot.name} removed · now viewing ${pd.fallbackName}"
+        } else {
+            "${pd.snapshot.name} removed"
+        }
+        snackbarScope.launch {
+            val result = try {
+                snackbarHostState.showSnackbar(
+                    message = msg,
+                    actionLabel = "Undo",
+                    withDismissAction = true,
+                    duration = androidx.compose.material3.SnackbarDuration.Short,
+                )
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                SnackbarResult.Dismissed
+            }
+            when (result) {
+                SnackbarResult.ActionPerformed -> viewModel.restoreSession(pd.snapshot)
+                SnackbarResult.Dismissed -> pendingDelete = null
+            }
+        }
+    }
+
+    if (showCreateDialog) {
+        CreateSessionDialog(
+            onConfirm = { name ->
+                viewModel.createNew(name)
+                showCreateDialog = false
+            },
+            onDismiss = { showCreateDialog = false },
+        )
+    }
+
+    renamingId?.let { id ->
+        RenameSessionDialog(
+            currentName = renameNewName,
+            onConfirm = { newName ->
+                viewModel.rename(id, newName)
+                renamingId = null
+            },
+            onDismiss = { renamingId = null },
+        )
     }
 }
 
