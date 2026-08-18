@@ -31,9 +31,9 @@ import androidx.compose.material3.Text
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Trash2
-import com.iris.irisshell.ui.components.IrisDropdownMenu
-import com.iris.irisshell.ui.components.IrisMenuItem
-import com.iris.irisshell.ui.components.IrisMenuItemStyle
+import com.iris.irisshell.design.system.IrisDropdownMenu
+import com.iris.irisshell.design.system.IrisMenuItem
+import com.iris.irisshell.design.system.IrisMenuItemStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
