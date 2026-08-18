@@ -1,0 +1,136 @@
+package com.iris.irisshell.design.system
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
+import com.iris.irisshell.design.system.IrisError
+import com.iris.irisshell.design.system.IrisOutline
+import com.iris.irisshell.design.system.IrisSurface
+import com.iris.irisshell.design.system.IrisSurfaceVariant
+import com.iris.irisshell.design.system.IrisText
+import com.iris.irisshell.design.system.IrisTextSecondary
+
+/**
+ * Iris Shell design system dropdown menu.
+ *
+ * Usage:
+ * ```
+ * IrisDropdownMenu(
+ *     expanded = expanded,
+ *     onDismissRequest = { expanded = false },
+ *     items = listOf(
+ *         IrisMenuItem("Rename", icon = Lucide.Pencil),
+ *         IrisMenuItem("Delete", icon = Lucide.Trash2, style = IrisMenuItemStyle.Destructive, dividerBefore = true),
+ *     ),
+ *     onItemClick = { item ->
+ *         when (item.label) {
+ *             "Rename" -> onRename()
+ *             "Delete" -> onDelete()
+ *         }
+ *     },
+ * )
+ * ```
+ */
+
+enum class IrisMenuItemStyle { Default, Destructive }
+
+data class IrisMenuItem(
+    val label: String,
+    val icon: ImageVector? = null,
+    val style: IrisMenuItemStyle = IrisMenuItemStyle.Default,
+    val dividerBefore: Boolean = false,
+    val enabled: Boolean = true,
+)
+
+@Composable
+fun IrisDropdownMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    items: List<IrisMenuItem>,
+    onItemClick: (IrisMenuItem) -> Unit,
+    offset: DpOffset = DpOffset(0.dp, 4.dp),
+    modifier: Modifier = Modifier,
+) {
+    DropdownMenu(
+        expanded         = expanded,
+        onDismissRequest = onDismissRequest,
+        offset           = offset,
+        shape            = RoundedCornerShape(14.dp),
+        modifier         = modifier.background(IrisSurface),
+    ) {
+        items.forEachIndexed { index, item ->
+            if (item.dividerBefore && index != 0) {
+                HorizontalDivider(
+                    color     = IrisOutline.copy(alpha = 0.35f),
+                    modifier  = Modifier.padding(vertical = 4.dp),
+                )
+            }
+
+            val textColor = when {
+                !item.enabled                          -> IrisTextSecondary.copy(alpha = 0.4f)
+                item.style == IrisMenuItemStyle.Destructive -> IrisError
+                else                                   -> IrisText
+            }
+            val iconTint = when {
+                !item.enabled                          -> IrisTextSecondary.copy(alpha = 0.3f)
+                item.style == IrisMenuItemStyle.Destructive -> IrisError.copy(alpha = 0.85f)
+                else                                   -> IrisTextSecondary
+            }
+
+            Surface(
+                onClick  = {
+                    if (item.enabled) {
+                        onDismissRequest()
+                        onItemClick(item)
+                    }
+                },
+                enabled  = item.enabled,
+                shape    = RoundedCornerShape(10.dp),
+                color    = Color.Transparent,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            ) {
+                Row(
+                    modifier          = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (item.icon != null) {
+                        Icon(
+                            imageVector        = item.icon,
+                            contentDescription = null,
+                            tint               = iconTint,
+                            modifier           = Modifier.size(17.dp),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                    }
+                    Text(
+                        text  = item.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = textColor,
+                    )
+                }
+            }
+        }
+    }
+}

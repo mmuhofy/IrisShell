@@ -1,16 +1,12 @@
 package com.iris.irisshell.ui.topbar
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,35 +23,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iris.irisshell.ui.theme.IrisOutline
-import com.iris.irisshell.ui.theme.IrisPrimary
-import com.iris.irisshell.ui.theme.IrisSurface
-import com.iris.irisshell.ui.theme.IrisSurfaceVariant
-import com.iris.irisshell.ui.theme.IrisText
-import com.iris.irisshell.ui.theme.IrisTextSecondary
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Maximize2
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.Settings
+import com.iris.irisshell.design.system.IrisSurface
+import com.iris.irisshell.design.system.IrisText
+import com.iris.irisshell.design.system.IrisTextSecondary
+import com.iris.irisshell.design.system.IrisDropdownMenu
+import com.iris.irisshell.design.system.IrisMenuItem
 
-/**
- * Iris Shell Terminal topbar — shapes and container color mirror ReTerminal's
- * [com.rk.terminal.ui.screens.terminal.TerminalTopBar], but with Iris Shell's
- * bolder left-aligned title and the "more vertical" affordance routing
- * terminal actions through a dropdown menu.
- *
- * Inspired by:
- *  - https://github.com/RohitKushvaha01/ReTerminal/blob/main/core/main/.../TerminalTopBar.kt
- *  - https://github.com/RohitKushvaha01/ReTerminal/blob/main/core/components/.../appbars/TopBar.kt
- *
- * Shape strategy:
- *  - Material 3 [TopAppBar] (same primitive ReTerminal uses) with a filled
- *    container color so the bar blends directly into the page surface — no
- *    bottom divider, no extra padding wrappers. The reference uses
- *    `Color.Transparent`; we use [IrisSurface] so the bar reads as one solid
- *    band against [IrisBackground].
- *  - Title slot: a 2-line column — large session title + small subtitle —
- *    replicating ReTerminal's "ReTerminal" / "$id ($mode)" idiom with
- *    Iris Shell's branding.
- *  - actions slot: a single [IconButton] -> [DropdownMenu] for session
- *    operations. No back arrow on entry so the bar stays single-purpose.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TerminalTopBar(
@@ -70,26 +47,27 @@ fun TerminalTopBar(
     modifier: Modifier = Modifier,
 ) {
     val activeTabIndex by activeTabIndexFlow.collectAsState()
+
     TopAppBar(
         modifier = modifier.fillMaxWidth(),
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = IrisSurface,
+        colors   = TopAppBarDefaults.topAppBarColors(
+            containerColor         = IrisSurface,
             scrolledContainerColor = IrisSurface,
-            titleContentColor = IrisText,
+            titleContentColor      = IrisText,
             actionIconContentColor = IrisTextSecondary,
         ),
         navigationIcon = {},
         title = {
             Column {
                 Text(
-                    text = sessionTitle,
+                    text  = sessionTitle,
                     color = IrisText,
                     fontSize = 20.sp,
                     style = MaterialTheme.typography.titleLarge,
                 )
                 if (tabCount > 0) {
                     Text(
-                        text = "Session ${activeTabIndex + 1} of $tabCount",
+                        text  = "Session ${activeTabIndex + 1} of $tabCount",
                         color = IrisTextSecondary,
                         fontSize = 12.sp,
                         style = MaterialTheme.typography.bodySmall,
@@ -99,11 +77,10 @@ fun TerminalTopBar(
         },
         actions = {
             MoreActionsMenu(
-                isFullscreen = isFullscreen,
-                onRefresh = onRefresh,
+                isFullscreen      = isFullscreen,
                 onToggleFullscreen = onToggleFullscreen,
-                onClose = onClose,
-                onOpenSettings = onOpenSettings,
+                onOpenSettings    = onOpenSettings,
+                onNewSession      = onRefresh, // caller maps this to new session
             )
         },
     )
@@ -112,73 +89,50 @@ fun TerminalTopBar(
 @Composable
 private fun MoreActionsMenu(
     isFullscreen: Boolean,
-    onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
-    onClose: () -> Unit,
     onOpenSettings: () -> Unit,
+    onNewSession: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier.size(48.dp),
+        modifier         = Modifier.size(48.dp),
         contentAlignment = Alignment.Center,
     ) {
         IconButton(onClick = { expanded = true }) {
             Icon(
-                imageVector = Icons.Filled.MoreVert,
+                imageVector        = Icons.Filled.MoreVert,
                 contentDescription = "More actions",
-                modifier = Modifier.size(24.dp),
-                tint = IrisTextSecondary,
+                modifier           = Modifier.size(24.dp),
+                tint               = IrisTextSecondary,
             )
         }
 
-        DropdownMenu(
-            expanded = expanded,
+        IrisDropdownMenu(
+            expanded         = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(IrisSurfaceVariant),
-        ) {
-            DropdownMenuItem(
-                text = { MenuLabel("Refresh terminal") },
-                onClick = {
-                    expanded = false
-                    onRefresh()
-                },
-            )
-            DropdownMenuItem(
-                text = {
-                    MenuLabel(
-                        if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    onToggleFullscreen()
-                },
-            )
-            HorizontalDivider(color = IrisOutline)
-            DropdownMenuItem(
-                text = { MenuLabel("Settings") },
-                onClick = {
-                    expanded = false
-                    onOpenSettings()
-                },
-            )
-            DropdownMenuItem(
-                text = { MenuLabel("Close session", destructive = true) },
-                onClick = {
-                    expanded = false
-                    onClose()
-                },
-            )
-        }
+            items = listOf(
+                IrisMenuItem(
+                    label = "New Session",
+                    icon  = Lucide.Plus,
+                ),
+                IrisMenuItem(
+                    label = if (isFullscreen) "Exit Fullscreen" else "Enter Fullscreen",
+                    icon  = Lucide.Maximize2,
+                ),
+                IrisMenuItem(
+                    label         = "Settings",
+                    icon          = Lucide.Settings,
+                    dividerBefore = true,
+                ),
+            ),
+            onItemClick = { item ->
+                when (item.label) {
+                    "New Session"                       -> onNewSession()
+                    "Enter Fullscreen", "Exit Fullscreen" -> onToggleFullscreen()
+                    "Settings"                          -> onOpenSettings()
+                }
+            },
+        )
     }
-}
-
-@Composable
-private fun MenuLabel(text: String, destructive: Boolean = false) {
-    Text(
-        text = text,
-        color = if (destructive) IrisPrimary else IrisText,
-        fontSize = 14.sp,
-    )
 }

@@ -101,20 +101,29 @@ fun SessionSwitcherSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
-        shape            = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+        shape            = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
         containerColor   = IrisSurface,
         tonalElevation   = 0.dp,
-        // Subtle top border on the sheet itself
+        dragHandle = {
+            // Handle sits higher — more breathing room above content
+            Box(
+                modifier = Modifier
+                    .padding(top = 14.dp, bottom = 6.dp)
+                    .size(width = 44.dp, height = 5.dp)
+                    .clip(CircleShape)
+                    .background(IrisText.copy(alpha = 0.15f)),
+            )
+        },
         modifier = Modifier.border(
             width = 1.dp,
             brush = Brush.horizontalGradient(
                 colors = listOf(
                     Color.White.copy(alpha = 0.02f),
-                    Color.White.copy(alpha = 0.05f),
+                    Color.White.copy(alpha = 0.06f),
                     Color.White.copy(alpha = 0.02f),
                 )
             ),
-            shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+            shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
         ),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {

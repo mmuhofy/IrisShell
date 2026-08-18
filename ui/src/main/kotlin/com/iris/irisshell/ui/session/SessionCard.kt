@@ -24,12 +24,16 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Trash2
+import com.iris.irisshell.ui.components.IrisDropdownMenu
+import com.iris.irisshell.ui.components.IrisMenuItem
+import com.iris.irisshell.ui.components.IrisMenuItemStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -57,7 +60,6 @@ import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisOnPrimary
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
-import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
@@ -212,20 +214,11 @@ fun SessionCard(
                 )
                 .border(
                     width = if (isActive || isCommitting) 1.5.dp else 1.dp,
-                    brush = if (isActive || isCommitting)
-                        Brush.linearGradient(
-                            colors = listOf(
-                                IrisPrimary.copy(alpha = if (isCommitting) 1f else 0.85f),
-                                IrisPrimary.copy(alpha = if (isCommitting) 0.6f else 0.4f),
-                            )
-                        )
-                    else
-                        Brush.linearGradient(
-                            colors = listOf(
-                                IrisBorderSubtle.copy(alpha = 0.8f),
-                                IrisBorderSubtle.copy(alpha = 0.8f),
-                            )
-                        ),
+                    color = when {
+                        isCommitting -> IrisPrimary
+                        isActive     -> IrisPrimary.copy(alpha = 0.55f)
+                        else         -> IrisBorderSubtle.copy(alpha = 0.8f)
+                    },
                     shape = CardShape,
                 )
                 .clickable(enabled = !isCommitting && swipeOffset.value == 0f) { onActivate() },
@@ -358,20 +351,25 @@ private fun CardOverflowMenu(
                 modifier           = Modifier.size(18.dp),
             )
         }
-        DropdownMenu(
+        IrisDropdownMenu(
             expanded         = expanded,
             onDismissRequest = { expanded = false },
-            modifier         = Modifier.background(IrisSurfaceVariant),
-        ) {
-            DropdownMenuItem(
-                text    = { Text("Rename", color = IrisText, fontSize = 14.sp) },
-                onClick = { expanded = false; onRename() },
-            )
-            DropdownMenuItem(
-                text    = { Text("Delete", color = IrisError, fontSize = 14.sp) },
-                onClick = { expanded = false; onDelete() },
-            )
-        }
+            items = listOf(
+                IrisMenuItem("Rename", icon = Lucide.Pencil),
+                IrisMenuItem(
+                    label         = "Delete",
+                    icon          = Lucide.Trash2,
+                    style         = IrisMenuItemStyle.Destructive,
+                    dividerBefore = true,
+                ),
+            ),
+            onItemClick = { item ->
+                when (item.label) {
+                    "Rename" -> onRename()
+                    "Delete" -> onDelete()
+                }
+            },
+        )
     }
 }
 
