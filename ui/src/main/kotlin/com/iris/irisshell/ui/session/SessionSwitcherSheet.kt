@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
@@ -216,6 +217,9 @@ fun SessionSwitcherSheet(
     onDismiss: () -> Unit,
     viewModel: SessionSwitcherViewModel = hiltViewModel(),
 ) {
+	val sessions by viewModel.allSessions.collectAsStateWithLifecycle()
+    val activeId by viewModel.activeId.collectAsStateWithLifecycle()
+	
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = IrisSurface,
@@ -317,7 +321,7 @@ private fun SessionList(
 ) {
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(bottom = 16.dp),
