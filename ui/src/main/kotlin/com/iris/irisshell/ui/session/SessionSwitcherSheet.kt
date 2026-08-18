@@ -1,20 +1,20 @@
 package com.iris.irisshell.ui.session
 
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,11 +41,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
+import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
-import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.ui.R
 import kotlinx.coroutines.delay
@@ -217,40 +216,41 @@ fun SessionSwitcherSheet(
     onDismiss: () -> Unit,
     viewModel: SessionSwitcherViewModel = hiltViewModel(),
 ) {
-	val sessions by viewModel.allSessions.collectAsStateWithLifecycle()
+    val sessions by viewModel.allSessions.collectAsStateWithLifecycle()
     val activeId by viewModel.activeId.collectAsStateWithLifecycle()
-	
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(
-        topStart = 28.dp,
-        topEnd = 28.dp,
-        bottomStart = 0.dp,
-        bottomEnd = 0.dp,
+            topStart = 28.dp,
+            topEnd = 28.dp,
+            bottomStart = 0.dp,
+            bottomEnd = 0.dp,
         ),
         containerColor = IrisSurface,
         tonalElevation = 6.dp,
     ) {
-    	Column(modifier = Modifier.fillMaxWidth()) {
-    		SwitcherTopBar(
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SwitcherTopBar(
                 onClose = onDismiss,
                 onCreate = {},
                 searchText = "",
                 onSearchChange = {},
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, fill = false),
-        ) {        
-            SessionList(
-                sessions = sessions,
-                activeId = activeId,
-                committingId = null,
-                onCommit = {},
-                onRename = {},
-                onDelete = {},
             )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
+            ) {
+                SessionList(
+                    sessions = sessions,
+                    activeId = activeId,
+                    committingId = null,
+                    onCommit = {},
+                    onRename = {},
+                    onDelete = {},
+                )
+            }
         }
     }
 }
