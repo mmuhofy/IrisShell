@@ -14,6 +14,7 @@ import android.os.SystemClock
 import android.text.InputType
 import android.text.TextUtils
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ActionMode
 import android.view.HapticFeedbackConstants
 import android.view.InputDevice
@@ -1213,15 +1214,28 @@ override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         }
     }
 
+    // ==================== KLAVYE AÇ/KAPA (GÜNCELLENDİ) ====================
+
     fun showKeyboard() {
-        requestFocus()
-        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+        try {
+            requestFocusFromTouch()
+            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+        } catch (e: Exception) {
+            Log.e("TerminalView", "showKeyboard failed", e)
+        }
     }
 
     fun hideKeyboard() {
-        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(windowToken, 0)
+        try {
+            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val token = windowToken
+            if (token != null) {
+                imm.hideSoftInputFromWindow(token, 0)
+            }
+        } catch (e: Exception) {
+            Log.e("TerminalView", "hideKeyboard failed", e)
+        }
     }
 
     companion object {

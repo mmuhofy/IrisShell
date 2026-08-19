@@ -45,6 +45,7 @@ import com.termux.view.TerminalView
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.util.Log
 
 /**
  * Phase 1 Terminal screen.
@@ -133,18 +134,38 @@ private fun ReadyScreen(
     // Keyboard focus / IME visibility is owned here so the TopBar
     // button and the TerminalView's touch handler can both toggle it.
     // TerminalView now handles IME via InputMethodManager directly.
-    var keyboardFocused by remember { androidx.compose.runtime.mutableStateOf(true) }
-    val terminalViewRef = remember { androidx.compose.runtime.mutableStateOf<TerminalView?>(null) }
+    var keyboardFocused by remember { mutableStateOf(true) }
+    val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
 
+    // ==================== KLAVYE AÇ/KAPA (GÜNCELLENDİ) ====================
     fun showKeyboard() {
-        terminalViewRef.value?.showKeyboard()
-        keyboardFocused = true
+        try {
+            terminalViewRef.value?.let { view ->
+                view.requestFocusFromTouch()
+                val imm = view.context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.showSoftInput(view, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+                keyboardFocused = true
+            }
+        } catch (e: Exception) {
+            Log.e("TerminalScreen", "showKeyboard failed", e)
+        }
     }
 
     fun hideKeyboard() {
-        terminalViewRef.value?.hideKeyboard()
-        keyboardFocused = false
+        try {
+            terminalViewRef.value?.let { view ->
+                val imm = view.context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                val token = view.windowToken
+                if (token != null) {
+                    imm.hideSoftInputFromWindow(token, 0)
+                    keyboardFocused = false
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("TerminalScreen", "hideKeyboard failed", e)
+        }
     }
+    // ======================================================================
 
     fun toggleKeyboard() {
         if (keyboardFocused) hideKeyboard() else showKeyboard()
@@ -342,7 +363,7 @@ private fun ReadyScreen(
     }
 
     if (switcherOpen) {
-    	SessionSwitcherSheet(onDismiss = { switcherOpen = false })
+        SessionSwitcherSheet(onDismiss = { switcherOpen = false })
     }
 }
 
@@ -432,7 +453,7 @@ private fun TerminalViewHost(
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     val terminalViewRef = remember {
-        androidx.compose.runtime.mutableStateOf<TerminalView?>(null)
+        mutableStateOf<TerminalView?>(null)
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     // Wire Termux's own ScaleGestureDetector callback into our ViewModel.
