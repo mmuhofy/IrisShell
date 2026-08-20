@@ -46,26 +46,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.util.Log
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
 
-/**
- * Phase 1 Terminal screen.
- *
- * Inspired by mmuhofy/IrisCode — app/src/main/kotlin/.../TerminalScreen.kt
- * Adapted for Iris Shell — com.iris.irisshell.
- *
- * Layout (when [ubuntuSetupState] == Ready):
- *   ┌──────────────┐
- *   │  TopBar      │   ← TerminalTopBar (MoreActionsMenu)
- *   ├──────────────┤
- *   │              │
- *   │  Terminal    │   ← Pinch-to-zoom → font size persists via VM
- *   │              │
- *   │          ║A║ │   ← VerticalZoomSlider (right edge, auto-hide)
- *   └──────────────┘
- *
- * Fullscreen (long-press "Enter fullscreen" in the topbar menu) hides both
- * the topbar and the slider so the termux view gets the whole screen.
- */
 @Composable
 fun TerminalScreen(
     terminalManager: TerminalManager,
@@ -131,19 +114,15 @@ private fun ReadyScreen(
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
 
-    // Keyboard focus / IME visibility is owned here so the TopBar
-    // button and the TerminalView's touch handler can both toggle it.
-    // TerminalView now handles IME via InputMethodManager directly.
     var keyboardFocused by remember { mutableStateOf(true) }
     val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
 
-    // ==================== KLAVYE AÇ/KAPA (GÜNCELLENDİ) ====================
     fun showKeyboard() {
         try {
             terminalViewRef.value?.let { view ->
                 view.requestFocusFromTouch()
-                val imm = view.context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-                imm.showSoftInput(view, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+                val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
                 keyboardFocused = true
             }
         } catch (e: Exception) {
@@ -154,7 +133,7 @@ private fun ReadyScreen(
     fun hideKeyboard() {
         try {
             terminalViewRef.value?.let { view ->
-                val imm = view.context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 val token = view.windowToken
                 if (token != null) {
                     imm.hideSoftInputFromWindow(token, 0)
@@ -165,16 +144,12 @@ private fun ReadyScreen(
             Log.e("TerminalScreen", "hideKeyboard failed", e)
         }
     }
-    // ======================================================================
 
     fun toggleKeyboard() {
         if (keyboardFocused) hideKeyboard() else showKeyboard()
     }
 
-    // Session-switch entry animation. When activeId changes, snap the
-    // terminal view to (scale 0.92, alpha 0) then animate back to (1, 1).
-    // The chosen card in the session switcher thus "explodes forward"
-    // into the terminal surface beneath.
+    // Session-switch entry animation
     val appearScale = remember { androidx.compose.animation.core.Animatable(1f) }
     val appearAlpha = remember { androidx.compose.animation.core.Animatable(1f) }
     LaunchedEffect(activeId) {
@@ -202,9 +177,6 @@ private fun ReadyScreen(
         }
     }
 
-    // Slider auto-hide. Whenever the slider becomes visible, schedule a
-    // hide after a short grace period. Any new pinch (or slider drag)
-    // cancels the pending hide via setFontSize in the ViewModel.
     LaunchedEffect(sliderVisible) {
         if (sliderVisible) {
             delay(2500L)
@@ -231,19 +203,12 @@ private fun ReadyScreen(
                 onOpenSettings = onOpenSettings,
             )
         }
-        // IME-aware column — lifts everything above the system keyboard.
-        // The InputBarHost sits at the very bottom, just above the IME.
-        // weight(1f) instead of fillMaxSize() so the outer Column distributes
-        // remaining height after TopBar is measured — prevents height=0 crash.
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .imePadding(),
         ) {
-            // Box no longer owns the pinch gesture — Termux's ScaleGestureDetector
-            // handles it through TerminalViewClient.onScale. The Box is just a
-            // container for the AndroidView + the optional fullscreen overlay.
             Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
                 if (useBlockEngine) {
                     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
@@ -252,14 +217,12 @@ private fun ReadyScreen(
                     val clipboardEvent by blockEngineViewModel.clipboardRequest.collectAsState()
                     val pendingEdit by blockEngineViewModel.pendingEdit.collectAsState()
 
-                    androidx.compose.runtime.LaunchedEffect(exportRequest) {
+                    LaunchedEffect(exportRequest) {
                         if (exportRequest != null) {
-                            // v1: file export not wired — clear marker. Future:
-                            // FileProvider via Intent.ACTION_CREATE_DOCUMENT.
                             blockEngineViewModel.consumeExportRequest()
                         }
                     }
-                    androidx.compose.runtime.LaunchedEffect(clipboardEvent) {
+                    LaunchedEffect(clipboardEvent) {
                         val event = clipboardEvent ?: return@LaunchedEffect
                         val text = when (event) {
                             is BlockEngineViewModel.ClipboardEvent.Command ->
@@ -276,7 +239,7 @@ private fun ReadyScreen(
                         )
                     }
                     val blocksRaw by blockEngineViewModel.blocks.collectAsState()
-                    androidx.compose.runtime.LaunchedEffect(blocksRaw, hiddenIds) {
+                    LaunchedEffect(blocksRaw, hiddenIds) {
                         visibleBlocks.value = blocksRaw.filterNot { it.id in hiddenIds }
                     }
 
@@ -309,6 +272,7 @@ private fun ReadyScreen(
                         terminalManager = terminalManager,
                         fontSizeSp = fontSizeSp,
                         terminalViewModel = terminalViewModel,
+                        terminalViewRef = terminalViewRef,
                         extraKeyState = extraKeyState,
                         modifier = Modifier
                             .fillMaxSize()
@@ -334,8 +298,6 @@ private fun ReadyScreen(
                 }
             }
 
-            // On-screen input bar — handle + extra keys, rendered above IME.
-            // Hidden in fullscreen mode (the user wants maximum space).
             if (!fullscreen) {
                 val inputBarState by inputBarViewModel.uiState.collectAsState()
                 InputBarHost(
@@ -346,11 +308,6 @@ private fun ReadyScreen(
             }
         }
 
-        // Slider lives outside the pinch-detection Box. If it lived inside,
-        // a two-finger pinch whose second finger happened to land on the
-        // 56dp slider strip would route the pointer events to the slider's
-        // own gesture handler and the box's detectTransformGestures would
-        // never fire — making the second pinch silently a no-op.
         if (!fullscreen && sliderVisible) {
             VerticalZoomSlider(
                 value = fontSizeSp,
@@ -449,23 +406,12 @@ private fun TerminalViewHost(
     terminalManager: TerminalManager,
     fontSizeSp: Int,
     terminalViewModel: TerminalViewModel,
+    terminalViewRef: MutableState<TerminalView?>,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
-    val terminalViewRef = remember {
-        mutableStateOf<TerminalView?>(null)
-    }
     val lifecycleOwner = LocalLifecycleOwner.current
-    // Wire Termux's own ScaleGestureDetector callback into our ViewModel.
-    // Compose's detectTransformGestures can't see the events because
-    // AndroidView's onTouchEvent consumes them — the Termux recogniser
-    // fires before Compose does. So pinch has to go through
-    // TerminalViewClient.onScale, which is the only thing Termux exposes.
-    //
-    // `extraKeyState` is the SAME singleton shared by `InputDispatcher`
-    // (and the extra-keys bar) — wired in here so `readControlKey()` /
-    // `readAltKey()` see the sticky modifier state set by the on-screen
-    // bar buttons. See `docs/MEMORYBANK.md` §8.
+
     val viewClient = remember(terminalViewModel, extraKeyState) {
         TerminalViewClientImpl(
             onScaleChange = { factor ->
@@ -504,8 +450,6 @@ private fun TerminalViewHost(
                 terminalManager.currentSession?.let { session -> attachSession(session) }
                 terminalManager.registerTerminalView(this, ctx)
                 terminalViewRef.value = this
-                // TerminalView now handles tap-to-focus and IME internally
-                // via its onTouchEvent and showKeyboard/hideKeyboard methods
             }
         },
         update = { view ->
