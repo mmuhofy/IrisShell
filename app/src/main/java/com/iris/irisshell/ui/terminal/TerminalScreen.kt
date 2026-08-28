@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -441,7 +442,7 @@ private fun TerminalViewHost(
                 
                 // View odaklandığında klavye durumunu güncelle
                 setOnFocusChangeListener { _, hasFocus ->
-                    this@ReadyScreen.keyboardVisible = hasFocus
+                    keyboardVisible = hasFocus
                 }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
