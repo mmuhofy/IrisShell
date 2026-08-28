@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import android.content.Context as AndroidContext
 import android.util.Log as AndroidLog
@@ -124,7 +124,7 @@ private fun ReadyScreen(
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
     val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
-
+    var keyboardVisible by remember { mutableStateOf(false) }
 
 
 
@@ -170,11 +170,13 @@ private fun ReadyScreen(
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
+                keyboardVisible = keyboardVisible,
                 onToggleKeyboard = {
                     terminalViewRef.value?.let { view ->
                         if (view.isFocused) {
                             view.hideKeyboard()
                         } else {
+                            view.requestFocus()
                             view.showKeyboard()
                         }
                     }
@@ -438,9 +440,9 @@ private fun TerminalViewHost(
                 terminalManager.currentSession?.let { session -> attachSession(session) }
                 terminalManager.registerTerminalView(this, ctx)
                 
-                // View odaklandığında klavye durumunu güncelle
-                setOnFocusChangeListener { _, hasFocus ->
-                    keyboardVisible = hasFocus
+                // Klavye durumunu TerminalScreen'e bildir
+                setKeyboardVisibilityListener { isVisible ->
+                    keyboardVisible = isVisible
                 }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
