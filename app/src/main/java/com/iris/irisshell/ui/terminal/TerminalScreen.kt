@@ -256,7 +256,7 @@ private fun ReadyScreen(
                                 scaleY = appearScale.value
                                 alpha = appearAlpha.value
                             },
-                    ) { keyboardVisible = it }
+                    ) { visible -> keyboardVisible = visible }
                 } else {
                     TerminalViewHost(
                         terminalManager = terminalManager,

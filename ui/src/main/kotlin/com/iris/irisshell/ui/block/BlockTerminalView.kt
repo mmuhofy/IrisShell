@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
@@ -46,7 +47,7 @@ fun BlockTerminalView(
     onDeleteBlock: (String) -> Unit = {},
     promptLabel: String = "iris",
     modifier: Modifier = Modifier,
-    extraBar: @Composable (keyboardVisible: Boolean) -> Unit = { _ -> },
+    extraBar: @Composable (Boolean) -> Unit = { _ -> },
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var keyboardVisible by remember { mutableStateOf(false) }
