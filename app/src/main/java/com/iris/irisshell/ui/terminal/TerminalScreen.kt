@@ -165,7 +165,7 @@ private fun ReadyScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
-            val keyboardController = LocalSoftwareKeyboardController.current
+
             val context = LocalContext.current
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
@@ -445,6 +445,11 @@ private fun TerminalViewHost(
                     keyboardVisible = isVisible
                 }
                 
+                // Klavye durumunu TerminalScreen'e bildir
+                setKeyboardVisibilityListener { isVisible ->
+                    keyboardVisible = isVisible
+                }
+
                 // View'in hazır olduğunu anlamak için layout listener ekle
                 val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
                     override fun onGlobalLayout() {
