@@ -30,9 +30,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
-import android.content.Context
-import android.util.Log
-import android.widget.Toast
+import android.content.Context as AndroidContext
+import android.util.Log as AndroidLog
+import android.widget.Toast as AndroidToast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -182,8 +182,8 @@ private fun ReadyScreen(
                         }
                         keyboardVisible = !keyboardVisible
                     } catch (e: Exception) {
-                        Log.e("TerminalScreen", "Keyboard toggle failed", e)
-                        Toast.makeText(context, "Keyboard error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        AndroidLog.e("TerminalScreen", "Keyboard toggle failed", e)
+                        AndroidToast.makeText(context, "Keyboard error: ${e.message}", AndroidToast.LENGTH_SHORT).show()
                     }
                 },
                 onRefresh = {
@@ -447,7 +447,7 @@ private fun TerminalViewHost(
                 
                 // View odaklandığında klavye durumunu güncelle
                 setOnFocusChangeListener { _, hasFocus ->
-                    keyboardVisible = hasFocus
+                    this@ReadyScreen.keyboardVisible = hasFocus
                 }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
