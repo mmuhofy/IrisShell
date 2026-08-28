@@ -48,6 +48,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.util.Log
 import android.content.Context
+import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
 
 @Composable
@@ -472,14 +473,15 @@ private fun TerminalViewHost(
                 terminalManager.registerTerminalView(this, ctx)
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
-                viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
                     override fun onGlobalLayout() {
-                        if (width > 0 && height > 0 && isAttachedToWindow) {
+                        if (width > 0 && height > 0) {
                             viewTreeObserver.removeOnGlobalLayoutListener(this)
-                            terminalViewRef.value = this
+                            terminalViewRef.value = this@apply
                         }
                     }
-                })
+                }
+                viewTreeObserver.addOnGlobalLayoutListener(listener)
             }
         },
         update = { view ->
