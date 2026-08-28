@@ -120,12 +120,18 @@ private fun ReadyScreen(
 
     fun showKeyboard() {
         try {
-            terminalViewRef.value?.let { view ->
-                view.requestFocusFromTouch()
-                val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
-                keyboardFocused = true
+            val view = terminalViewRef.value ?: run {
+                Log.w("TerminalScreen", "TerminalView is not ready, cannot show keyboard")
+                return
             }
+            if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
+                Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot show keyboard")
+                return
+            }
+            view.requestFocusFromTouch()
+            val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+            keyboardFocused = true
         } catch (e: Exception) {
             Log.e("TerminalScreen", "showKeyboard failed", e)
         }
@@ -133,13 +139,19 @@ private fun ReadyScreen(
 
     fun hideKeyboard() {
         try {
-            terminalViewRef.value?.let { view ->
-                val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                val token = view.windowToken
-                if (token != null) {
-                    imm.hideSoftInputFromWindow(token, 0)
-                    keyboardFocused = false
-                }
+            val view = terminalViewRef.value ?: run {
+                Log.w("TerminalScreen", "TerminalView is not ready, cannot hide keyboard")
+                return
+            }
+            if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
+                Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot hide keyboard")
+                return
+            }
+            val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val token = view.windowToken
+            if (token != null) {
+                imm.hideSoftInputFromWindow(token, 0)
+                keyboardFocused = false
             }
         } catch (e: Exception) {
             Log.e("TerminalScreen", "hideKeyboard failed", e)
@@ -147,6 +159,14 @@ private fun ReadyScreen(
     }
 
     fun toggleKeyboard() {
+        val view = terminalViewRef.value ?: run {
+            Log.w("TerminalScreen", "TerminalView is not ready, cannot toggle keyboard")
+            return
+        }
+        if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
+            Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot toggle keyboard")
+            return
+        }
         if (keyboardFocused) hideKeyboard() else showKeyboard()
     }
 
@@ -450,15 +470,26 @@ private fun TerminalViewHost(
                 setTerminalViewClient(viewClient)
                 terminalManager.currentSession?.let { session -> attachSession(session) }
                 terminalManager.registerTerminalView(this, ctx)
-                terminalViewRef.value = this
+                
+                // View'in hazır olduğunu anlamak için layout listener ekle
+                viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        if (width > 0 && height > 0 && isAttachedToWindow) {
+                            viewTreeObserver.removeOnGlobalLayoutListener(this)
+                            terminalViewRef.value = this
+                        }
+                    }
+                })
             }
         },
         update = { view ->
             view.setTextSize(fontSizeSp)
             terminalManager.currentSession?.let { session -> view.attachSession(session) }
             terminalManager.registerTerminalView(view, view.context)
-            terminalViewRef.value = view
-            view.requestFocus()
+            if (view.isAttachedToWindow && view.width > 0 && view.height > 0) {
+                terminalViewRef.value = view
+                view.requestFocus()
+            }
         },
     )
 }

@@ -1228,6 +1228,14 @@ override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
 
     fun hideKeyboard() {
         try {
+            if (!isAttachedToWindow) {
+                Log.w("TerminalView", "View is not attached to window, cannot hide keyboard")
+                return
+            }
+            if (width <= 0 || height <= 0) {
+                Log.w("TerminalView", "View has zero size, cannot hide keyboard")
+                return
+            }
             val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             val token = windowToken
             if (token != null) {

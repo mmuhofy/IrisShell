@@ -16,6 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import android.widget.Toast
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -109,12 +111,24 @@ fun SessionSwitcherTopBar(
             }
         },
         actions = {
+            val context = LocalContext.current
             Box(
                 modifier = Modifier.size(48.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 IconButton(
-                    onClick = onToggleKeyboard,
+                    onClick = {
+                        try {
+                            onToggleKeyboard()
+                        } catch (e: Exception) {
+                            Log.e("TopBar", "Keyboard toggle failed", e)
+                            Toast.makeText(
+                                context,
+                                "Keyboard error: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Icon(
