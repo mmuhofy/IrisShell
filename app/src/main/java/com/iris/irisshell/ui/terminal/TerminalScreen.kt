@@ -117,14 +117,12 @@ private fun ReadyScreen(
     inputBarViewModel: InputBarViewModel = hiltViewModel(),
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
-    var keyboardVisible by remember { mutableStateOf(false) }
     var fullscreen by remember { mutableStateOf(false) }
     var switcherOpen by remember { mutableStateOf(false) }
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
-
     var keyboardVisible by remember { mutableStateOf(false) }
     val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
 
@@ -447,7 +445,7 @@ private fun TerminalViewHost(
                 
                 // View odaklandığında klavye durumunu güncelle
                 setOnFocusChangeListener { _, hasFocus ->
-                    this@ReadyScreen.keyboardVisible = hasFocus
+                    keyboardVisible = hasFocus
                 }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
