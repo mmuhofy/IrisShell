@@ -442,7 +442,7 @@ private fun TerminalViewHost(
                 
                 // View odaklandığında klavye durumunu güncelle
                 setOnFocusChangeListener { _, hasFocus ->
-                    keyboardVisible = hasFocus
+                    this@ReadyScreen.keyboardVisible = hasFocus
                 }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
