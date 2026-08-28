@@ -22,9 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,10 +44,8 @@ fun BlockTerminalView(
     onDeleteBlock: (String) -> Unit = {},
     promptLabel: String = "iris",
     modifier: Modifier = Modifier,
-    extraBar: @Composable (Boolean) -> Unit = { _ -> },
+    extraBar: @Composable () -> Unit = {},
 ) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-    var keyboardVisible by remember { mutableStateOf(false) }
     val list by blocks.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val clipboard = LocalClipboardManager.current
@@ -122,18 +117,10 @@ fun BlockTerminalView(
         BlockInputField(
             onSubmit = { cmd ->
                 onCommandSubmitted("", cmd)
-                keyboardController?.hide()
-                keyboardVisible = false
             },
             promptLabel = promptLabel,
-            onFocusChanged = { focused ->
-                keyboardVisible = focused
-                if (focused) {
-                    keyboardController?.show()
-                }
-            },
         )
-        extraBar(keyboardVisible)
+        extraBar()
     }
 }
 

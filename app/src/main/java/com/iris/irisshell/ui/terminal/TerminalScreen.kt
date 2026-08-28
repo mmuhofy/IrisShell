@@ -30,6 +30,10 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -113,17 +117,11 @@ private fun ReadyScreen(
     inputBarViewModel: InputBarViewModel = hiltViewModel(),
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
-    var fullscreen by remember { mutableStateOf(false) }
-    var switcherOpen by remember { mutableStateOf(false) }
-    val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
-    val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
-    val activeId by sessionSwitcherViewModel.activeId.collectAsState()
-    val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
-
     var keyboardVisible by remember { mutableStateOf(false) }
-    val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
 
-    fun toggleKeyboard(keyboardController: SoftwareKeyboardController?, context: Context) {
+    fun toggleKeyboard() {
         try {
             if (keyboardVisible) {
                 keyboardController?.hide()
@@ -136,6 +134,17 @@ private fun ReadyScreen(
             Toast.makeText(context, "Keyboard error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+    var fullscreen by remember { mutableStateOf(false) }
+    var switcherOpen by remember { mutableStateOf(false) }
+    val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
+    val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
+    val activeId by sessionSwitcherViewModel.activeId.collectAsState()
+    val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
+
+    var keyboardVisible by remember { mutableStateOf(false) }
+    val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
+
+
 
     // Session-switch entry animation
     val appearScale = remember { androidx.compose.animation.core.Animatable(1f) }
@@ -174,13 +183,11 @@ private fun ReadyScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
-            val keyboardController = LocalSoftwareKeyboardController.current
-            val context = LocalContext.current
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
                 keyboardVisible = keyboardVisible,
-                onToggleKeyboard = { toggleKeyboard(keyboardController, context) },
+                onToggleKeyboard = ::toggleKeyboard,
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
                     terminalManager.addTab()
@@ -256,7 +263,7 @@ private fun ReadyScreen(
                                 scaleY = appearScale.value
                                 alpha = appearAlpha.value
                             },
-                    ) { visible -> keyboardVisible = visible }
+                    )
                 } else {
                     TerminalViewHost(
                         terminalManager = terminalManager,
@@ -442,7 +449,7 @@ private fun TerminalViewHost(
                 
                 // View odaklandığında klavye durumunu güncelle
                 setOnFocusChangeListener { _, hasFocus ->
-                    this@ReadyScreen.keyboardVisible = hasFocus
+                    keyboardVisible = hasFocus
                 }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
