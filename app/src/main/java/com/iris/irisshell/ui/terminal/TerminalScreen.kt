@@ -118,22 +118,6 @@ private fun ReadyScreen(
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     var keyboardVisible by remember { mutableStateOf(false) }
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val context = LocalContext.current
-
-    fun toggleKeyboard() {
-        try {
-            if (keyboardVisible) {
-                keyboardController?.hide()
-            } else {
-                keyboardController?.show()
-            }
-            keyboardVisible = !keyboardVisible
-        } catch (e: Exception) {
-            Log.e("TerminalScreen", "Keyboard toggle failed", e)
-            Toast.makeText(context, "Keyboard error: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
     var fullscreen by remember { mutableStateOf(false) }
     var switcherOpen by remember { mutableStateOf(false) }
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
@@ -183,11 +167,25 @@ private fun ReadyScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
+            val keyboardController = LocalSoftwareKeyboardController.current
+            val context = LocalContext.current
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
                 keyboardVisible = keyboardVisible,
-                onToggleKeyboard = ::toggleKeyboard,
+                onToggleKeyboard = {
+                    try {
+                        if (keyboardVisible) {
+                            keyboardController?.hide()
+                        } else {
+                            keyboardController?.show()
+                        }
+                        keyboardVisible = !keyboardVisible
+                    } catch (e: Exception) {
+                        Log.e("TerminalScreen", "Keyboard toggle failed", e)
+                        Toast.makeText(context, "Keyboard error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                },
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
                     terminalManager.addTab()
