@@ -123,8 +123,8 @@ private fun ReadyScreen(
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
-    var keyboardVisible by remember { mutableStateOf(false) }
     val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
+    var keyboardVisible by remember { mutableStateOf(false) }
 
 
 
@@ -445,7 +445,7 @@ private fun TerminalViewHost(
                 
                 // View odaklandığında klavye durumunu güncelle
                 setOnFocusChangeListener { _, hasFocus ->
-                    keyboardVisible = hasFocus
+                    this@ReadyScreen.keyboardVisible = hasFocus
                 }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
