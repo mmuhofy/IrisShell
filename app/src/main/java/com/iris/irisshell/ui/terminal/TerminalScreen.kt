@@ -122,10 +122,7 @@ private fun ReadyScreen(
     var keyboardVisible by remember { mutableStateOf(false) }
     val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
 
-    @Composable
-    fun toggleKeyboard() {
-        val keyboardController = LocalSoftwareKeyboardController.current
-        val context = LocalContext.current
+    fun toggleKeyboard(keyboardController: SoftwareKeyboardController?, context: Context) {
         try {
             if (keyboardVisible) {
                 keyboardController?.hide()
@@ -176,11 +173,13 @@ private fun ReadyScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
+            val keyboardController = LocalSoftwareKeyboardController.current
+            val context = LocalContext.current
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
                 keyboardVisible = keyboardVisible,
-                onToggleKeyboard = { toggleKeyboard() },
+                onToggleKeyboard = { toggleKeyboard(keyboardController, context) },
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
                     terminalManager.addTab()
@@ -442,7 +441,7 @@ private fun TerminalViewHost(
                 
                 // View odaklandığında klavye durumunu güncelle
                 setOnFocusChangeListener { _, hasFocus ->
-                    keyboardVisible = hasFocus
+                    this@ReadyScreen.keyboardVisible = hasFocus
                 }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
