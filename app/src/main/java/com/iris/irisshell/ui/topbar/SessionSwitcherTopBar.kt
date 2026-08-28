@@ -48,7 +48,7 @@ import com.iris.irisshell.ui.theme.IrisTextSecondary
 fun SessionSwitcherTopBar(
     viewModel: SessionSwitcherViewModel,
     isFullscreen: Boolean,
-    keyboardFocused: Boolean = true,
+    keyboardVisible: Boolean = false,
     onToggleKeyboard: () -> Unit = {},
     onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
@@ -132,16 +132,16 @@ fun SessionSwitcherTopBar(
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Icon(
-                        painter = painterResource(
-                            if (keyboardFocused) R.drawable.lucide_keyboard_off
-                            else R.drawable.lucide_keyboard
-                        ),
-                        contentDescription =
-                            if (keyboardFocused) "Hide keyboard" else "Show keyboard",
-                        tint = IrisTextSecondary,
-                        modifier = Modifier.size(24.dp),
-                    )
+                        Icon(
+                            painter = painterResource(
+                                if (keyboardVisible) R.drawable.lucide_keyboard_off
+                                else R.drawable.lucide_keyboard
+                            ),
+                            contentDescription =
+                                if (keyboardVisible) "Hide keyboard" else "Show keyboard",
+                            tint = IrisTextSecondary,
+                            modifier = Modifier.size(24.dp),
+                        )
                 }
             }
             MoreActionsMenu(

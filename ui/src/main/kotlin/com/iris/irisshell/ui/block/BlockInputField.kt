@@ -47,6 +47,7 @@ fun BlockInputField(
     enabled: Boolean = true,
     promptLabel: String = "iris",
     modifier: Modifier = Modifier,
+    onFocusChanged: (Boolean) -> Unit = {},
 ) {
     var text by remember { mutableStateOf("") }
     var focused by remember { mutableStateOf(false) }
@@ -105,7 +106,10 @@ fun BlockInputField(
                     cursorBrush = SolidColor(IrisPrimary),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .onFocusChanged { focused = it.isFocused },
+                        .onFocusChanged {
+                        focused = it.isFocused
+                        onFocusChanged(it.isFocused)
+                    },
                     minLines = 1,
                     maxLines = 6,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
