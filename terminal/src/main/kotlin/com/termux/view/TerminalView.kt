@@ -1254,6 +1254,9 @@ override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         setupKeyboardVisibilityListener()
     }
 
+    /**
+     * Listens for keyboard visibility changes and notifies the callback.
+     */
     private fun setupKeyboardVisibilityListener() {
         if (keyboardVisibilityListener == null) return
 
