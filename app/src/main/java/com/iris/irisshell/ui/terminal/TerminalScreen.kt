@@ -352,39 +352,23 @@ private fun CompactFullscreenExit(onExitFullscreen: () -> Unit) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    AndroidView(
-        modifier = modifier.fillMaxSize(),
-        factory = { ctx ->
-            TerminalView(ctx, null).apply {
-                setTextSize(fontSizeSp)
-                isFocusable = true
-                isFocusableInTouchMode = true
-                setTerminalViewClient(viewClient)
-                terminalManager.currentSession?.let { session -> attachSession(session) }
-                terminalManager.registerTerminalView(this, ctx)
-                
-                // Klavye durumunu TerminalScreen'e bildir
-                setKeyboardVisibilityListener { isVisible ->
-                    keyboardVisible = isVisible
-                }
-                
-                // Klavye durumunu TerminalScreen'e bildir
-                setKeyboardVisibilityListener { isVisible ->
-                    keyboardVisible = isVisible
+                } else {
+                    TerminalViewHost(
+                        terminalManager = terminalManager,
+                        fontSizeSp = fontSizeSp,
+                        terminalViewModel = terminalViewModel,
+                        terminalViewRef = terminalViewRef,
+                        extraKeyState = extraKeyState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = appearScale.value
+                                scaleY = appearScale.value
+                                alpha = appearAlpha.value
+                            },
+                    )
                 }
 
-                // View'in hazır olduğunu anlamak için layout listener ekle
-                val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
-                    override fun onGlobalLayout() {
-                        if (width > 0 && height > 0) {
-                            viewTreeObserver.removeOnGlobalLayoutListener(this)
-                            terminalViewRef.value = this@apply
-                        }
-                    }
-                }
-                viewTreeObserver.addOnGlobalLayoutListener(listener)
-            }
-        },
         update = { view ->
             view.setTextSize(fontSizeSp)
             terminalManager.currentSession?.let { session -> view.attachSession(session) }
@@ -489,6 +473,45 @@ private fun TerminalViewHost(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
+}
+
+@Composable
+private fun TerminalViewHost(
+    terminalManager: TerminalManager,
+    fontSizeSp: Int,
+    terminalViewModel: TerminalViewModel,
+    terminalViewRef: MutableState<TerminalView?>,
+    modifier: Modifier = Modifier,
+    extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    val viewClient = remember(terminalViewModel, extraKeyState) {
+        TerminalViewClientImpl(
+            onScaleChange = { factor ->
+                terminalViewModel.bumpFontSize(factor)
+                terminalViewModel.showSlider()
+                factor
+            },
+            extraKeyState = extraKeyState,
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        if (terminalManager.tabCount == 0) {
+            terminalManager.addTab()
+        }
+    }
+
+    LaunchedEffect(fontSizeSp) {
+        terminalViewRef.value?.setTextSize(fontSizeSp)
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, _ -> }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     AndroidView(
         modifier = modifier.fillMaxSize(),
@@ -529,3 +552,5 @@ private fun TerminalViewHost(
         },
     )
 }
+
+@Composable
