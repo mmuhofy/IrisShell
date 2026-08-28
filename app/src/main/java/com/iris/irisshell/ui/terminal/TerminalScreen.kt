@@ -124,7 +124,7 @@ private fun ReadyScreen(
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
     val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
-    var keyboardVisible by remember { mutableStateOf(false) }
+
 
 
 
@@ -170,18 +170,13 @@ private fun ReadyScreen(
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
-                keyboardVisible = keyboardVisible,
                 onToggleKeyboard = {
-                    try {
-                        if (keyboardVisible) {
-                            keyboardController?.hide()
+                    terminalViewRef.value?.let { view ->
+                        if (view.isFocused) {
+                            view.hideKeyboard()
                         } else {
-                            keyboardController?.show()
+                            view.showKeyboard()
                         }
-                        keyboardVisible = !keyboardVisible
-                    } catch (e: Exception) {
-                        AndroidLog.e("TerminalScreen", "Keyboard toggle failed", e)
-                        AndroidToast.makeText(context, "Keyboard error: ${e.message}", AndroidToast.LENGTH_SHORT).show()
                     }
                 },
                 onRefresh = {
