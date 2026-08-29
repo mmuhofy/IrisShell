@@ -37,7 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.iris.irisshell.terminal.ExtraKeyState
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
@@ -452,7 +454,6 @@ private fun TerminalViewHost(
         TerminalView(context).apply {
             setTextSize(fontSizeSp)
             setTerminalViewClient(terminalManager)
-            setTerminalViewKeyListener(terminalManager)
             setKeyboardVisibilityListener { visible ->
                 onKeyboardVisibilityChanged(visible)
             }
