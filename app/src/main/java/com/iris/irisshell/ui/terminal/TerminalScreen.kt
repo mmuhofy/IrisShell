@@ -28,12 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
-
-import androidx.compose.ui.platform.SoftwareKeyboardController
-import android.content.Context as AndroidContext
-import android.util.Log as AndroidLog
-import android.widget.Toast as AndroidToast
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,8 +50,6 @@ import android.util.Log
 import android.content.Context
 import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun TerminalScreen(
@@ -123,10 +115,32 @@ private fun ReadyScreen(
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
-    val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
+
     var keyboardVisible by remember { mutableStateOf(false) }
+    val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
 
+    fun toggleKeyboard() {
+        val view = terminalViewRef.value
+        if (view != null) {
+            if (keyboardVisible) {
+                view.hideKeyboard()
+            } else {
+                view.showKeyboard()
+            }
+        }
+    }
 
+    fun toggleKeyboard() {
+        val view = terminalViewRef.value ?: run {
+            Log.w("TerminalScreen", "TerminalView is not ready, cannot toggle keyboard")
+            return
+        }
+        if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
+            Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot toggle keyboard")
+            return
+        }
+        if (keyboardFocused) hideKeyboard() else showKeyboard()
+    }
 
     // Session-switch entry animation
     val appearScale = remember { androidx.compose.animation.core.Animatable(1f) }
@@ -165,22 +179,11 @@ private fun ReadyScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
-            val keyboardController = LocalSoftwareKeyboardController.current
-            val context = LocalContext.current
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
                 keyboardVisible = keyboardVisible,
-                onToggleKeyboard = {
-                    terminalViewRef.value?.let { view ->
-                        if (view.isFocused) {
-                            view.hideKeyboard()
-                        } else {
-                            view.requestFocus()
-                            view.showKeyboard()
-                        }
-                    }
-                },
+                onToggleKeyboard = ::toggleKeyboard,
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
                     terminalManager.addTab()
@@ -271,6 +274,9 @@ private fun ReadyScreen(
                                 scaleY = appearScale.value
                                 alpha = appearAlpha.value
                             },
+                        onKeyboardVisibilityChanged = { visible ->
+                            keyboardVisible = visible
+                        },
                     )
                 }
 
@@ -396,9 +402,10 @@ private fun TerminalViewHost(
     terminalManager: TerminalManager,
     fontSizeSp: Int,
     terminalViewModel: TerminalViewModel,
-    terminalViewRef: MutableState<TerminalView?>,
+    terminalViewRef: MutableState<TerminalView?>,,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
+    onKeyboardVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -437,13 +444,11 @@ private fun TerminalViewHost(
                 isFocusable = true
                 isFocusableInTouchMode = true
                 setTerminalViewClient(viewClient)
+                setKeyboardVisibilityListener { visible ->
+                    onKeyboardVisibilityChanged(visible)
+                }
                 terminalManager.currentSession?.let { session -> attachSession(session) }
                 terminalManager.registerTerminalView(this, ctx)
-                
-                // Klavye durumunu TerminalScreen'e bildir
-                setKeyboardVisibilityListener { isVisible ->
-                    keyboardVisible = isVisible
-                }
                 
                 // View'in hazır olduğunu anlamak için layout listener ekle
                 val listener = object : ViewTreeObserver.OnGlobalLayoutListener {

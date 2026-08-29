@@ -1247,6 +1247,7 @@ override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
     }
 
     // ==================== KLAVYE DURUMU CALLBACK ====================
+
     private var keyboardVisibilityListener: ((Boolean) -> Unit)? = null
 
     fun setKeyboardVisibilityListener(listener: (Boolean) -> Unit) {
@@ -1255,14 +1256,12 @@ override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
     }
 
     private fun setupKeyboardVisibilityListener() {
-        if (keyboardVisibilityListener == null) return
-
         viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            private val rect = android.graphics.Rect()
             private var wasKeyboardVisible = false
-
             override fun onGlobalLayout() {
-                getWindowVisibleDisplayFrame(rect)
+                val rootView = rootView
+                val rect = android.graphics.Rect()
+                rootView.getWindowVisibleDisplayFrame(rect)
                 val screenHeight = rootView.height
                 val keypadHeight = screenHeight - rect.bottom
                 val isKeyboardVisible = keypadHeight > screenHeight * 0.15
@@ -1273,38 +1272,6 @@ override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
                 }
             }
         })
-    }
-
-    // ==================== KLAVYE AÇ/KAPA (GÜNCELLENDİ) ====================
-
-    fun showKeyboard() {
-        try {
-            requestFocusFromTouch()
-            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
-        } catch (e: Exception) {
-            Log.e("TerminalView", "showKeyboard failed", e)
-        }
-    }
-
-    fun hideKeyboard() {
-        try {
-            if (!isAttachedToWindow) {
-                Log.w("TerminalView", "View is not attached to window, cannot hide keyboard")
-                return
-            }
-            if (width <= 0 || height <= 0) {
-                Log.w("TerminalView", "View has zero size, cannot hide keyboard")
-                return
-            }
-            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            val token = windowToken
-            if (token != null) {
-                imm.hideSoftInputFromWindow(token, 0)
-            }
-        } catch (e: Exception) {
-            Log.e("TerminalView", "hideKeyboard failed", e)
-        }
     }
 
     companion object {
