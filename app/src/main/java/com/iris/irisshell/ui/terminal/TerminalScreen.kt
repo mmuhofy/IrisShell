@@ -173,12 +173,7 @@ private fun ReadyScreen(
                 keyboardVisible = keyboardVisible,
                 onToggleKeyboard = {
                     terminalViewRef.value?.let { view ->
-                        if (view.isFocused) {
-                            view.hideKeyboard()
-                        } else {
-                            view.requestFocus()
-                            view.showKeyboard()
-                        }
+                        view.toggleKeyboard(!keyboardVisible)
                     }
                 },
                 onRefresh = {
@@ -271,8 +266,10 @@ private fun ReadyScreen(
                                 scaleY = appearScale.value
                                 alpha = appearAlpha.value
                             },
+                        onKeyboardVisibilityChanged = { visible ->
+                            keyboardVisible = visible
+                        },
                     )
-                }
 
                 if (fullscreen) {
                     Box(
@@ -366,6 +363,9 @@ private fun CompactFullscreenExit(onExitFullscreen: () -> Unit) {
                                 scaleY = appearScale.value
                                 alpha = appearAlpha.value
                             },
+                        onKeyboardVisibilityChanged = { visible ->
+                            keyboardVisible = visible
+                        },
                     )
                 }
 
@@ -443,113 +443,43 @@ private fun TerminalViewHost(
     terminalViewModel: TerminalViewModel,
     terminalViewRef: MutableState<TerminalView?>,
     modifier: Modifier = Modifier,
-    extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
+    extraKeyState: ExtraKeyState? = null,
+    onKeyboardVisibilityChanged: (Boolean) -> Unit = {},
 ) {
+    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    val viewClient = remember(terminalViewModel, extraKeyState) {
-        TerminalViewClientImpl(
-            onScaleChange = { factor ->
-                terminalViewModel.bumpFontSize(factor)
-                terminalViewModel.showSlider()
-                factor
-            },
-            extraKeyState = extraKeyState,
-        )
-    }
-
-    LaunchedEffect(Unit) {
-        if (terminalManager.tabCount == 0) {
-            terminalManager.addTab()
+    val view = remember {
+        TerminalView(context).apply {
+            setTextSize(fontSizeSp)
+            setTerminalViewClient(terminalManager)
+            setTerminalViewKeyListener(terminalManager)
+            setKeyboardVisibilityListener { visible ->
+                onKeyboardVisibilityChanged(visible)
+            }
         }
     }
 
-    LaunchedEffect(fontSizeSp) {
-        terminalViewRef.value?.setTextSize(fontSizeSp)
-    }
-
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, _ -> }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                terminalManager.onResume()
+            } else if (event == Lifecycle.Event.ON_PAUSE) {
+                terminalManager.onPause()
+            }
+        }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-}
-
-@Composable
-private fun TerminalViewHost(
-    terminalManager: TerminalManager,
-    fontSizeSp: Int,
-    terminalViewModel: TerminalViewModel,
-    terminalViewRef: MutableState<TerminalView?>,
-    modifier: Modifier = Modifier,
-    extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
-) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    val viewClient = remember(terminalViewModel, extraKeyState) {
-        TerminalViewClientImpl(
-            onScaleChange = { factor ->
-                terminalViewModel.bumpFontSize(factor)
-                terminalViewModel.showSlider()
-                factor
-            },
-            extraKeyState = extraKeyState,
-        )
-    }
-
-    LaunchedEffect(Unit) {
-        if (terminalManager.tabCount == 0) {
-            terminalManager.addTab()
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
-    LaunchedEffect(fontSizeSp) {
-        terminalViewRef.value?.setTextSize(fontSizeSp)
-    }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, _ -> }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    LaunchedEffect(view) {
+        terminalViewRef.value = view
     }
 
     AndroidView(
-        modifier = modifier.fillMaxSize(),
-        factory = { ctx ->
-            TerminalView(ctx, null).apply {
-                setTextSize(fontSizeSp)
-                isFocusable = true
-                isFocusableInTouchMode = true
-                setTerminalViewClient(viewClient)
-                terminalManager.currentSession?.let { session -> attachSession(session) }
-                terminalManager.registerTerminalView(this, ctx)
-
-                // Klavye durumunu TerminalScreen'e bildir
-                setKeyboardVisibilityListener { isVisible ->
-                    keyboardVisible = isVisible
-                }
-
-                // View'in hazır olduğunu anlamak için layout listener ekle
-                val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
-                    override fun onGlobalLayout() {
-                        if (width > 0 && height > 0) {
-                            viewTreeObserver.removeOnGlobalLayoutListener(this)
-                            terminalViewRef.value = this@apply
-                        }
-                    }
-                }
-                viewTreeObserver.addOnGlobalLayoutListener(listener)
-            }
-        },
-        update = { view ->
-            view.setTextSize(fontSizeSp)
-            terminalManager.currentSession?.let { session -> view.attachSession(session) }
-            terminalManager.registerTerminalView(view, view.context)
-            if (view.isAttachedToWindow && view.width > 0 && view.height > 0) {
-                terminalViewRef.value = view
-                view.requestFocus()
-            }
-        },
+        factory = { view },
+        modifier = modifier,
     )
 }
 
