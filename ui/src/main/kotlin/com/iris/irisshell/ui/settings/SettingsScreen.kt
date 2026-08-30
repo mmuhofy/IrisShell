@@ -33,7 +33,6 @@ import com.iris.irisshell.design.system.IrisSuccess
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextDisabled
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.design.system.IrisWarning
@@ -137,7 +136,7 @@ fun SettingsScreen(
                     SettingsToggleRow(
                         iconRes         = R.drawable.lucide_keyboard,
                         label           = "Extra Keys Bar",
-                        description     = "ESC, TAB, CTRL, ALT and arrow keys ",
+                        description     = "ESC, TAB, CTRL, ALT ve yön tuşları",
                         checked         = extraKeysBarVisible,
                         onCheckedChange = viewModel::setExtraKeysBarVisible,
                     )
@@ -145,10 +144,10 @@ fun SettingsScreen(
                 Spacer(Modifier.height(24.dp))
             }
 
-            // ── APPEARANCE ───────────────────────────────────────────────────────
+            // ── GÖRÜNÜM ───────────────────────────────────────────────────────
 
             item {
-                SettingsSectionLabel("APPEARANCE")
+                SettingsSectionLabel("Görünüm")
             }
 
             item {
@@ -162,9 +161,9 @@ fun SettingsScreen(
                     SettingsDivider()
 
                     ColorPickerRow(
-                        iconRes     = R.drawable.lucide_square,
-                        label       = "Background",
-                        description = "Terminal background color",
+                        iconRes     = R.drawable.lucide_minimize,
+                        label       = "Arkaplan",
+                        description = "Terminal zemin rengi",
                         options     = BG_PALETTE,
                         selectedHex = terminalBgColor,
                         onSelect    = viewModel::setTerminalBgColor,
@@ -174,8 +173,8 @@ fun SettingsScreen(
 
                     ColorPickerRow(
                         iconRes     = R.drawable.lucide_palette,
-                        label       = "Accent Color",
-                        description = "Command prompt and active items",
+                        label       = "Vurgu Rengi",
+                        description = "Komut istemi ve aktif öğeler",
                         options     = ACCENT_PALETTE,
                         selectedHex = accentColor,
                         onSelect    = viewModel::setAccentColor,
@@ -185,8 +184,8 @@ fun SettingsScreen(
 
                     ColorPickerRow(
                         iconRes     = R.drawable.lucide_a_large_small,
-                        label       = "Text Color",
-                        description = "Terminal Output Color",
+                        label       = "Metin Rengi",
+                        description = "Terminal çıktı metni",
                         options     = TEXT_PALETTE,
                         selectedHex = terminalTextColor,
                         onSelect    = viewModel::setTerminalTextColor,
@@ -195,7 +194,7 @@ fun SettingsScreen(
                 Spacer(Modifier.height(24.dp))
             }
 
-            // ── ABOUT ──────────────────────────────────────────────────────
+            // ── HAKKINDA ──────────────────────────────────────────────────────
 
             item {
                 SettingsSectionLabel("Hakkında")
