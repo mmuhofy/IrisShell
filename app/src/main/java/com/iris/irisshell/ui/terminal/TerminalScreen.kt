@@ -116,46 +116,17 @@ private fun ReadyScreen(
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
 
-    var keyboardFocused by remember { mutableStateOf(true) }
+    var keyboardVisible by remember { mutableStateOf(false) }
     val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
 
-    fun showKeyboard() {
-        try {
-            val view = terminalViewRef.value ?: run {
-                Log.w("TerminalScreen", "TerminalView is not ready, cannot show keyboard")
-                return
+    fun toggleKeyboard() {
+        val view = terminalViewRef.value
+        if (view != null) {
+            if (keyboardVisible) {
+                view.hideKeyboard()
+            } else {
+                view.showKeyboard()
             }
-            if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
-                Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot show keyboard")
-                return
-            }
-            view.requestFocusFromTouch()
-            val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
-            keyboardFocused = true
-        } catch (e: Exception) {
-            Log.e("TerminalScreen", "showKeyboard failed", e)
-        }
-    }
-
-    fun hideKeyboard() {
-        try {
-            val view = terminalViewRef.value ?: run {
-                Log.w("TerminalScreen", "TerminalView is not ready, cannot hide keyboard")
-                return
-            }
-            if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
-                Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot hide keyboard")
-                return
-            }
-            val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            val token = view.windowToken
-            if (token != null) {
-                imm.hideSoftInputFromWindow(token, 0)
-                keyboardFocused = false
-            }
-        } catch (e: Exception) {
-            Log.e("TerminalScreen", "hideKeyboard failed", e)
         }
     }
 
@@ -211,7 +182,7 @@ private fun ReadyScreen(
             SessionSwitcherTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = false,
-                keyboardFocused = keyboardFocused,
+                keyboardVisible = keyboardVisible,
                 onToggleKeyboard = ::toggleKeyboard,
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
@@ -303,6 +274,9 @@ private fun ReadyScreen(
                                 scaleY = appearScale.value
                                 alpha = appearAlpha.value
                             },
+                        onKeyboardVisibilityChanged = { visible ->
+                            keyboardVisible = visible
+                        },
                     )
                 }
 
@@ -428,9 +402,10 @@ private fun TerminalViewHost(
     terminalManager: TerminalManager,
     fontSizeSp: Int,
     terminalViewModel: TerminalViewModel,
-    terminalViewRef: MutableState<TerminalView?>,
+    terminalViewRef: MutableState<TerminalView?>,,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
+    onKeyboardVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -469,6 +444,9 @@ private fun TerminalViewHost(
                 isFocusable = true
                 isFocusableInTouchMode = true
                 setTerminalViewClient(viewClient)
+                setKeyboardVisibilityListener { visible ->
+                    onKeyboardVisibilityChanged(visible)
+                }
                 terminalManager.currentSession?.let { session -> attachSession(session) }
                 terminalManager.registerTerminalView(this, ctx)
                 

@@ -1246,6 +1246,36 @@ override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         }
     }
 
+    // ==================== KLAVYE DURUMU CALLBACK ====================
+
+    private var keyboardVisibilityListener: ((Boolean) -> Unit)? = null
+
+    fun setKeyboardVisibilityListener(listener: (Boolean) -> Unit) {
+        keyboardVisibilityListener = listener
+        setupKeyboardVisibilityListener()
+    }
+
+    private fun setupKeyboardVisibilityListener() {
+        if (keyboardVisibilityListener == null) return
+
+        viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            private val rect = android.graphics.Rect()
+            private var wasKeyboardVisible = false
+
+            override fun onGlobalLayout() {
+                getWindowVisibleDisplayFrame(rect)
+                val screenHeight = rootView.height
+                val keypadHeight = screenHeight - rect.bottom
+                val isKeyboardVisible = keypadHeight > screenHeight * 0.15
+
+                if (isKeyboardVisible != wasKeyboardVisible) {
+                    wasKeyboardVisible = isKeyboardVisible
+                    keyboardVisibilityListener?.invoke(isKeyboardVisible)
+                }
+            }
+        })
+    }
+
     companion object {
         /** Log terminal view key and IME events. */
         private var TERMINAL_VIEW_KEY_LOGGING_ENABLED = false
