@@ -5,18 +5,15 @@ import kotlinx.coroutines.flow.Flow
 /**
  * User preferences that live in DataStore.
  *
- * Currently surfaces:
- *  - Block Mode toggle — when enabled, the terminal renders as a stack of
- *    HUD cards (one per command) instead of the classic Termux
- *    `TerminalView`. Both modes share the same session and
- *    `TerminalManager`; only the render layer switches.
- *  - Extra-keys bar visibility toggle — when true, the on-screen
- *    keyboard handle shows a bar above the IME with ESC/TAB/CTRL/ALT
- *    and arrow keys (Phase 3 Sprint 1).
+ * Surfaces:
+ *  - Block Mode toggle
+ *  - Extra-keys bar visibility toggle
+ *  - Terminal font size (sp)
+ *  - Terminal background color (hex string)
+ *  - Accent color (hex string)
+ *  - Terminal text color (hex string)
  *
- * Default: both false. Users opt into either from Settings.
- *
- * See `docs/block-engine/PLAN.md` §9 and `docs/MEMORYBANK.md` §8.
+ * See MEMORYBANK.md §5 and §8.
  */
 interface SettingsRepository {
 
@@ -37,4 +34,22 @@ interface SettingsRepository {
 
     /** Persists the font size in sp. */
     suspend fun setFontSize(size: Int)
+
+    /** Hot stream of the terminal background color as a hex string. Default: "#0C0C0C". */
+    val terminalBgColor: Flow<String>
+
+    /** Persists the terminal background color. */
+    suspend fun setTerminalBgColor(hex: String)
+
+    /** Hot stream of the accent color as a hex string. Default: "#E8C547". */
+    val accentColor: Flow<String>
+
+    /** Persists the accent color. */
+    suspend fun setAccentColor(hex: String)
+
+    /** Hot stream of the terminal text color as a hex string. Default: "#EEEEEE". */
+    val terminalTextColor: Flow<String>
+
+    /** Persists the terminal text color. */
+    suspend fun setTerminalTextColor(hex: String)
 }
