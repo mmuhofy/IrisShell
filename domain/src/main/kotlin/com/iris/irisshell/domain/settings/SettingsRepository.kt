@@ -31,4 +31,10 @@ interface SettingsRepository {
 
     /** Persists the extra-keys bar visibility flag. */
     suspend fun setExtraKeysBarVisible(visible: Boolean)
+
+    /** Hot stream of the font size in sp. Emits 14 on first launch. */
+    val fontSizeSp: Flow<Int>
+
+    /** Persists the font size in sp. */
+    suspend fun setFontSize(size: Int)
 }

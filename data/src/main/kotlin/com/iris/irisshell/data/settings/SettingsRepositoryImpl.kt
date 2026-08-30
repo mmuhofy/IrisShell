@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import com.iris.irisshell.data.local.irisShellDataStore
 import com.iris.irisshell.domain.settings.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -43,10 +44,19 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_EXTRA_KEYS_BAR_VISIBLE] = visible }
     }
 
+    override val fontSizeSp: Flow<Int> =
+        dataStore.data.map { prefs -> prefs[KEY_FONT_SIZE_SP] ?: DEFAULT_FONT_SIZE_SP }
+
+    override suspend fun setFontSize(size: Int) {
+        dataStore.edit { prefs -> prefs[KEY_FONT_SIZE_SP] = size }
+    }
+
     private companion object {
         val KEY_USE_BLOCK_ENGINE = booleanPreferencesKey("use_block_engine")
         const val DEFAULT_USE_BLOCK_ENGINE: Boolean = false
         val KEY_EXTRA_KEYS_BAR_VISIBLE = booleanPreferencesKey("extra_keys_bar_visible")
         const val DEFAULT_EXTRA_KEYS_BAR_VISIBLE: Boolean = false
+        val KEY_FONT_SIZE_SP = intPreferencesKey("font_size_sp")
+        const val DEFAULT_FONT_SIZE_SP: Int = 14
     }
 }

@@ -21,11 +21,18 @@ class SettingsViewModel @Inject constructor(
     val extraKeysBarVisible: StateFlow<Boolean> = settings.extraKeysBarVisible
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val fontSizeSp: StateFlow<Int> = settings.fontSizeSp
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 14)
+
     fun setUseBlockEngine(enabled: Boolean) {
         viewModelScope.launch { settings.setUseBlockEngine(enabled) }
     }
 
     fun setExtraKeysBarVisible(visible: Boolean) {
         viewModelScope.launch { settings.setExtraKeysBarVisible(visible) }
+    }
+
+    fun setFontSize(size: Int) {
+        viewModelScope.launch { settings.setFontSize(size) }
     }
 }
