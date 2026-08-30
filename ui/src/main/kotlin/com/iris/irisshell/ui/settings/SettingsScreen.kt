@@ -29,11 +29,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBackground
-import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisOutline
-import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +41,6 @@ fun SettingsScreen(
 ) {
     val useBlockEngine by viewModel.useBlockEngine.collectAsStateWithLifecycle()
     val extraKeysBarVisible by viewModel.extraKeysBarVisible.collectAsStateWithLifecycle()
-    val fontSizeSp by viewModel.fontSizeSp.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = IrisBackground,
@@ -73,7 +69,6 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // ==================== TERMINAL ====================
             SectionHeader("Terminal")
             
             SettingsToggleRow(
@@ -90,60 +85,11 @@ fun SettingsScreen(
                 onCheckedChange = viewModel::setExtraKeysBarVisible,
             )
             
-            SettingsSliderRow(
-                title = "Font Size",
-                value = fontSizeSp,
-                onValueChange = viewModel::setFontSize,
-                valueRange = 8..32,
-            )
-            
             HorizontalDivider(color = IrisOutline, modifier = Modifier.padding(vertical = 8.dp))
             
-            // ==================== APPEARANCE ====================
-            SectionHeader("Appearance")
-            
-            SettingsDropdownRow(
-                title = "Cursor Type",
-                selectedValue = "Block",
-                options = listOf("Block", "Line", "Underline"),
-                onValueChange = { /* TODO: Implement */ },
-            )
-            
-            SettingsSliderRow(
-                title = "Cursor Blink Rate",
-                value = 500,
-                onValueChange = { /* TODO: Implement */ },
-                valueRange = 100..2000,
-                unit = "ms",
-            )
-            
-            HorizontalDivider(color = IrisOutline, modifier = Modifier.padding(vertical = 8.dp))
-            
-            // ==================== BEHAVIOR ====================
-            SectionHeader("Behavior")
-            
-            SettingsToggleRow(
-                title = "Back Button as Escape",
-                subtitle = "Map the back button to send ESC instead of closing the app.",
-                checked = false,
-                onCheckedChange = { /* TODO: Implement */ },
-            )
-            
-            SettingsToggleRow(
-                title = "Auto-Show Keyboard",
-                subtitle = "Automatically show the keyboard when the terminal gains focus.",
-                checked = true,
-                onCheckedChange = { /* TODO: Implement */ },
-            )
-            
-            HorizontalDivider(color = IrisOutline, modifier = Modifier.padding(vertical = 8.dp))
-            
-            // ==================== ABOUT ====================
             SectionHeader("About")
-            
             InfoRow(label = "Version", value = "1.0.0")
             InfoRow(label = "Build", value = "Phase 1 — Terminal Core")
-            InfoRow(label = "License", value = "MIT")
         }
     }
 }
