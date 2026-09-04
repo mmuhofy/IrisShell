@@ -1,10 +1,8 @@
 package com.iris.irisshell.ui.settings
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,8 +85,8 @@ fun SettingsDivider() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 16.dp)
-            .height(0.5.dp)
-            .background(IrisOutline.copy(alpha = 0.6f)),
+            .height(1.dp)
+            .background(IrisOutline.copy(alpha = 0.4f)),
     )
 }
 
@@ -274,9 +272,13 @@ private fun TerminalModeOptionCard(
     val borderColor by animateColorAsState(
         targetValue   = if (isSelected) IrisPrimary else IrisOutline,
         animationSpec = tween(200),
-        label         = "modeBorder",
+        label         = "modeBorderColor",
     )
-    val borderWidth = if (isSelected) 1.5.dp else 1.dp
+    val borderWidth by animateDpAsState(
+        targetValue   = if (isSelected) 1.5.dp else 1.dp,
+        animationSpec = tween(200),
+        label         = "modeBorderWidth",
+    )
 
     Column(
         modifier            = modifier
