@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -112,7 +113,8 @@ fun SettingsScreen(
             modifier            = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .widthIn(min = 1.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp),
             contentPadding      = PaddingValues(top = 4.dp, bottom = 40.dp),
         ) {
