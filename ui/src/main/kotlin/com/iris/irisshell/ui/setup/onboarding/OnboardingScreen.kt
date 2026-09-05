@@ -12,12 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.iris.irisshell.ui.setup.onboarding.scenes.ArchitectureScene
 import com.iris.irisshell.ui.setup.onboarding.scenes.ReadyScene
 import com.iris.irisshell.ui.setup.onboarding.scenes.WelcomeScene
 import com.iris.irisshell.ui.setup.theme.SetupPalette
+import kotlinx.coroutines.launch
 
 /**
  * Three-scene onboarding flow with no HorizontalPager.
@@ -39,20 +41,25 @@ fun OnboardingScreen(
     modifier: Modifier = Modifier,
 ) {
     var scene by remember { mutableStateOf(OnboardingSceneKind.Welcome) }
+    val coroutineScope = rememberCoroutineScope()
 
     val advance: () -> Unit = {
         val next = scene.next()
         if (next != null) {
             scene = next
         } else {
-            viewModel.finishOnboarding(thenStartBootstrap = true)
-            onCompleted()
+            coroutineScope.launch {
+                viewModel.finishOnboarding()
+                onCompleted()
+            }
         }
     }
 
     val skip: () -> Unit = {
-        viewModel.finishOnboarding(thenStartBootstrap = true)
-        onCompleted()
+        coroutineScope.launch {
+            viewModel.finishOnboarding()
+            onCompleted()
+        }
     }
 
     Box(
