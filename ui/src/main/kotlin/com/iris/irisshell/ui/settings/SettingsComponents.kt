@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -70,6 +71,8 @@ fun SettingsCategoryCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .widthIn(min = 1.dp)
+            .heightIn(min = 1.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(IrisSurface)
             .border(1.dp, IrisBorderSubtle, RoundedCornerShape(14.dp)),
@@ -286,6 +289,8 @@ private fun TerminalModeOptionCard(
             .background(IrisSurfaceVariant)
             .border(borderWidth, borderColor, RoundedCornerShape(10.dp))
             .clickable { onClick() }
+            .widthIn(min = 1.dp)
+            .heightIn(min = 1.dp)
             .padding(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -335,6 +340,8 @@ private fun BlockPreview() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .widthIn(min = 1.dp)
+                .heightIn(min = 1.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(IrisSurfaceVariant)
                 .border(1.dp, IrisOutline, RoundedCornerShape(4.dp))
@@ -496,6 +503,8 @@ fun ColorPickerRow(
                         .size(32.dp)
                         .clip(CircleShape)
                         .border(2.dp, ringColor, CircleShape)
+                        .widthIn(min = 1.dp)
+                        .heightIn(min = 1.dp)
                         .padding(3.dp)
                         .clip(CircleShape)
                         .background(color)
