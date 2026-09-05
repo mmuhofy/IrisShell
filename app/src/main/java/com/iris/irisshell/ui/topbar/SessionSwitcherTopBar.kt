@@ -66,8 +66,8 @@ fun SessionSwitcherTopBar(
         null
     }
 
-        SessionSwitcherTopBar(
-             modifier = modifier.fillMaxWidth(),
+    TopAppBar(
+        modifier = modifier.fillMaxWidth(),
              colors = TopAppBarDefaults.topAppBarColors(
                  containerColor = IrisSurface,
                  scrolledContainerColor = IrisSurface,
@@ -146,9 +146,9 @@ fun SessionSwitcherTopBar(
                      onClose = onClose,
                      onOpenSettings = onOpenSettings,
                  )
-             },
-         )
-     }
+              },
+          )
+    }
 
 @Composable
 private fun MoreActionsMenu(
