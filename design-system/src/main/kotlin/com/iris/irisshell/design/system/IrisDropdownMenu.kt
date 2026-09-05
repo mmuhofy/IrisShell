@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
@@ -79,14 +80,16 @@ fun IrisDropdownMenu(
                 },
                 enabled  = item.enabled,
                 shape    = RoundedCornerShape(10.dp),
-                color    = Color.Transparent,
+                color    = IrisSurface,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .widthIn(min = 1.dp)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
             ) {
                 Row(
                     modifier          = Modifier
                         .fillMaxWidth()
+                        .widthIn(min = 1.dp)
                         .padding(horizontal = 14.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
