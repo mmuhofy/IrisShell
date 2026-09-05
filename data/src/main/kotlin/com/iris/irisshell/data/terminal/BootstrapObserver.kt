@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -57,11 +57,9 @@ class BootstrapObserver @Inject constructor(
         }
     }
 
-    override fun progress(): Flow<BootstrapProgress> = combine(
-        port.state,
-        _ring,
-    ) { state, _ -> translate(state) }
-        .stateIn(scope, SharingStarted.Eagerly, BootstrapProgress.initial())
+    override fun progress(): Flow<BootstrapProgress> = port.state
+        .map { state -> translate(state) }
+        .stateIn(scope, SharingStarted.Eagerly, translate(port.state.value))
 
     override fun liveLogs(): Flow<String> = _ring.asSharedFlow()
 

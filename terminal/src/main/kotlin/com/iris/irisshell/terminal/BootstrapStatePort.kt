@@ -23,21 +23,28 @@ import kotlinx.coroutines.launch
  */
 class BootstrapStatePort(private val bootstrap: UbuntuBootstrap) {
 
-    private val _state = MutableStateFlow<UbuntuSetupState>(UbuntuSetupState.Idle)
+    private val _state = MutableStateFlow<UbuntuSetupState>(
+        if (bootstrap.isInstalled) UbuntuSetupState.Ready else UbuntuSetupState.Idle,
+    )
     val state: StateFlow<UbuntuSetupState> = _state.asStateFlow()
 
     private val _logs = MutableSharedFlow<String>(extraBufferCapacity = 256)
     val logs: SharedFlow<String> = _logs.asSharedFlow()
 
     /**
-     * Drives the bootstrap pipeline. Safe to call multiple times — each call
-     * resets `_state` to `Idle` before running.
+     * Drives the bootstrap pipeline. Safe to call multiple times — if the
+     * rootfs is already installed, this is a no-op (state stays `Ready`) and
+     * avoids flashing the stepper UI on subsequent app starts.
      */
     fun runBootstrap(
         scope: CoroutineScope,
         installPackages: Boolean = true,
         optimize: Boolean = true,
     ) {
+        if (bootstrap.isInstalled) {
+            _state.value = UbuntuSetupState.Ready
+            return
+        }
         scope.launch {
             _state.value = UbuntuSetupState.Idle
             bootstrap.install(
