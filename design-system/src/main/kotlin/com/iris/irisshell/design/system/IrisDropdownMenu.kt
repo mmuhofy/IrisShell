@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 
 enum class IrisMenuItemStyle { Default, Destructive }
 
-private val MIN_MENU_WIDTH = 180.dp
+private val MIN_MENU_WIDTH = 140.dp
 private val MAX_MENU_WIDTH = 280.dp
 
 data class IrisMenuItem(
@@ -50,7 +50,9 @@ fun IrisDropdownMenu(
         onDismissRequest = onDismissRequest,
         offset           = offset,
         shape            = RoundedCornerShape(14.dp),
-        modifier         = modifier.background(IrisSurface),
+        modifier         = modifier
+            .background(IrisSurface)
+            .widthIn(min = MIN_MENU_WIDTH, max = MAX_MENU_WIDTH),
     ) {
         items.forEachIndexed { index, item ->
             if (item.dividerBefore && index != 0) {
@@ -71,43 +73,36 @@ fun IrisDropdownMenu(
                 else                                        -> IrisTextSecondary
             }
 
-            Surface(
-                onClick  = {
-                    if (item.enabled) {
-                        onDismissRequest()
-                        onItemClick(item)
-                    }
-                },
-                enabled  = item.enabled,
-                shape    = RoundedCornerShape(10.dp),
-                color    = IrisSurface,
-                modifier = Modifier
+            Row(
+                modifier          = Modifier
                     .fillMaxWidth()
-                    .widthIn(min = 1.dp)
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-            ) {
-                Row(
-                    modifier          = Modifier
-                        .fillMaxWidth()
-                        .widthIn(min = 1.dp)
-                        .padding(horizontal = 14.dp, vertical = 11.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (item.icon != null) {
-                        Icon(
-                            painter            = item.icon,
-                            contentDescription = null,
-                            tint               = iconTint,
-                            modifier           = Modifier.size(17.dp),
-                        )
-                        Spacer(Modifier.width(12.dp))
-                    }
-                    Text(
-                        text  = item.label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = textColor,
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable(
+                        onClick = {
+                            if (item.enabled) {
+                                onDismissRequest()
+                                onItemClick(item)
+                            }
+                        },
+                        enabled = item.enabled,
                     )
+                    .padding(horizontal = 14.dp, vertical = 11.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (item.icon != null) {
+                    Icon(
+                        painter            = item.icon,
+                        contentDescription = null,
+                        tint               = iconTint,
+                        modifier           = Modifier.size(17.dp),
+                    )
+                    Spacer(Modifier.width(12.dp))
                 }
+                Text(
+                    text  = item.label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor,
+                )
             }
         }
     }

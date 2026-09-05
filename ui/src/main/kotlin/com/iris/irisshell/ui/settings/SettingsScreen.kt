@@ -19,7 +19,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,43 +26,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBackground
-import com.iris.irisshell.design.system.IrisBuild
-import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisPrimary
-import com.iris.irisshell.design.system.IrisSuccess
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.design.system.IrisWarning
 import com.iris.irisshell.ui.R
-
-// ── Palettes ──────────────────────────────────────────────────────────────────
-
-private val BG_PALETTE = listOf(
-    IrisBackground,
-    IrisSurface,
-    IrisSurfaceVariant,
-    Color(0xFF000000), // OLED
-)
-
-private val ACCENT_PALETTE = listOf(
-    IrisPrimary,
-    IrisSuccess,
-    IrisBuild,
-    IrisError,
-    IrisWarning,
-)
-
-private val TEXT_PALETTE = listOf(
-    Color(0xFFEEEEEE), // IrisText
-    Color(0xFFFFFFFF),
-    Color(0xFF888888), // IrisTextSecondary
-    Color(0xFF666666), // IrisTextMuted
-)
-
-// ── Screen ────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +72,7 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = IrisBackground,
+                    containerColor = IrisSurface,
                 ),
             )
         },
@@ -118,13 +86,9 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(0.dp),
             contentPadding      = PaddingValues(top = 4.dp, bottom = 40.dp),
         ) {
-
-            // ── TERMINAL ──────────────────────────────────────────────────────
-
             item {
                 SettingsSectionLabel("Terminal")
             }
-
             item {
                 TerminalModeCard(
                     useBlockEngine = useBlockEngine,
@@ -132,76 +96,60 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(8.dp))
             }
-
             item {
                 SettingsCategoryCard {
                     SettingsToggleRow(
                         iconRes         = R.drawable.lucide_keyboard,
                         label           = "Extra Keys Bar",
-                        description     = "ESC, TAB, CTRL, ALT ve yön tuşları",
+                        description     = "ESC, TAB, CTRL, ALT, yön tuşları",
                         checked         = extraKeysBarVisible,
-                        onCheckedChange = viewModel::setExtraKeysBarVisible,
+                        onCheckedChange = { viewModel.setExtraKeysBarVisible(it) },
                     )
                 }
                 Spacer(Modifier.height(24.dp))
             }
-
-            // ── GÖRÜNÜM ───────────────────────────────────────────────────────
-
             item {
                 SettingsSectionLabel("Görünüm")
             }
-
             item {
                 SettingsCategoryCard {
-
                     FontSizeSliderRow(
                         fontSizeSp   = fontSizeSp,
-                        onSizeChange = viewModel::setFontSize,
+                        onSizeChange = { viewModel.setFontSize(it) },
                     )
-
                     SettingsDivider()
-
                     ColorPickerRow(
                         iconRes     = R.drawable.lucide_minimize,
                         label       = "Arkaplan",
                         description = "Terminal zemin rengi",
-                        options     = BG_PALETTE,
+                        options     = listOf(IrisBackground, IrisSurface, IrisSurfaceVariant),
                         selectedHex = terminalBgColor,
-                        onSelect    = viewModel::setTerminalBgColor,
+                        onSelect    = { viewModel.setTerminalBgColor(it) },
                     )
-
                     SettingsDivider()
-
                     ColorPickerRow(
                         iconRes     = R.drawable.lucide_palette,
                         label       = "Vurgu Rengi",
                         description = "Komut istemi ve aktif öğeler",
-                        options     = ACCENT_PALETTE,
+                        options     = listOf(IrisPrimary),
                         selectedHex = accentColor,
-                        onSelect    = viewModel::setAccentColor,
+                        onSelect    = { viewModel.setAccentColor(it) },
                     )
-
                     SettingsDivider()
-
                     ColorPickerRow(
                         iconRes     = R.drawable.lucide_a_large_small,
                         label       = "Metin Rengi",
                         description = "Terminal çıktı metni",
-                        options     = TEXT_PALETTE,
+                        options     = listOf(IrisText, IrisTextSecondary),
                         selectedHex = terminalTextColor,
-                        onSelect    = viewModel::setTerminalTextColor,
+                        onSelect    = { viewModel.setTerminalTextColor(it) },
                     )
                 }
                 Spacer(Modifier.height(24.dp))
             }
-
-            // ── HAKKINDA ──────────────────────────────────────────────────────
-
             item {
                 SettingsSectionLabel("Hakkında")
             }
-
             item {
                 SettingsCategoryCard {
                     InfoRow(label = "Versiyon", value = "1.0.0")

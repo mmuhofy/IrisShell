@@ -3,9 +3,7 @@ package com.iris.irisshell.ui.settings
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,13 +16,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -40,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iris.irisshell.design.system.IrisBackground
-import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisOutline
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
@@ -64,27 +59,21 @@ fun SettingsSectionLabel(text: String) {
     )
 }
 
-// ── Card container ──────────────────────────────────────────────────────────────
-// Surface(border=...) kullanılır — LazyColumn 0-width'de Material3 Surface'ın
-// kendi drawBehind'ını kullanır; Modifier.border() geçilmez.
+// ── Card container (IrisCode pattern: clip + background, NO border) ──────────────
 
 @Composable
 fun SettingsCategoryCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Surface(
-        modifier  = modifier
+    Column(
+        modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp)),
-        shape     = RoundedCornerShape(14.dp),
-        color     = IrisSurface,
-        border    = BorderStroke(1.dp, IrisBorderSubtle),
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 4.dp),
-        ) { content() }
-    }
+            .widthIn(min = 1.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(IrisSurface)
+            .padding(vertical = 4.dp),
+    ) { content() }
 }
 
 // ── Divider ─────────────────────────────────────────────────────────────────────
@@ -95,55 +84,8 @@ fun SettingsDivider() {
         modifier = Modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(IrisOutline.copy(alpha = 0.4f)),
+            .background(IrisOutline.copy(alpha = 0.35f)),
     )
-}
-
-// ── Settings row ─────────────────────────────────────────────────────────────────
-
-@Composable
-fun SettingsRow(
-    iconRes     : Int,
-    label       : String,
-    description : String,
-    onClick     : () -> Unit,
-    modifier    : Modifier = Modifier,
-) {
-    Row(
-        modifier          = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier         = Modifier
-                .size(34.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(IrisPrimary.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter            = painterResource(iconRes),
-                contentDescription = null,
-                tint               = IrisPrimary,
-                modifier           = Modifier.size(16.dp),
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = label,       color = IrisText,          fontSize = 15.sp)
-            Text(text = description, color = IrisTextSecondary, fontSize = 12.sp,
-                modifier = Modifier.padding(top = 1.dp))
-        }
-        Icon(
-            painter            = painterResource(R.drawable.lucide_chevron_down),
-            contentDescription = null,
-            tint               = IrisTextMuted,
-            modifier           = Modifier.size(14.dp),
-        )
-    }
 }
 
 // ── Toggle row ───────────────────────────────────────────────────────────────────
@@ -198,7 +140,7 @@ fun SettingsToggleRow(
     }
 }
 
-// ── Terminal Mode Card ──────────────────────────────────────────────────────────
+// ── Terminal Mode Card (clip + background, NO border) ───────────────────────────
 
 @Composable
 fun TerminalModeCard(
@@ -265,7 +207,7 @@ fun TerminalModeCard(
     }
 }
 
-// ── Terminal mode option card ────────────────────────────────────────────────────
+// ── Terminal mode option card (clip + background, NO border) ────────────────────
 
 @Composable
 private fun TerminalModeOptionCard(
@@ -275,58 +217,60 @@ private fun TerminalModeOptionCard(
     preview    : @Composable () -> Unit,
     modifier   : Modifier = Modifier,
 ) {
-    val borderColor by animateColorAsState(
-        targetValue   = if (isSelected) IrisPrimary else IrisOutline,
+    val backgroundColor by animateColorAsState(
+        targetValue   = if (isSelected) IrisPrimary.copy(alpha = 0.15f) else IrisSurfaceVariant,
         animationSpec = tween(200),
-        label         = "modeBorderColor",
+        label         = "modeBg",
     )
-    val borderWidth by animateDpAsState(
-        targetValue   = if (isSelected) 1.5.dp else 1.dp,
+    val labelColor by animateColorAsState(
+        targetValue   = if (isSelected) IrisPrimary else IrisTextSecondary,
         animationSpec = tween(200),
-        label         = "modeBorderWidth",
+        label         = "modeLabel",
     )
 
-    Surface(
-        modifier     = modifier
+    Column(
+        modifier            = modifier
             .widthIn(min = 1.dp)
-            .heightIn(min = 1.dp)
-            .clip(RoundedCornerShape(10.dp)),
-        shape        = RoundedCornerShape(10.dp),
-        color        = IrisSurfaceVariant,
-        border       = BorderStroke(borderWidth, borderColor),
-        onClick      = onClick,
+            .clip(RoundedCornerShape(10.dp))
+            .background(backgroundColor)
+            .clickable { onClick() }
+            .padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier            = Modifier.padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(IrisBackground)
+                .padding(8.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(IrisBackground)
-                    .padding(8.dp),
-            ) {
-                preview()
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text       = label,
-                color      = if (isSelected) IrisPrimary else IrisTextSecondary,
-                fontSize   = 12.sp,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            )
+            preview()
         }
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text       = label,
+            color      = labelColor,
+            fontSize   = 12.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+        )
     }
 }
 
-// ── BlockPreview içinde border ──────────────────────────────────────────────────
-// BlockPreview ve ClassicPreview içindeki Box'lar fixed-height (80.dp) içinde
-// olduğundan 0-width olmaz. ama yine de BorderStroke → Surface çevirisiz
-// border bırakıyorum (drawBehind risk yok çünkü height sabit).
+// ── Previews ────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun ClassicPreview() {
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        TerminalPreviewLine("$ ls -la",          IrisPrimary)
+        TerminalPreviewLine("drwxr-xr-x  usr",   IrisTextSecondary)
+        TerminalPreviewLine("-rw-r--r--  file",  IrisTextSecondary)
+        TerminalPreviewLine("$ git status",      IrisPrimary)
+        TerminalPreviewLine("On branch main",    IrisTextSecondary)
+    }
+}
 
 @Composable
 private fun BlockPreview() {
@@ -335,10 +279,8 @@ private fun BlockPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(min = 1.dp)
-                .heightIn(min = 1.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(IrisSurfaceVariant)
-                .border(1.dp, IrisOutline, RoundedCornerShape(4.dp))
                 .padding(horizontal = 6.dp, vertical = 4.dp),
         ) {
             TerminalPreviewLine("$ git status", IrisPrimary)
@@ -359,17 +301,6 @@ private fun BlockPreview() {
                 Text("12ms", color = IrisTextMuted, fontSize = 8.sp)
             }
         }
-    }
-}
-
-@Composable
-private fun ClassicPreview() {
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        TerminalPreviewLine("$ ls -la",          IrisPrimary)
-        TerminalPreviewLine("drwxr-xr-x  usr",   IrisTextSecondary)
-        TerminalPreviewLine("-rw-r--r--  file",  IrisTextSecondary)
-        TerminalPreviewLine("$ git status",      IrisPrimary)
-        TerminalPreviewLine("On branch main",    IrisTextSecondary)
     }
 }
 
@@ -395,6 +326,7 @@ fun FontSizeSliderRow(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .widthIn(min = 1.dp)
             .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(
@@ -446,7 +378,7 @@ fun FontSizeSliderRow(
     }
 }
 
-// ── Color picker row ────────────────────────────────────────────────────────────
+// ── Color picker row (clip + background, NO border / NO Surface) ────────────────
 
 @Composable
 fun ColorPickerRow(
@@ -501,16 +433,17 @@ fun ColorPickerRow(
                     label         = "colorRing",
                 )
 
-                Surface(
+                val ringSize = if (isSelected) 4.dp else 2.dp
+
+                Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(32.dp + ringSize)
                         .clip(CircleShape)
-                        .padding(3.dp)
-                        .clip(CircleShape),
-                    shape   = CircleShape,
-                    color   = color,
-                    border  = BorderStroke(2.dp, ringColor),
-                    onClick = { onSelect(hex) },
+                        .background(ringColor)
+                        .padding(ringSize)
+                        .clip(CircleShape)
+                        .background(color)
+                        .clickable { onSelect(hex) },
                 ) {}
             }
         }
