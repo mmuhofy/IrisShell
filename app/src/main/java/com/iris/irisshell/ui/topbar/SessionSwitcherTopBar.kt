@@ -66,94 +66,89 @@ fun SessionSwitcherTopBar(
         null
     }
 
-    TopAppBar(
-        modifier = modifier.fillMaxWidth(),
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = IrisSurface,
-            scrolledContainerColor = IrisSurface,
-            titleContentColor = IrisText,
-            actionIconContentColor = IrisTextSecondary,
-        ),
-        navigationIcon = {},
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable(onClick = onOpenSwitcher)
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = activeName ?: "IrisShell",
-                            color = IrisText,
-                            fontSize = 20.sp,
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                        Icon(
-                            imageVector = Icons.Filled.ExpandMore,
-                            contentDescription = "Open session switcher",
-                            tint = IrisTextSecondary,
-                            modifier = Modifier
-                                .padding(start = 4.dp)
-                                .size(18.dp),
-                        )
-                    }
-                    if (subtitle != null) {
-                        Text(
-                            text = subtitle,
-                            color = IrisTextSecondary,
-                            fontSize = 12.sp,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-            }
-        },
-        actions = {
-            val context = LocalContext.current
-            Box(
-                modifier = Modifier.size(48.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                IconButton(
-                    onClick = {
-                        try {
-                            onToggleKeyboard()
-                        } catch (e: Exception) {
-                            Log.e("TopBar", "Keyboard toggle failed", e)
-                            Toast.makeText(
-                                context,
-                                "Keyboard error: ${e.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (keyboardFocused) R.drawable.lucide_keyboard_off
-                            else R.drawable.lucide_keyboard
-                        ),
-                        contentDescription =
-                            if (keyboardFocused) "Hide keyboard" else "Show keyboard",
-                        tint = IrisTextSecondary,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            }
-            MoreActionsMenu(
-                isFullscreen = isFullscreen,
-                onRefresh = onRefresh,
-                onToggleFullscreen = onToggleFullscreen,
-                onClose = onClose,
-                onOpenSettings = onOpenSettings,
-            )
-        },
-    )
-}
+        SessionSwitcherTopBar(
+             modifier = modifier.fillMaxWidth(),
+             colors = TopAppBarDefaults.topAppBarColors(
+                 containerColor = IrisSurface,
+                 scrolledContainerColor = IrisSurface,
+                 titleContentColor = IrisText,
+                 actionIconContentColor = IrisTextSecondary,
+             ),
+             navigationIcon = {},
+             title = {
+                 Row(
+                     verticalAlignment = Alignment.CenterVertically,
+                     modifier = Modifier
+                         .clip(RoundedCornerShape(6.dp))
+                         .clickable(onClick = onOpenSwitcher)
+                         .padding(horizontal = 4.dp, vertical = 2.dp),
+                 ) {
+                     Column {
+                         Row(verticalAlignment = Alignment.CenterVertically) {
+                             Text(
+                                 text = activeName ?: "IrisShell",
+                                 color = IrisText,
+                                 fontSize = 20.sp,
+                                 style = MaterialTheme.typography.titleLarge,
+                             )
+                             Icon(
+                                 imageVector = Icons.Filled.ExpandMore,
+                                 contentDescription = "Open session switcher",
+                                 tint = IrisTextSecondary,
+                                 modifier = Modifier
+                                     .padding(start = 4.dp)
+                                     .size(18.dp),
+                             )
+                         }
+                         if (subtitle != null) {
+                             Text(
+                                 text = subtitle,
+                                 color = IrisTextSecondary,
+                                 fontSize = 12.sp,
+                                 style = MaterialTheme.typography.bodySmall,
+                             )
+                         }
+                     }
+                 }
+             },
+             actions = {
+                 val context = LocalContext.current
+                 IconButton(
+                     onClick = {
+                         try {
+                             onToggleKeyboard()
+                         } catch (e: Exception) {
+                             Log.e("TopBar", "Keyboard toggle failed", e)
+                             Toast.makeText(
+                                 context,
+                                 "Keyboard error: ${e.message}",
+                                 Toast.LENGTH_SHORT
+                             ).show()
+                         }
+                     },
+                     modifier = Modifier.size(48.dp),
+                 ) {
+                     Icon(
+                         painter = painterResource(
+                             if (keyboardFocused) R.drawable.lucide_keyboard_off
+                             else R.drawable.lucide_keyboard
+                         ),
+                         contentDescription =
+                             if (keyboardFocused) "Hide keyboard" else "Show keyboard",
+                         tint = IrisTextSecondary,
+                         modifier = Modifier.size(24.dp),
+                     )
+                 }
+                 MoreActionsMenu(
+                     isFullscreen = isFullscreen,
+                     onRefresh = onRefresh,
+                     onToggleFullscreen = onToggleFullscreen,
+                     onClose = onClose,
+                     onOpenSettings = onOpenSettings,
+                 )
+             },
+         )
+     }
 
 @Composable
 private fun MoreActionsMenu(
@@ -165,53 +160,48 @@ private fun MoreActionsMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box(
+    IconButton(
+        onClick = { expanded = true },
         modifier = Modifier.size(48.dp),
-        contentAlignment = Alignment.Center,
     ) {
-        IconButton(
-            onClick = { expanded = true },
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Icon(
-                imageVector = Icons.Filled.MoreVert,
-                contentDescription = "More actions",
-                tint = IrisTextSecondary,
-                modifier = Modifier.size(24.dp),
+        Icon(
+            imageVector = Icons.Filled.MoreVert,
+            contentDescription = "More actions",
+            tint = IrisTextSecondary,
+            modifier = Modifier.size(24.dp),
             )
-        }
-
-        IrisDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            items = listOf(
-                IrisMenuItem(
-                    label = "Refresh terminal",
-                    icon = painterResource(R.drawable.lucide_rotate_cw),
-                ),
-                IrisMenuItem(
-                    label = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
-                    icon = painterResource(if (isFullscreen) R.drawable.lucide_minimize else R.drawable.lucide_maximize),
-                ),
-                IrisMenuItem(
-                    label = "Settings",
-                    icon = painterResource(R.drawable.lucide_settings),
-                    dividerBefore = true,
-                ),
-                IrisMenuItem(
-                    label = "Close session",
-                    icon = painterResource(R.drawable.lucide_x_circle),
-                    style = IrisMenuItemStyle.Destructive,
-                ),
-            ),
-            onItemClick = { item ->
-                when (item.label) {
-                    "Refresh terminal" -> onRefresh()
-                    "Exit fullscreen", "Enter fullscreen" -> onToggleFullscreen()
-                    "Settings" -> onOpenSettings()
-                    "Close session" -> onClose()
-                }
-            },
-        )
     }
+
+    IrisDropdownMenu(
+        expanded           = expanded,
+        onDismissRequest   = { expanded = false },
+        items              = listOf(
+            IrisMenuItem(
+                label = "Refresh terminal",
+                icon = painterResource(R.drawable.lucide_rotate_cw),
+            ),
+            IrisMenuItem(
+                label = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
+                icon = painterResource(if (isFullscreen) R.drawable.lucide_minimize else R.drawable.lucide_maximize),
+            ),
+            IrisMenuItem(
+                label = "Settings",
+                icon = painterResource(R.drawable.lucide_settings),
+                dividerBefore = true,
+            ),
+            IrisMenuItem(
+                label = "Close session",
+                icon = painterResource(R.drawable.lucide_x_circle),
+                style = IrisMenuItemStyle.Destructive,
+            ),
+        ),
+        onItemClick          = { item ->
+            when (item.label) {
+                "Refresh terminal" -> onRefresh()
+                "Exit fullscreen", "Enter fullscreen" -> onToggleFullscreen()
+                "Settings" -> onOpenSettings()
+                "Close session" -> onClose()
+            }
+        },
+    )
 }

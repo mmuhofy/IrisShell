@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
@@ -23,6 +24,9 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 
 enum class IrisMenuItemStyle { Default, Destructive }
+
+private val MIN_MENU_WIDTH = 180.dp
+private val MAX_MENU_WIDTH = 280.dp
 
 data class IrisMenuItem(
     val label: String,
@@ -46,7 +50,9 @@ fun IrisDropdownMenu(
         onDismissRequest = onDismissRequest,
         offset           = offset,
         shape            = RoundedCornerShape(14.dp),
-        modifier         = modifier.background(IrisSurface),
+        modifier         = modifier
+            .background(IrisSurface)
+            .widthIn(min = MIN_MENU_WIDTH, max = MAX_MENU_WIDTH),
     ) {
         items.forEachIndexed { index, item ->
             if (item.dividerBefore && index != 0) {
@@ -79,11 +85,13 @@ fun IrisDropdownMenu(
                 color    = Color.Transparent,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .widthIn(min = 1.dp)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
             ) {
                 Row(
                     modifier          = Modifier
                         .fillMaxWidth()
+                        .widthIn(min = 1.dp)
                         .padding(horizontal = 14.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
