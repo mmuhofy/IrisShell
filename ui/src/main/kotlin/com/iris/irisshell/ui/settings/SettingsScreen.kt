@@ -1,14 +1,16 @@
 package com.iris.irisshell.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -77,87 +79,74 @@ fun SettingsScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
-            modifier            = Modifier
+        Column(
+            modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-                .widthIn(min = 1.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
-            contentPadding      = PaddingValues(top = 4.dp, bottom = 40.dp),
+                .padding(horizontal = 16.dp),
         ) {
-            item {
-                SettingsSectionLabel("Terminal")
-            }
-            item {
-                TerminalModeCard(
-                    useBlockEngine = useBlockEngine,
-                    onSelect       = viewModel::setUseBlockEngine,
+            SettingsSectionLabel("Terminal")
+            TerminalModeCard(
+                useBlockEngine = useBlockEngine,
+                onSelect       = { viewModel.setUseBlockEngine(it) },
+            )
+            Spacer(Modifier.height(8.dp))
+
+            SettingsCategoryCard {
+                SettingsToggleRow(
+                    iconRes         = R.drawable.lucide_keyboard,
+                    label           = "Extra Keys Bar",
+                    description     = "ESC, TAB, CTRL, ALT, yön tuşları",
+                    checked         = extraKeysBarVisible,
+                    onCheckedChange = { viewModel.setExtraKeysBarVisible(it) },
                 )
-                Spacer(Modifier.height(8.dp))
             }
-            item {
-                SettingsCategoryCard {
-                    SettingsToggleRow(
-                        iconRes         = R.drawable.lucide_keyboard,
-                        label           = "Extra Keys Bar",
-                        description     = "ESC, TAB, CTRL, ALT, yön tuşları",
-                        checked         = extraKeysBarVisible,
-                        onCheckedChange = { viewModel.setExtraKeysBarVisible(it) },
-                    )
-                }
-                Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
+
+            SettingsSectionLabel("Görünüm")
+            SettingsCategoryCard {
+                FontSizeSliderRow(
+                    fontSizeSp   = fontSizeSp,
+                    onSizeChange = { viewModel.setFontSize(it) },
+                )
+                SettingsDivider()
+                ColorPickerRow(
+                    iconRes     = R.drawable.lucide_minimize,
+                    label       = "Arkaplan",
+                    description = "Terminal zemin rengi",
+                    options     = listOf(IrisBackground, IrisSurface, IrisSurfaceVariant),
+                    selectedHex = terminalBgColor,
+                    onSelect    = { viewModel.setTerminalBgColor(it) },
+                )
+                SettingsDivider()
+                ColorPickerRow(
+                    iconRes     = R.drawable.lucide_palette,
+                    label       = "Vurgu Rengi",
+                    description = "Komut istemi ve aktif öğeler",
+                    options     = listOf(IrisPrimary),
+                    selectedHex = accentColor,
+                    onSelect    = { viewModel.setAccentColor(it) },
+                )
+                SettingsDivider()
+                ColorPickerRow(
+                    iconRes     = R.drawable.lucide_a_large_small,
+                    label       = "Metin Rengi",
+                    description = "Terminal çıktı metni",
+                    options     = listOf(IrisText, IrisTextSecondary),
+                    selectedHex = terminalTextColor,
+                    onSelect    = { viewModel.setTerminalTextColor(it) },
+                )
             }
-            item {
-                SettingsSectionLabel("Görünüm")
-            }
-            item {
-                SettingsCategoryCard {
-                    FontSizeSliderRow(
-                        fontSizeSp   = fontSizeSp,
-                        onSizeChange = { viewModel.setFontSize(it) },
-                    )
-                    SettingsDivider()
-                    ColorPickerRow(
-                        iconRes     = R.drawable.lucide_minimize,
-                        label       = "Arkaplan",
-                        description = "Terminal zemin rengi",
-                        options     = listOf(IrisBackground, IrisSurface, IrisSurfaceVariant),
-                        selectedHex = terminalBgColor,
-                        onSelect    = { viewModel.setTerminalBgColor(it) },
-                    )
-                    SettingsDivider()
-                    ColorPickerRow(
-                        iconRes     = R.drawable.lucide_palette,
-                        label       = "Vurgu Rengi",
-                        description = "Komut istemi ve aktif öğeler",
-                        options     = listOf(IrisPrimary),
-                        selectedHex = accentColor,
-                        onSelect    = { viewModel.setAccentColor(it) },
-                    )
-                    SettingsDivider()
-                    ColorPickerRow(
-                        iconRes     = R.drawable.lucide_a_large_small,
-                        label       = "Metin Rengi",
-                        description = "Terminal çıktı metni",
-                        options     = listOf(IrisText, IrisTextSecondary),
-                        selectedHex = terminalTextColor,
-                        onSelect    = { viewModel.setTerminalTextColor(it) },
-                    )
-                }
-                Spacer(Modifier.height(24.dp))
-            }
-            item {
-                SettingsSectionLabel("Hakkında")
-            }
-            item {
-                SettingsCategoryCard {
-                    InfoRow(label = "Versiyon", value = "1.0.0")
-                    SettingsDivider()
-                    InfoRow(label = "Build", value = "Phase 1 — Terminal Core")
-                    SettingsDivider()
-                    InfoRow(label = "Lisans", value = "MIT")
-                }
+            Spacer(Modifier.height(24.dp))
+
+            SettingsSectionLabel("Hakkında")
+            SettingsCategoryCard {
+                InfoRow(label = "Versiyon", value = "1.0.0")
+                SettingsDivider()
+                InfoRow(label = "Build", value = "Phase 1 — Terminal Core")
+                SettingsDivider()
+                InfoRow(label = "Lisans", value = "MIT")
             }
         }
     }
