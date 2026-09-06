@@ -33,4 +33,12 @@ interface SessionLifecycleCallbacks {
      * @param pid          The OS process id of the shell.
      */
     fun onSessionPidChanged(persistentId: String?, pid: Int)
+
+    /**
+     * Called when the last live PTY session exits and [TerminalManager]
+     * would have no sessions left. The data layer should ensure at least
+     * one session exists (e.g. by creating a default session in Room)
+     * so the terminal never goes blank.
+     */
+    fun onLastSessionExited()
 }

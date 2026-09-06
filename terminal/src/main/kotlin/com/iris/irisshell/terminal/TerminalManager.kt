@@ -352,6 +352,12 @@ class TerminalManager(
             currentSession?.let { view.attachSession(it) }
         }
 
+        // If no sessions remain, notify the data layer so it can create
+        // a replacement — the terminal must never go blank.
+        if (irisSessions.isEmpty()) {
+            lifecycleCallbacks?.onLastSessionExited()
+        }
+
         lifecycleCallbacks?.onSessionFinished(persistentId, exitCode)
     }
 

@@ -138,6 +138,15 @@ class SessionManagerAdapter @Inject constructor(
                     sessionRepository.updateState(id, SessionState.Closed)
                 }
             }
+
+            // If no sessions are live and none are running/idle in Room,
+            // ensure the terminal never goes blank by creating a default.
+            if (liveIds.isEmpty() && !snapshots.any { it.state == SessionState.Running || it.state == SessionState.Idle }) {
+                appScope.launch {
+                    val defaultId = sessionRepository.create("Default")
+                    sessionRepository.setActiveId(defaultId)
+                }
+            }
         }
 
         lastNames = currentNames
@@ -152,6 +161,22 @@ class SessionManagerAdapter @Inject constructor(
         if (persistentId == null) return
         appScope.launch {
             sessionRepository.updateState(persistentId, SessionState.Closed)
+        }
+    }
+
+    /**
+     * Called by [TerminalManager] when the last live PTY session exits
+     * and [irisSessions] would become empty. Ensures the terminal never
+     * goes blank by creating a default session if none exist in Room.
+     */
+    override fun onLastSessionExited() {
+        appScope.launch {
+            val existing = sessionRepository.observeAll().first()
+            val hasLive = existing.any { it.state == SessionState.Running || it.state == SessionState.Idle }
+            if (!hasLive) {
+                val defaultId = sessionRepository.create("Default")
+                sessionRepository.setActiveId(defaultId)
+            }
         }
     }
 

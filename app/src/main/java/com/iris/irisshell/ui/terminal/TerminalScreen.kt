@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -433,6 +434,7 @@ private fun TerminalViewHost(
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
+    val sessionSwitcherViewModel: SessionSwitcherViewModel = hiltViewModel()
 
     val viewClient = remember(terminalViewModel, extraKeyState) {
         TerminalViewClientImpl(
@@ -447,7 +449,13 @@ private fun TerminalViewHost(
 
     LaunchedEffect(Unit) {
         if (terminalManager.tabCount == 0) {
-            terminalManager.addTab()
+            val hasSessions = sessionSwitcherViewModel.allSessions.value.isNotEmpty()
+            if (!hasSessions) {
+                sessionSwitcherViewModel.createNew("Default")
+            }
+            snapshotFlow { terminalManager.tabCount }
+                .filter { it > 0 }
+                .first()
         }
     }
 
