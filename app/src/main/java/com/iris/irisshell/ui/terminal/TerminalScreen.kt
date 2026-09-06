@@ -46,6 +46,8 @@ import com.iris.irisshell.ui.block.BlockTerminalView
 import com.termux.view.TerminalView
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.util.Log
 import android.content.Context
