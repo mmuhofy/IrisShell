@@ -53,6 +53,10 @@ class SessionManagerAdapter @Inject constructor(
     fun start() {
         stop()
 
+        // Reset exit signal — covers fresh process launch where shouldExit
+        // might have been true from a previous run that was terminated.
+        appScope.launch { sessionRepository.setShouldExit(false) }
+
         terminalManager.lifecycleCallbacks = this
 
         reconcileJob = appScope.launch {
@@ -77,16 +81,6 @@ class SessionManagerAdapter @Inject constructor(
                 delay(SNAPSHOT_TICK_MS)
                 // Live snapshot capture is deferred until TerminalBuffer API is stable.
                 // TODO: Implement captureLiveSnapshot() using emulator.getScreen()
-            }
-        }
-
-        // One-shot: ensure a default session exists at startup so the terminal
-        // is never blank on first launch. Mirrors TermuxActivity.onServiceConnected.
-        appScope.launch {
-            val existing = sessionRepository.observeAll().first()
-            if (existing.isEmpty()) {
-                val defaultId = sessionRepository.create("Default")
-                sessionRepository.setActiveId(defaultId)
             }
         }
     }
@@ -148,6 +142,15 @@ class SessionManagerAdapter @Inject constructor(
         }
 
         lastNames = currentNames
+
+        // If Room has no sessions at all, ensure a default exists.
+        // This runs on every observeAll() emission, covering both initial
+        // startup and relaunch after app exit (process may be reused,
+        // start() not called again). create() resets shouldExit to false.
+        if (currentIds.isEmpty()) {
+            val defaultId = sessionRepository.create("Default")
+            sessionRepository.setActiveId(defaultId)
+        }
     }
 
     /**

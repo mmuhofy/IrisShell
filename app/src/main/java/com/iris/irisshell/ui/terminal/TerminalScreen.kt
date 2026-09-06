@@ -46,6 +46,7 @@ import com.termux.view.TerminalView
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import android.util.Log
 import android.content.Context
 import android.view.ViewTreeObserver
@@ -121,7 +122,15 @@ private fun ReadyScreen(
     val shouldExit by sessionSwitcherViewModel.shouldExit.collectAsState()
 
     LaunchedEffect(shouldExit) {
-        if (shouldExit) onExit()
+        if (shouldExit) {
+            // Defer by one yield to give SessionManagerAdapter.reconcile()
+            // a chance to create a default session if Room is empty.
+            // This prevents exit when the app process is reused after
+            // the previous session was deleted.
+            yield()
+            if (sessionSwitcherViewModel.allSessions.value.isNotEmpty()) return@LaunchedEffect
+            onExit()
+        }
     }
 
     var keyboardFocused by remember { mutableStateOf(true) }
