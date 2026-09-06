@@ -128,13 +128,14 @@ class MainActivity : ComponentActivity() {
             startDestination = "terminal",
         ) {
             composable("terminal") {
+                val context = LocalContext.current as ComponentActivity
                 TerminalScreen(
                     terminalManager = terminalManager,
                     ubuntuSetupState = UbuntuSetupState.Ready,
                     onRetry = onRetry,
                     onOpenSettings = { navController.navigate("settings") },
                     extraKeyState = extraKeyState,
-                    onExit = { (LocalContext.current as? ComponentActivity)?.finish() },
+                    onExit = { context.finish() },
                 )
             }
             composable("settings") {
