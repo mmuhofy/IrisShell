@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.iris.irisshell.domain.terminal.ObserveFirstLaunchUseCase
 import com.iris.irisshell.domain.terminal.TriggerBootstrapUseCase
@@ -133,6 +134,7 @@ class MainActivity : ComponentActivity() {
                     onRetry = onRetry,
                     onOpenSettings = { navController.navigate("settings") },
                     extraKeyState = extraKeyState,
+                    onExit = { (LocalContext.current as? ComponentActivity)?.finish() },
                 )
             }
             composable("settings") {

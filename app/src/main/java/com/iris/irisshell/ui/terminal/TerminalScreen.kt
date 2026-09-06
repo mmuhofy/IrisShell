@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -46,8 +45,6 @@ import com.iris.irisshell.ui.block.BlockTerminalView
 import com.termux.view.TerminalView
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.util.Log
 import android.content.Context
@@ -62,6 +59,7 @@ fun TerminalScreen(
     onOpenSettings: () -> Unit = {},
     terminalViewModel: TerminalViewModel = hiltViewModel(),
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
+    onExit: () -> Unit = {},
 ) {
     var showProgress by remember { mutableStateOf(false) }
     LaunchedEffect(ubuntuSetupState) {
@@ -90,6 +88,7 @@ fun TerminalScreen(
                 terminalViewModel = terminalViewModel,
                 onOpenSettings = onOpenSettings,
                 extraKeyState = extraKeyState,
+                onExit = onExit,
             )
         }
         is UbuntuSetupState.Failed -> {
@@ -107,6 +106,7 @@ private fun ReadyScreen(
     terminalManager: TerminalManager,
     terminalViewModel: TerminalViewModel,
     onOpenSettings: () -> Unit,
+    onExit: () -> Unit,
     sessionSwitcherViewModel: SessionSwitcherViewModel = hiltViewModel(),
     blockEngineViewModel: BlockEngineViewModel = hiltViewModel(),
     inputBarViewModel: InputBarViewModel = hiltViewModel(),
@@ -118,6 +118,11 @@ private fun ReadyScreen(
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
+    val shouldExit by sessionSwitcherViewModel.shouldExit.collectAsState()
+
+    LaunchedEffect(shouldExit) {
+        if (shouldExit) onExit()
+    }
 
     var keyboardFocused by remember { mutableStateOf(true) }
     val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
@@ -436,7 +441,6 @@ private fun TerminalViewHost(
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val sessionSwitcherViewModel: SessionSwitcherViewModel = hiltViewModel()
 
     val viewClient = remember(terminalViewModel, extraKeyState) {
         TerminalViewClientImpl(
@@ -447,18 +451,6 @@ private fun TerminalViewHost(
             },
             extraKeyState = extraKeyState,
         )
-    }
-
-    LaunchedEffect(Unit) {
-        if (terminalManager.tabCount == 0) {
-            val hasSessions = sessionSwitcherViewModel.allSessions.value.isNotEmpty()
-            if (!hasSessions) {
-                sessionSwitcherViewModel.createNew("Default")
-            }
-            snapshotFlow { terminalManager.tabCount }
-                .filter { it > 0 }
-                .first()
-        }
     }
 
     LaunchedEffect(fontSizeSp) {

@@ -30,7 +30,9 @@ import javax.inject.Singleton
  * Inspired by Termux's service-level session management pattern
  * (github.com/termux/termux-app, TermuxService.kt + TermuxShellManager.kt),
  * where the service owns the session list and callbacks flow back to keep
- * UI state in sync.
+ * UI state in sync. When the last session exits or is deleted, the service
+ * calls requestStopService() to exit — Iris Shell mirrors this by setting
+ * shouldExit so the UI can finish the Activity.
  */
 @Singleton
 class SessionManagerAdapter @Inject constructor(
@@ -77,6 +79,16 @@ class SessionManagerAdapter @Inject constructor(
                 // TODO: Implement captureLiveSnapshot() using emulator.getScreen()
             }
         }
+
+        // One-shot: ensure a default session exists at startup so the terminal
+        // is never blank on first launch. Mirrors TermuxActivity.onServiceConnected.
+        appScope.launch {
+            val existing = sessionRepository.observeAll().first()
+            if (existing.isEmpty()) {
+                val defaultId = sessionRepository.create("Default")
+                sessionRepository.setActiveId(defaultId)
+            }
+        }
     }
 
     fun stop() {
@@ -92,13 +104,11 @@ class SessionManagerAdapter @Inject constructor(
     /**
      * Reconciles the persistent Room state with the live terminal sessions.
      *
-     * Key improvement over the prior [lastIds]-based delta: we now compare
-     * Room's session list against [TerminalManager.liveSessionIds] — the
-     * actual set of sessions currently in the PTY layer. This ensures:
+     * Compares Room's session list against [TerminalManager.liveSessionIds] —
+     * the actual set of sessions currently in the PTY layer.
      *  - Sessions restored from Closed → Idle get spawned.
-     *  - Sessions that exited (Closed in Room, removed from PTY) are not
-     *    re-spawned.
-     *  - Sessions deleted from Room are closed in the terminal.
+     *  - Sessions that exited (Closed in Room, removed from PTY) are not re-spawned.
+     *  - Sessions deleted from Room are closed in the terminal via [closeTab].
      *
      * Inspired by Termux's reconcile in TermuxService, which diffs the
      * live session list against the desired state.
@@ -108,10 +118,8 @@ class SessionManagerAdapter @Inject constructor(
         val currentNames = snapshots.associate { it.id to it.name }
 
         withContext(Dispatchers.Main.immediate) {
-            // Snapshot of what's actually live in the terminal manager.
             val liveIds = terminalManager.liveSessionIds()
 
-            // Sessions in Room but not yet spawned in the terminal.
             val notLive = currentIds - liveIds
             notLive.forEach { id ->
                 val snapshot = snapshots.firstOrNull { it.id == id }
@@ -121,7 +129,6 @@ class SessionManagerAdapter @Inject constructor(
                 }
             }
 
-            // Rename sync: only for sessions that are actually live.
             lastNames.forEach { (id, oldName) ->
                 val newName = currentNames[id]
                 if (newName != null && newName != oldName && id in liveIds) {
@@ -130,22 +137,12 @@ class SessionManagerAdapter @Inject constructor(
                 }
             }
 
-            // Sessions live in terminal but removed from Room.
             val stale = liveIds - currentIds
             stale.forEach { id ->
                 val idx = terminalManager.getIndexForId(id)
                 if (idx >= 0) {
                     terminalManager.closeTab(idx)
                     sessionRepository.updateState(id, SessionState.Closed)
-                }
-            }
-
-            // If no sessions are live and none are running/idle in Room,
-            // ensure the terminal never goes blank by creating a default.
-            if (liveIds.isEmpty() && !snapshots.any { it.state == SessionState.Running || it.state == SessionState.Idle }) {
-                appScope.launch {
-                    val defaultId = sessionRepository.create("Default")
-                    sessionRepository.setActiveId(defaultId)
                 }
             }
         }
@@ -166,18 +163,17 @@ class SessionManagerAdapter @Inject constructor(
     }
 
     /**
-     * Called by [TerminalManager] when the last live PTY session exits
-     * and [irisSessions] would become empty. Ensures the terminal never
-     * goes blank by creating a default session if none exist in Room.
+     * Called by [TerminalManager] when the last live PTY session exits or is
+     * explicitly closed and [irisSessions] becomes empty.
+     *
+     * Following Termux's pattern (TermuxService.updateNotification →
+     * requestStopService), we signal the UI layer to exit rather than
+     * auto-creating a replacement. The UI observes [SessionRepository.shouldExit]
+     * and finishes the Activity when it becomes true.
      */
     override fun onLastSessionExited() {
         appScope.launch {
-            val existing = sessionRepository.observeAll().first()
-            val hasLive = existing.any { it.state == SessionState.Running || it.state == SessionState.Idle }
-            if (!hasLive) {
-                val defaultId = sessionRepository.create("Default")
-                sessionRepository.setActiveId(defaultId)
-            }
+            sessionRepository.setShouldExit(true)
         }
     }
 

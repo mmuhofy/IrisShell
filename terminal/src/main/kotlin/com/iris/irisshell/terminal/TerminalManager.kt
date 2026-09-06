@@ -208,13 +208,13 @@ class TerminalManager(
     }
 
     fun closeTab(index: Int) {
-        if (irisSessions.size <= 1) return
+        if (index !in irisSessions.indices) return
         val irisSession = irisSessions[index]
+        val persistentId = irisSession.persistentId
         irisSession.terminalSession.finishIfRunning()
         irisSessions.removeAt(index)
 
-        val closedId = irisSession.persistentId
-        if (closedId != null) idToIndex.remove(closedId)
+        if (persistentId != null) idToIndex.remove(persistentId)
 
         for (i in index until irisSessions.size) {
             val id = irisSessions[i].persistentId
@@ -226,7 +226,15 @@ class TerminalManager(
             index == _activeTabIndex.value && _activeTabIndex.value >= irisSessions.size ->
                 _activeTabIndex.value = (irisSessions.size - 1).coerceAtLeast(0)
         }
-        currentSession?.let { terminalViewRef?.attachSession(it) }
+
+        terminalViewRef?.let { view ->
+            currentSession?.let { view.attachSession(it) }
+        }
+
+        if (irisSessions.isEmpty()) {
+            lifecycleCallbacks?.onSessionFinished(persistentId, -1)
+            lifecycleCallbacks?.onLastSessionExited()
+        }
     }
 
     fun switchTab(index: Int) {

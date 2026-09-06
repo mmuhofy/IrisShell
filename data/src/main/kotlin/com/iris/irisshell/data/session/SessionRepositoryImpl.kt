@@ -39,6 +39,13 @@ class SessionRepositoryImpl @Inject constructor(
     private val _livePreviews = MutableStateFlow<Map<String, List<String>>>(emptyMap())
     val livePreviews: StateFlow<Map<String, List<String>>> = _livePreviews.asStateFlow()
 
+    private val _shouldExit = MutableStateFlow(false)
+    override val shouldExit: StateFlow<Boolean> = _shouldExit.asStateFlow()
+
+    override suspend fun setShouldExit(value: Boolean) {
+        _shouldExit.value = value
+    }
+
     override fun observeAll(): Flow<List<SessionSnapshot>> =
         combine(
             dao.observeAll(),
@@ -73,6 +80,7 @@ class SessionRepositoryImpl @Inject constructor(
             )
         )
         dataStore.edit { it[KEY_ACTIVE_SESSION_ID] = id }
+        _shouldExit.value = false
         return id
     }
 

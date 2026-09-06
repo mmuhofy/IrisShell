@@ -1,7 +1,5 @@
 package com.iris.irisshell.terminal
 
-import com.termux.terminal.TerminalSession
-
 /**
  * Callback interface allowing [TerminalManager] to notify the data/session
  * layer about terminal session lifecycle events.
@@ -35,10 +33,14 @@ interface SessionLifecycleCallbacks {
     fun onSessionPidChanged(persistentId: String?, pid: Int)
 
     /**
-     * Called when the last live PTY session exits and [TerminalManager]
-     * would have no sessions left. The data layer should ensure at least
-     * one session exists (e.g. by creating a default session in Room)
-     * so the terminal never goes blank.
+     * Called when the last live PTY session exits or is explicitly closed
+     * and [TerminalManager] has no sessions left.
+     *
+     * Following Termux's pattern (TermuxService.updateNotification →
+     * requestStopService), the data layer should signal the UI to exit
+     * rather than auto-creating a replacement session. Default session
+     * creation at app startup is handled separately by
+     * [SessionManagerAdapter.start].
      */
     fun onLastSessionExited()
 }
