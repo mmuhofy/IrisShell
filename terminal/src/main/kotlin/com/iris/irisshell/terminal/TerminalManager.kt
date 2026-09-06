@@ -360,8 +360,10 @@ class TerminalManager(
             currentSession?.let { view.attachSession(it) }
         }
 
-        // If no sessions remain, notify the data layer so it can create
-        // a replacement — the terminal must never go blank.
+        // If no sessions remain, notify the data layer. Following Termux's
+        // pattern, this signals the UI to exit rather than auto-creating a
+        // replacement (default creation at startup is handled separately
+        // by SessionManagerAdapter.start()).
         if (irisSessions.isEmpty()) {
             lifecycleCallbacks?.onLastSessionExited()
         }
