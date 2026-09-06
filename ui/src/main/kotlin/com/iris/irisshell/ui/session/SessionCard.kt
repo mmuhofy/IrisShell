@@ -4,7 +4,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,12 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import com.iris.irisshell.design.system.IrisDropdownMenu
 import com.iris.irisshell.design.system.IrisMenuItem
 import com.iris.irisshell.design.system.IrisMenuItemStyle
-import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.ui.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,8 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -58,7 +53,6 @@ import androidx.compose.ui.unit.sp
 import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisError
-import com.iris.irisshell.design.system.IrisOnPrimary
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
@@ -103,13 +97,6 @@ fun SessionCard(
         label = "card-scale",
     )
 
-    // Gold glow opacity when committing
-    val glowAlpha by animateFloatAsState(
-        targetValue   = if (isCommitting) 1f else 0f,
-        animationSpec = tween(120),
-        label         = "card-glow",
-    )
-
     val deleteProgress = (swipeOffset.value / deleteThresholdPx).coerceIn(0f, 1f)
 
     Box(
@@ -136,16 +123,6 @@ fun SessionCard(
         }
 
         // Card
-        val shadowElevation = when {
-            isCommitting -> 20.dp
-            isActive     -> 10.dp
-            else         -> 4.dp
-        }
-        val shadowColor = if (isActive || isCommitting)
-            IrisPrimary.copy(alpha = 0.25f * glowAlpha + if (isActive) 0.12f else 0f)
-        else
-            Color.Black.copy(alpha = 0.4f)
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -190,53 +167,27 @@ fun SessionCard(
                         )
                     }
                 }
-                .shadow(
-                    elevation    = shadowElevation,
-                    shape        = CardShape,
-                    ambientColor = shadowColor,
-                    spotColor    = shadowColor,
-                )
                 .clip(CardShape)
-                .background(
-                    if (isActive)
-                        Brush.linearGradient(
-                            colors = listOf(
-                                IrisPrimary.copy(alpha = 0.07f),
-                                IrisSurfaceVariant.copy(alpha = 0.55f),
-                            )
-                        )
-                    else
-                        Brush.linearGradient(
-                            colors = listOf(
-                                IrisSurfaceVariant.copy(alpha = 0.55f),
-                                IrisSurfaceVariant.copy(alpha = 0.55f),
-                            )
-                        )
-                )
+                .background(IrisSurface)
                 .border(
-                    width = if (isActive || isCommitting) 1.5.dp else 1.dp,
-                    color = when {
-                        isCommitting -> IrisPrimary
-                        isActive     -> IrisPrimary.copy(alpha = 0.55f)
-                        else         -> IrisBorderSubtle.copy(alpha = 0.8f)
-                    },
+                    width = 0.5.dp,
+                    color = if (isActive)
+                        IrisPrimary.copy(alpha = 0.25f)
+                    else
+                        IrisBorderSubtle.copy(alpha = 0.12f),
                     shape = CardShape,
                 )
                 .clickable(enabled = !isCommitting && swipeOffset.value == 0f) { onActivate() },
         ) {
-            // Active left pulse bar
+            // Active left accent bar — solid gold, ultra-thin
             if (isActive) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .width(3.dp)
+                        .width(2.dp)
                         .height(32.dp)
-                        .clip(RoundedCornerShape(topEnd = 3.dp, bottomEnd = 3.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(IrisPrimary, IrisPrimary.copy(alpha = 0.5f))
-                            )
-                        ),
+                        .clip(RoundedCornerShape(topEnd = 2.dp, bottomEnd = 2.dp))
+                        .background(IrisPrimary),
                 )
             }
 
@@ -271,16 +222,17 @@ fun SessionCard(
                         Spacer(Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(IrisPrimary)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(IrisPrimary.copy(alpha = 0.1f))
+                                .border(0.5.dp, IrisPrimary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                         ) {
                             Text(
                                 text          = "ACTIVE",
-                                color         = IrisOnPrimary,
+                                color         = IrisPrimary,
                                 fontSize      = 9.sp,
-                                fontWeight    = FontWeight.ExtraBold,
-                                letterSpacing = 0.8.sp,
+                                fontWeight    = FontWeight.SemiBold,
+                                letterSpacing = 0.5.sp,
                             )
                         }
                     }
@@ -309,8 +261,8 @@ fun SessionCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(PreviewShape)
-                            .background(IrisBackground.copy(alpha = 0.6f))
-                            .border(1.dp, IrisBorderSubtle.copy(alpha = 0.5f), PreviewShape)
+                            .background(IrisBackground.copy(alpha = 0.3f))
+                            .border(0.5.dp, IrisBorderSubtle.copy(alpha = 0.15f), PreviewShape)
                             .padding(horizontal = 10.dp, vertical = 7.dp),
                     ) {
                         Text(

@@ -2,6 +2,7 @@ package com.iris.irisshell.ui.session
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -9,6 +10,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +30,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -34,7 +37,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -48,8 +50,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -101,30 +103,18 @@ fun SessionSwitcherSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
-        shape            = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
+        shape            = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         containerColor   = IrisSurface,
         tonalElevation   = 0.dp,
         dragHandle = {
-            // Handle sits higher — more breathing room above content
             Box(
                 modifier = Modifier
                     .padding(top = 14.dp, bottom = 6.dp)
-                    .size(width = 44.dp, height = 5.dp)
+                    .size(width = 40.dp, height = 3.dp)
                     .clip(CircleShape)
-                    .background(IrisText.copy(alpha = 0.15f)),
+                    .background(IrisText.copy(alpha = 0.1f)),
             )
         },
-        modifier = Modifier.border(
-            width = 1.dp,
-            brush = Brush.horizontalGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = 0.02f),
-                    Color.White.copy(alpha = 0.06f),
-                    Color.White.copy(alpha = 0.02f),
-                )
-            ),
-            shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
-        ),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -269,6 +259,41 @@ fun SessionSwitcherSheet(
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Press-scale clickable box                                                 */
+/* -------------------------------------------------------------------------- */
+
+@Composable
+private fun PressScaleBox(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    contentAlignment: Alignment = Alignment.Center,
+    content: @Composable () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.92f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness    = 300f,
+        ),
+        label = "press-scale",
+    )
+    Box(
+        modifier = modifier
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication        = null,
+                onClick           = onClick,
+                enabled           = enabled,
+            ),
+        contentAlignment = contentAlignment,
+    ) { content() }
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Top bar                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -296,12 +321,13 @@ private fun SheetTopBar(
             modifier = Modifier.weight(1f),
         )
 
-        // New session button — pill shape, gold
-        Surface(
+        // New session button — gold pill, scale on press
+        PressScaleBox(
             onClick = onCreate,
-            shape   = RoundedCornerShape(18.dp),
-            color   = IrisPrimary,
-            modifier = Modifier.height(36.dp),
+            modifier = Modifier
+                .height(36.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(IrisPrimary),
         ) {
             Row(
                 modifier          = Modifier.padding(horizontal = 14.dp),
@@ -325,23 +351,21 @@ private fun SheetTopBar(
 
         Spacer(Modifier.size(8.dp))
 
-        // Close button — subtle circle
-        Box(
+        // Close button — subtle circle, scale on press
+        PressScaleBox(
+            onClick = onClose,
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
                 .background(Color.White.copy(alpha = 0.03f))
-                .border(1.dp, IrisBorderSubtle, CircleShape),
-            contentAlignment = Alignment.Center,
+                .border(0.5.dp, IrisBorderSubtle.copy(alpha = 0.3f), CircleShape),
         ) {
-            IconButton(onClick = onClose, modifier = Modifier.size(36.dp)) {
-                Icon(
-                    painter            = painterResource(R.drawable.lucide_x),
-                    contentDescription = "Close",
-                    tint               = IrisTextSecondary,
-                    modifier           = Modifier.size(18.dp),
-                )
-            }
+            Icon(
+                painter            = painterResource(R.drawable.lucide_x),
+                contentDescription = "Close",
+                tint               = IrisTextSecondary,
+                modifier           = Modifier.size(18.dp),
+            )
         }
     }
 
@@ -366,9 +390,9 @@ private fun SheetTopBar(
         },
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor   = IrisPrimary,
-            unfocusedBorderColor = IrisBorderSubtle,
-            focusedContainerColor   = IrisBackground.copy(alpha = 0.6f),
-            unfocusedContainerColor = IrisBackground.copy(alpha = 0.35f),
+            unfocusedBorderColor = IrisBorderSubtle.copy(alpha = 0.3f),
+            focusedContainerColor   = IrisBackground.copy(alpha = 0.4f),
+            unfocusedContainerColor = IrisBackground.copy(alpha = 0.25f),
             cursorColor          = IrisPrimary,
             focusedTextColor     = IrisText,
             unfocusedTextColor   = IrisText,
