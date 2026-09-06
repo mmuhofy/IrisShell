@@ -54,7 +54,6 @@ import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisPrimary
-import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
@@ -168,13 +167,12 @@ fun SessionCard(
                     }
                 }
                 .clip(CardShape)
-                .background(IrisSurface)
                 .border(
                     width = 0.5.dp,
                     color = if (isActive)
                         IrisPrimary.copy(alpha = 0.25f)
                     else
-                        IrisBorderSubtle.copy(alpha = 0.12f),
+                        IrisBorderSubtle.copy(alpha = 0.1f),
                     shape = CardShape,
                 )
                 .clickable(enabled = !isCommitting && swipeOffset.value == 0f) { onActivate() },

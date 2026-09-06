@@ -389,10 +389,10 @@ private fun SheetTopBar(
             )
         },
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor   = IrisPrimary,
-            unfocusedBorderColor = IrisBorderSubtle.copy(alpha = 0.3f),
-            focusedContainerColor   = IrisBackground.copy(alpha = 0.4f),
-            unfocusedContainerColor = IrisBackground.copy(alpha = 0.25f),
+            focusedBorderColor   = IrisPrimary.copy(alpha = 0.5f),
+            unfocusedBorderColor = IrisBorderSubtle.copy(alpha = 0.08f),
+            focusedContainerColor   = IrisBackground.copy(alpha = 0.2f),
+            unfocusedContainerColor = IrisBackground.copy(alpha = 0.1f),
             cursorColor          = IrisPrimary,
             focusedTextColor     = IrisText,
             unfocusedTextColor   = IrisText,
