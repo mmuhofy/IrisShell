@@ -1,35 +1,40 @@
 package com.iris.irisshell.ui.setup.onboarding.scenes
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iris.irisshell.ui.setup.onboarding.components.CursorPos
-import com.iris.irisshell.ui.setup.onboarding.components.OnboardingOverlay
+import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.design.system.IrisPrimary
+import com.iris.irisshell.design.system.IrisText
+import com.iris.irisshell.design.system.IrisTextMuted
+import com.iris.irisshell.design.system.OutfitFontFamily
+import com.iris.irisshell.ui.setup.onboarding.components.DroshLogo
+import com.iris.irisshell.ui.setup.onboarding.components.SetupButton
 import com.iris.irisshell.ui.setup.onboarding.components.SkipAnchor
-import com.iris.irisshell.ui.setup.onboarding.components.TerminalBackdrop
-import com.iris.irisshell.ui.setup.onboarding.components.terminalTextStyle
-import com.iris.irisshell.ui.setup.theme.SetupPalette
-import kotlinx.coroutines.delay
 
 /**
  * Scene 1 — Welcome.
  *
- * Fake terminal backdrop shows a blinking prompt. After 1.4s the line
- * "whoami" simulates being typed, and 700ms later "root" appears as the
- * response. The caption invites the user to run that themselves once the
- * bootstrap is over.
+ * Hero: DroshLogo (stylized shell icon with cursor blink + float).
+ * Body:  Tagline under the logo.
+ * Action: "Başla →" button at the bottom.
+ * Skip:   top-left SkipAnchor.
+ *
+ * No TerminalBackdrop — the new flow uses clean, minimalist surfaces.
  */
 @Composable
 fun WelcomeScene(
@@ -37,62 +42,60 @@ fun WelcomeScene(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var lines by remember { mutableStateOf(listOf<String>()) }
-    var cursorLine by remember { mutableStateOf(0) }
-    var cursorCol by remember { mutableStateOf(1) }
-
-    LaunchedEffect(Unit) {
-        lines = lines + "$"
-        cursorLine = 0
-        cursorCol = 2
-        delay(900L)
-        // Type "whoami" one char at a time using a synthetic typing step.
-        val typing = "whoami"
-        var typed = ""
-        for (ch in typing) {
-            typed += ch
-            lines = lines.dropLast(1) + (lines.last() + ch)
-            cursorCol += 1
-            delay(85L)
-        }
-        delay(400L)
-        lines = lines + "root"
-        cursorLine = lines.size - 1
-        cursorCol = 0
-        delay(700L)
-        lines = lines + "$"
-        cursorLine = lines.size - 1
-        cursorCol = 1
-    }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        TerminalBackdrop(
-            lines = lines,
-            cursorPosition = CursorPos(cursorLine, cursorCol),
-        )
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(IrisBackground),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Centered hero text — appears above the terminal feed as
-            // ambient framing. Respects Iris aesthetic: monospace, muted.
+            Spacer(modifier = Modifier.height(80.dp))
+
+            DroshLogo(size = 96.dp, tint = IrisPrimary)
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             Text(
-                text = "iris shell",
-                color = SetupPalette.Text,
+                text = "Iris Shell",
                 style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = OutfitFontFamily,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 22.sp,
-                    letterSpacing = 2.sp,
+                    letterSpacing = 0.5.sp,
                 ),
+                color = IrisText,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Telefonunu bir Unix makinesi yap.\n" +
+                    "Artık sonunda.",
+                style = TextStyle(
+                    fontFamily = OutfitFontFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    textAlign = TextAlign.Center,
+                ),
+                color = IrisTextMuted,
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            SetupButton(
+                text = "Başla →",
+                onClick = onContinue,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
             )
         }
+
         SkipAnchor(onSkip = onSkip)
-        OnboardingOverlay(
-            caption = "Run your first command. Try `whoami`. The terminal\n" +
-                "wakes up after setup finishes.",
-            continueLabel = "Continue",
-            onContinue = onContinue,
-        )
     }
 }

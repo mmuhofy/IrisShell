@@ -15,43 +15,59 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.iris.irisshell.ui.setup.onboarding.scenes.ArchitectureScene
-import com.iris.irisshell.ui.setup.onboarding.scenes.ReadyScene
+import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.ui.setup.OnboardingViewModel
+import com.iris.irisshell.ui.setup.onboarding.components.ShellChoice
+import com.iris.irisshell.ui.setup.onboarding.components.PackageProfile
+import com.iris.irisshell.ui.setup.onboarding.scenes.DeviceCheckScene
+import com.iris.irisshell.ui.setup.onboarding.scenes.PreferencesScene
+import com.iris.irisshell.ui.setup.onboarding.scenes.PreferencesState
+import com.iris.irisshell.ui.setup.onboarding.scenes.ShellSetupScene
 import com.iris.irisshell.ui.setup.onboarding.scenes.WelcomeScene
-import com.iris.irisshell.ui.setup.theme.SetupPalette
 import kotlinx.coroutines.launch
 
 /**
- * Three-scene onboarding flow with no HorizontalPager.
+ * Four-scene onboarding wizard:
  *
- * Scene transitions are full-screen fade (220ms). On the last scene, Continue
- * finishes onboarding via [viewModel]. Skip is available everywhere and
- * always routes to the bootstrap stepper (i.e. skips the wizard but still
- * triggers bootstrap).
+ *   Welcome → DeviceCheck → Preferences → ShellSetup (Zsh only)
  *
- * The terminal backdrop is shared across scenes (per-scene content is
- * rendered on top of it). Onboarding does not mount a real TermuxView —
- * see `TerminalBackdrop` for the rationale.
+ * State:
+ *   - [userName]    → used as shell prompt after bootstrap
+ *   - [shellChoice] → Zsh or Bash; drives whether ShellSetup is shown
+ *   - [packageProfile] + [customPackages] → sent to bootstrap use case
+ *
+ * Skip is available on Welcome and DeviceCheck via SkipAnchor, and routes
+ * straight to finishOnboarding (same as completing the full wizard).
  */
 @Composable
 fun OnboardingScreen(
     onCompleted: () -> Unit,
-    viewModel: com.iris.irisshell.ui.setup.OnboardingViewModel =
-        androidx.hilt.navigation.compose.hiltViewModel(),
+    viewModel: OnboardingViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
     modifier: Modifier = Modifier,
 ) {
     var scene by remember { mutableStateOf(OnboardingSceneKind.Welcome) }
     val coroutineScope = rememberCoroutineScope()
 
+    var userName by remember { mutableStateOf("muhofy") }
+    var shellChoice by remember { mutableStateOf(ShellChoice.Zsh) }
+    var packageProfile by remember { mutableStateOf(PackageProfile.Developer) }
+    var customPackages by remember { mutableStateOf(setOf<String>()) }
+
+    val finish: () -> Unit = {
+        coroutineScope.launch {
+            viewModel.finishOnboarding()
+            onCompleted()
+        }
+    }
+
     val advance: () -> Unit = {
         val next = scene.next()
-        if (next != null) {
+        if (next == OnboardingSceneKind.ShellSetup && shellChoice != ShellChoice.Zsh) {
+            finish()
+        } else if (next != null) {
             scene = next
         } else {
-            coroutineScope.launch {
-                viewModel.finishOnboarding()
-                onCompleted()
-            }
+            finish()
         }
     }
 
@@ -62,10 +78,31 @@ fun OnboardingScreen(
         }
     }
 
+    val prefsState = remember(
+        userName, shellChoice, packageProfile, customPackages,
+    ) {
+        PreferencesState(
+            userName = userName,
+            shellChoice = shellChoice,
+            packageProfile = packageProfile,
+            customPackages = customPackages,
+            onUserNameChange = { userName = it },
+            onShellChoiceChange = { shellChoice = it },
+            onPackageProfileChange = { packageProfile = it },
+            onCustomPackageToggled = { pkg ->
+                customPackages = if (customPackages.contains(pkg)) {
+                    customPackages - pkg
+                } else {
+                    customPackages + pkg
+                }
+            },
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(SetupPalette.Background),
+            .background(IrisBackground),
     ) {
         AnimatedContent(
             targetState = scene,
@@ -78,10 +115,12 @@ fun OnboardingScreen(
             when (current) {
                 OnboardingSceneKind.Welcome ->
                     WelcomeScene(onContinue = advance, onSkip = skip)
-                OnboardingSceneKind.Architecture ->
-                    ArchitectureScene(onContinue = advance, onSkip = skip)
-                OnboardingSceneKind.Ready ->
-                    ReadyScene(onContinue = advance, onSkip = skip)
+                OnboardingSceneKind.DeviceCheck ->
+                    DeviceCheckScene(onContinue = advance, onSkip = skip)
+                OnboardingSceneKind.Preferences ->
+                    PreferencesScene(state = prefsState, onContinue = advance)
+                OnboardingSceneKind.ShellSetup ->
+                    ShellSetupScene(onContinue = advance)
             }
         }
     }

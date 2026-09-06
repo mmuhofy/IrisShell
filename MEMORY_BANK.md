@@ -199,3 +199,17 @@ Closed (Room only, removed from irisSessions)
 
 ### To Build
 - Same as docs/TODO.md (full feature backlog)
+
+### Completed (Onboarding Wizard — 2026-09-06)
+- ✅ Design system components: `DroshLogo`, `SetupButton`, `DeviceCheckItem`, `ShellSelector`, `PackageProfileSelector`
+- ✅ New 4-scene flow: Welcome → DeviceCheck → Preferences → ShellSetup (Zsh conditional)
+- ✅ `WelcomeScene` replaced TerminalBackdrop with DroshLogo + SetupButton
+- ✅ `OnboardingScreen` hoists preference state; conditional ShellSetup skip for Bash
+- ✅ Old `ArchitectureScene`/`ReadyScene` left as dead code (no longer referenced)HEREDOC
+
+### Completed (Onboarding Wizard — 2026-09-06)
+- ✅ Design system components: DroshLogo, SetupButton, DeviceCheckItem, ShellSelector, PackageProfileSelector
+- ✅ New 4-scene flow: Welcome → DeviceCheck → Preferences → ShellSetup (Zsh conditional)
+- ✅ WelcomeScene replaced TerminalBackdrop with DroshLogo + SetupButton
+- ✅ OnboardingScreen hoists preference state; conditional ShellSetup skip for Bash
+- ✅ Old ArchitectureScene/ReadyScene left as dead code
