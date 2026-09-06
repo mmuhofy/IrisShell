@@ -52,19 +52,34 @@ util/         → Constants, helpers
 ### Session Data Flow
 
 ```
-Compose Screen (SessionSwitcherSheet)
+Compose Screen (SessionSwitcherSheet / ReadyScreen)
       ↓ UI events
-SessionSwitcherViewModel
+SessionSwitcherViewModel (exposes allSessions, activeId, shouldExit)
       ↓ calls
 ObserveActiveSessionUseCase / SessionRepository
       ↓ calls
-SessionRepositoryImpl (Room + DataStore)
+SessionRepositoryImpl (Room + DataStore, _shouldExit MutableStateFlow)
       ↓ bridges
 SessionManagerAdapter (implements SessionLifecycleCallbacks)
       ↓ calls
 TerminalManager (IrisSession list, PTY lifecycle)
       ↓ owns
 TerminalSession (PTY emulator) + TerminalSessionClientImpl
+```
+
+### Exit Signal Flow
+
+```
+User deletes last session OR last session exits naturally:
+  TerminalManager.closeTab() or onSessionFinished()
+      → irisSessions empty
+      → onSessionsEmpty() / onLastSessionExited()
+      → SessionManagerAdapter
+      → sessionRepository.setShouldExit(true)
+      → SessionRepositoryImpl._shouldExit.value = true
+      → SessionSwitcherViewModel.shouldExit (StateFlow)
+      → ReadyScreen LaunchedEffect { onExit() }
+      → MainActivity: LocalContext.current.finish()
 ```
 
 ---
@@ -114,9 +129,45 @@ Idle (Room only, not yet spawned)
 Running (in Room + in irisSessions)
   ↓ process exits naturally → onSessionFinished → Room → Closed
   ↓ user deletes from Room → reconcile → closeTab → PTY killed
+    → if last session → onLastSessionExited → shouldExit=true → Activity.finish()
 Closed (Room only, removed from irisSessions)
   ↓ user restores → restoreSession → Idle → reconcile spawns PTY
+    → shouldExit reset to false on create()
 ```
+
+### Bug Fixes (2026-09-06 — closeTab + app exit)
+
+- **BUG**: `closeTab` had `if (irisSessions.size <= 1) return` guard preventing
+  the last session from ever being closed. User deletes session → Room row
+  removed → `reconcile()` calls `closeTab` → guard blocks it → terminal
+  never closes, session stuck "Running" in Room forever.
+- **FIX**: Removed guard; `closeTab` now allows closing last session.
+  When `irisSessions` becomes empty, immediately calls
+  `onSessionFinished(persistentId, -1)` + `onLastSessionExited()`.
+- **FIX**: `onLastSessionExited` now sets `shouldExit=true` (signals app exit)
+  instead of creating a replacement session. Mirrors Termux's
+  `TermuxService.updateNotification() → requestStopService()` pattern.
+- **FIX**: Default session creation moved from `TerminalViewHost.LaunchedEffect`
+  (UI layer) to `SessionManagerAdapter.start()` (one-shot at app startup).
+  `reconcile()` no longer auto-creates defaults.
+- **FIX**: `SessionRepository.create()` resets `_shouldExit` to false when a
+  new session is created (so session switcher Create button cancels exit).
+- **ADDED**: `SessionRepository.shouldExit` + `setShouldExit` (domain interface).
+  `SessionSwitcherViewModel.shouldExit` (StateFlow). `TerminalScreen.onExit`
+  callback → `MainActivity` uses `LocalContext.finish()`.
+
+### Termux Patterns Studied (2026-09-06)
+
+- **TermuxShellManager** (termux-shared/shell/TermuxShellManager.java): simple
+  `List<TermuxSession>` + static ID counter. No parallel arrays. Iris Shell
+  mirrors with single `MutableList<IrisSession>`.
+- **TermuxService** (app/TermuxService.java): `mShellManager.mTermuxSessions`
+  is the single source of truth. `onTermuxSessionExited` removes from list.
+  `updateNotification()` calls `requestStopService()` when sessions empty.
+- **TermuxActivity** (app/TermuxActivity.java): `onServiceConnected` checks
+  `isTermuxSessionsEmpty()` → creates new session if visible, or
+  `finishActivityIfNotFinishing()` if not. Iris Shell mirrors:
+  startup creates default session, user deletion triggers exit.
 
 ---
 

@@ -21,6 +21,15 @@
 - [ ] Session groups / favorites
 - [ ] Session search in switcher
 
+### Completed (2026-09-06 — closeTab + app exit)
+- [x] Fix closeTab: remove `if (irisSessions.size <= 1) return` guard
+- [x] Add shouldExit StateFlow to SessionRepository (domain + data)
+- [x] SessionManagerAdapter.start(): one-shot default session at startup
+- [x] onLastSessionExited: signal app exit instead of creating default
+- [x] SessionSwitcherViewModel: expose shouldExit
+- [x] TerminalScreen/ReadyScreen: onExit callback → Activity.finish()
+- [x] MainActivity: pass onExit via LocalContext
+
 ### PTY / Terminal
 - [ ] Verify PTY session creation with PRoot + Ubuntu rootfs
 - [ ] Handle PTY session resize on orientation change
