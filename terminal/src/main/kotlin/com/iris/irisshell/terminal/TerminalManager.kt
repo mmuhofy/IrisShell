@@ -13,25 +13,41 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+/**
+ * Manages PTY session lifecycle, tab state, and id-keyed session lookup.
+ *
+ * Ported from: mmuhofy/IrisCode — terminal/TerminalManager.kt
+ * Adapted for Iris Shell — com.iris.irisshell
+ *
+ * Key improvements over the prior implementation:
+ *  - [IrisSession] wrapper bundles TerminalSession + persistentId + name + pid,
+ *    replacing the fragile 4-parallel-structure design (_sessions + _tabNames
+ *    + _idToIndex + _indexToId) that could desync.
+ *  - [onSessionFinished] now cleans up id mappings (like [closeTab] does) and
+ *    notifies [SessionLifecycleCallbacks] so the data layer can sync Room.
+ *  - PID tracking is wired through [TerminalSessionClientImpl.setTerminalShellPid],
+ *    following Termux's TerminalSessionClient callback pattern.
+ */
 class TerminalManager(
     private val ubuntuBootstrap: UbuntuBootstrap,
     application: Application,
     private val blockEngineWire: BlockEngineWire? = null,
 ) {
-    private val _sessions: MutableList<TerminalSession> = mutableListOf()
-    private val _tabNames: MutableList<String> = mutableListOf()
-    val tabNames: List<String> get() = _tabNames
+    /**
+     * Single source of truth for session storage. Each [IrisSession] bundles
+     * the live [TerminalSession] with its persistent id, display name, and
+     * shell pid — eliminating the prior risk of _sessions / _tabNames /
+     * _idToIndex / _indexToId falling out of sync.
+     */
+    private val irisSessions: MutableList<IrisSession> = mutableListOf()
 
     /**
      * Reverse map: persistent session id (UUID, stored in Room) →
-     * positional index into [_sessions]. Phase 2 Session System uses
-     * ids so that the UI can refer to a session stably across app
-     * restarts. Inspired by ReTerminal's SessionService id-keyed
-     * HashMap (github.com/RohitKushvaha01/ReTerminal, file
-     * core/main/src/main/java/com/rk/terminal/service/SessionService.kt).
+     * positional index into [irisSessions]. Inspired by ReTerminal's
+     * SessionService id-keyed HashMap (github.com/RohitKushvaha01/ReTerminal,
+     * file core/main/src/main/java/com/rk/terminal/service/SessionService.kt).
      */
-    private val _idToIndex: MutableMap<String, Int> = mutableMapOf()
-    private val _indexToId: MutableMap<Int, String> = mutableMapOf()
+    private val idToIndex: MutableMap<String, Int> = mutableMapOf()
 
     private val _activeTabIndex = MutableStateFlow(0)
     val activeTabIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
@@ -42,12 +58,24 @@ class TerminalManager(
      */
     fun getActiveTabIndexSnapshot(): Int = _activeTabIndex.value
 
-    val tabCount: Int get() = _sessions.size
+    val tabCount: Int get() = irisSessions.size
 
     val currentSession: TerminalSession?
-        get() = _sessions.getOrNull(_activeTabIndex.value)
+        get() = irisSessions.getOrNull(_activeTabIndex.value)?.terminalSession
+
+    /** Display names of all tabs, in positional order. */
+    val tabNames: List<String>
+        get() = irisSessions.map { it.name }
 
     val sessionClient: TerminalSessionClientImpl = TerminalSessionClientImpl()
+
+    /**
+     * Callback for session lifecycle events (finish, pid change).
+     * Set by the data layer (SessionManagerAdapter) so Room stays
+     * in sync with PTY state — inspired by Termux's TerminalSessionClient
+     * callback flow (github.com/termux/termux-app).
+     */
+    var lifecycleCallbacks: SessionLifecycleCallbacks? = null
 
     private var terminalViewRef: TerminalView? = null
 
@@ -65,6 +93,7 @@ class TerminalManager(
             terminalViewRef?.onScreenUpdated()
             blockEngineWire?.onSessionTextChanged(session)
         }
+        sessionClient.onPidChanged = { session, pid -> onSessionPidChanged(session, pid) }
     }
 
     fun registerTerminalView(view: TerminalView, context: Context) {
@@ -81,22 +110,24 @@ class TerminalManager(
 
     /**
      * Id-aware spawn. When [persistentId] is non-null, the new session
-     * is recorded in [_idToIndex] so that the Session System can
+     * is recorded in [idToIndex] so that the Session System can
      * refer to it across app restarts. Returns the spawned
      * [TerminalSession] just like [addTab] does.
      */
     fun addTabWithId(persistentId: String?, name: String): TerminalSession {
-        val session = createNewSession()
-        _sessions.add(session)
-        _tabNames.add(name)
-        val newIndex = _sessions.size - 1
+        val irisSession = IrisSession(
+            terminalSession = createNewSession(),
+            persistentId = persistentId,
+            name = name,
+        )
+        irisSessions.add(irisSession)
+        val newIndex = irisSessions.size - 1
         if (persistentId != null) {
-            _idToIndex[persistentId] = newIndex
-            _indexToId[newIndex] = persistentId
+            idToIndex[persistentId] = newIndex
         }
         _activeTabIndex.value = newIndex
-        terminalViewRef?.attachSession(session)
-        return session
+        terminalViewRef?.attachSession(irisSession.terminalSession)
+        return irisSession.terminalSession
     }
 
     /**
@@ -104,10 +135,26 @@ class TerminalManager(
      * `-1` if the id is unknown / the session was closed.
      */
     fun getIndexForId(persistentId: String): Int =
-        _idToIndex[persistentId] ?: -1
+        idToIndex[persistentId] ?: -1
 
-    /** Reverse lookup: positional index → persistent id. */
-    fun getIdForIndex(index: Int): String? = _indexToId[index]
+    /**
+     * Reverse lookup: positional index → persistent id.
+     */
+    fun getIdForIndex(index: Int): String? =
+        irisSessions.getOrNull(index)?.persistentId
+
+    /**
+     * Look up the positional index of a [TerminalSession] by reference.
+     * Returns -1 if the session is not currently managed.
+     */
+    fun getIndexOfSession(session: TerminalSession): Int =
+        irisSessions.indexOfFirst { it.terminalSession === session }
+
+    /**
+     * Look up the [IrisSession] for a [TerminalSession] by reference.
+     */
+    private fun getIrisSession(session: TerminalSession): IrisSession? =
+        irisSessions.find { it.terminalSession === session }
 
     /**
      * Switch to the session identified by [persistentId]. No-op when
@@ -120,21 +167,36 @@ class TerminalManager(
     }
 
     /** Currently-active session's persistent id, or null if unknown. */
-    fun activePersistentId(): String? = _indexToId[_activeTabIndex.value]
+    fun activePersistentId(): String? =
+        irisSessions.getOrNull(_activeTabIndex.value)?.persistentId
+
+    /**
+     * Snapshot of all session ids currently live in the terminal manager
+     * (i.e. in [irisSessions] with a non-null [IrisSession.persistentId]).
+     * Used by [SessionManagerAdapter] to reconcile Room state with live
+     * PTY sessions.
+     */
+    fun liveSessionIds(): Set<String> =
+        irisSessions.mapNotNull { it.persistentId }.toSet()
 
     fun renameTab(index: Int, name: String) {
-        if (index in _tabNames.indices) {
-            _tabNames[index] = name
+        if (index in irisSessions.indices) {
+            irisSessions[index].name = name
         }
     }
 
     fun moveTab(from: Int, to: Int) {
         if (from == to) return
-        if (from !in _sessions.indices || to !in _sessions.indices) return
-        val session = _sessions.removeAt(from)
-        val name = _tabNames.removeAt(from)
-        _sessions.add(to, session)
-        _tabNames.add(to, name)
+        if (from !in irisSessions.indices || to !in irisSessions.indices) return
+        val session = irisSessions.removeAt(from)
+        irisSessions.add(to, session)
+
+        val rebaseRange = if (from < to) (from + 1)..to else to until from
+        rebaseRange.forEach { idx ->
+            val id = irisSessions[idx].persistentId
+            if (id != null) idToIndex[id] = idx
+        }
+
         if (_activeTabIndex.value == from) {
             _activeTabIndex.value = to
         } else {
@@ -146,32 +208,29 @@ class TerminalManager(
     }
 
     fun closeTab(index: Int) {
-        if (_sessions.size <= 1) return
-        _sessions[index].finishIfRunning()
-        _sessions.removeAt(index)
-        _tabNames.removeAt(index)
-        // Strip the id mapping for the closed index and rebase later
-        // indices down by one.
-        val closedId = _indexToId.remove(index)
-        if (closedId != null) _idToIndex.remove(closedId)
-        val rebased = _indexToId.toMap()
-        _indexToId.clear()
-        _idToIndex.clear()
-        rebased.forEach { (oldIdx, id) ->
-            val newIdx = if (oldIdx > index) oldIdx - 1 else oldIdx
-            _indexToId[newIdx] = id
-            _idToIndex[id] = newIdx
+        if (irisSessions.size <= 1) return
+        val irisSession = irisSessions[index]
+        irisSession.terminalSession.finishIfRunning()
+        irisSessions.removeAt(index)
+
+        val closedId = irisSession.persistentId
+        if (closedId != null) idToIndex.remove(closedId)
+
+        for (i in index until irisSessions.size) {
+            val id = irisSessions[i].persistentId
+            if (id != null) idToIndex[id] = i
         }
+
         when {
             index < _activeTabIndex.value -> _activeTabIndex.value--
-            index == _activeTabIndex.value && _activeTabIndex.value >= _sessions.size ->
-                _activeTabIndex.value = (_sessions.size - 1).coerceAtLeast(0)
+            index == _activeTabIndex.value && _activeTabIndex.value >= irisSessions.size ->
+                _activeTabIndex.value = (irisSessions.size - 1).coerceAtLeast(0)
         }
         currentSession?.let { terminalViewRef?.attachSession(it) }
     }
 
     fun switchTab(index: Int) {
-        if (index < 0 || index >= _sessions.size || index == _activeTabIndex.value) return
+        if (index < 0 || index >= irisSessions.size || index == _activeTabIndex.value) return
         _activeTabIndex.value = index
         // Block engine state is per-session; reset so the next snapshot
         // is anchored against the new buffer.
@@ -180,10 +239,10 @@ class TerminalManager(
     }
 
     fun createSession(): TerminalSession {
-        if (_sessions.isEmpty()) {
+        if (irisSessions.isEmpty()) {
             return addTab()
         }
-        return _sessions[_activeTabIndex.value]
+        return irisSessions[_activeTabIndex.value].terminalSession
     }
 
     private fun createNewSession(): TerminalSession {
@@ -252,25 +311,67 @@ class TerminalManager(
         }
     }
 
+    /**
+     * Called by [TerminalSessionClientImpl.onSessionFinished] when the PTY
+     * process exits (either naturally or via [closeTab] → [finishIfRunning]).
+     *
+     * Fixes two bugs from the prior implementation:
+     *  1. Was not cleaning up [idToIndex] mappings (unlike [closeTab]).
+     *  2. Was not notifying [lifecycleCallbacks] so Room never learned
+     *     the session exited — it stayed "Running" forever.
+     *
+     * If the session was already removed (e.g. by [closeTab] or [destroy]),
+     * this is a no-op — the session was intentionally closed.
+     */
     fun onSessionFinished(finishedSession: TerminalSession) {
-        val idx = _sessions.indexOf(finishedSession)
-        if (idx >= 0) {
-            _sessions.removeAt(idx)
-            _tabNames.removeAt(idx)
-            when {
-                idx < _activeTabIndex.value -> _activeTabIndex.value--
-                idx == _activeTabIndex.value && _activeTabIndex.value >= _sessions.size ->
-                    _activeTabIndex.value = (_sessions.size - 1).coerceAtLeast(0)
-            }
-            terminalViewRef?.let { view ->
-                currentSession?.let { view.attachSession(it) }
-            }
+        val idx = getIndexOfSession(finishedSession)
+        if (idx < 0) return
+
+        val irisSession = irisSessions[idx]
+        val persistentId = irisSession.persistentId
+        val exitCode = finishedSession.exitStatus
+
+        irisSessions.removeAt(idx)
+
+        if (persistentId != null) {
+            idToIndex.remove(persistentId)
         }
+
+        for (i in idx until irisSessions.size) {
+            val id = irisSessions[i].persistentId
+            if (id != null) idToIndex[id] = i
+        }
+
+        when {
+            idx < _activeTabIndex.value -> _activeTabIndex.value--
+            idx == _activeTabIndex.value && _activeTabIndex.value >= irisSessions.size ->
+                _activeTabIndex.value = (irisSessions.size - 1).coerceAtLeast(0)
+        }
+
+        terminalViewRef?.let { view ->
+            currentSession?.let { view.attachSession(it) }
+        }
+
+        lifecycleCallbacks?.onSessionFinished(persistentId, exitCode)
+    }
+
+    /**
+     * Called by [TerminalSessionClientImpl.onPidChanged] when the shell pid
+     * is assigned (during [TerminalSession.initializeEmulator]). Stores the
+     * pid on the [IrisSession] and forwards it to [lifecycleCallbacks] so
+     * the data layer can persist it if needed (PID tracking, inspired by
+     * Termux's TerminalSessionClient.setTerminalShellPid).
+     */
+    private fun onSessionPidChanged(session: TerminalSession, pid: Int) {
+        val irisSession = getIrisSession(session) ?: return
+        irisSession.pid = pid
+        lifecycleCallbacks?.onSessionPidChanged(irisSession.persistentId, pid)
     }
 
     fun destroy() {
-        _sessions.forEach { it.finishIfRunning() }
-        _sessions.clear()
+        irisSessions.forEach { it.terminalSession.finishIfRunning() }
+        irisSessions.clear()
+        idToIndex.clear()
     }
 
     suspend fun executeCommand(

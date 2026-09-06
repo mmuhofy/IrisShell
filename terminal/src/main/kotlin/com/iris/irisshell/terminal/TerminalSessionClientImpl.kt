@@ -12,6 +12,7 @@ class TerminalSessionClientImpl : TerminalSessionClient {
     var onTextChanged: ((TerminalSession) -> Unit)? = null
     var onTitleChanged: ((TerminalSession) -> Unit)? = null
     var onSessionFinished: ((TerminalSession) -> Unit)? = null
+    var onPidChanged: ((TerminalSession, Int) -> Unit)? = null
     var clipboard: ClipboardManager? = null
     var terminalView: com.termux.view.TerminalView? = null
 
@@ -53,6 +54,7 @@ class TerminalSessionClientImpl : TerminalSessionClient {
     }
 
     override fun setTerminalShellPid(session: TerminalSession, pid: Int) {
+        onPidChanged?.invoke(session, pid)
     }
 
     override fun getTerminalCursorStyle(): Int? = null
