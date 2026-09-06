@@ -148,10 +148,13 @@ Closed (Room only, removed from irisSessions)
   instead of creating a replacement session. Mirrors Termux's
   `TermuxService.updateNotification() → requestStopService()` pattern.
 - **FIX**: Default session creation moved from `TerminalViewHost.LaunchedEffect`
-  (UI layer) to `SessionManagerAdapter.start()` (one-shot at app startup).
-  `reconcile()` no longer auto-creates defaults.
+  (UI layer) to `SessionManagerAdapter.reconcile()` (running on appScope,
+  survives Activity recreation). `create()` resets `shouldExit=false`.
 - **FIX**: `SessionRepository.create()` resets `_shouldExit` to false when a
   new session is created (so session switcher Create button cancels exit).
+- **FIX**: `start()` resets `shouldExit=false` on fresh process launch;
+  `ReadyScreen` uses `yield()` guard before onExit to let `reconcile()`
+  create default on process-reuse relaunch.
 - **ADDED**: `SessionRepository.shouldExit` + `setShouldExit` (domain interface).
   `SessionSwitcherViewModel.shouldExit` (StateFlow). `TerminalScreen.onExit`
   callback → `MainActivity` uses `LocalContext.finish()`.
