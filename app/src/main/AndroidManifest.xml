@@ -49,14 +49,12 @@
 
         <provider
             android:name=".IrisShellDocumentsProvider"
-            android:authorities="com.iris.irisshell.documents"
+            android:authorities="${applicationId}.documents"
             android:exported="true"
             android:grantUriPermissions="true"
-            android:multiprocess="false">
+            android:permission="android.permission.MANAGE_DOCUMENTS">
             <intent-filter>
-                <action android:name="android.content.Intent.ACTION_OPEN_DOCUMENT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="*/*" />
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>
         </provider>
     </application>

@@ -55,8 +55,9 @@ class IrisShellDocumentsProvider : DocumentsProvider() {
     override fun queryRoots(projection: Array<String>?): Cursor {
         val result = MatrixCursor(projection ?: defaultRootProjection)
         val row = result.newRow()
-        row.add(Root.COLUMN_ROOT_ID, getDocIdForFile(baseDir))
-        row.add(Root.COLUMN_DOCUMENT_ID, getDocIdForFile(baseDir))
+        val docId = getDocIdForFile(baseDir)
+        row.add(Root.COLUMN_ROOT_ID, docId)
+        row.add(Root.COLUMN_DOCUMENT_ID, docId)
         row.add(Root.COLUMN_SUMMARY, null)
         row.add(
             Root.COLUMN_FLAGS,
