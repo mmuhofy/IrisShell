@@ -1,7 +1,7 @@
 package com.iris.irisshell.ui.topbar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -28,6 +28,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
@@ -39,19 +41,18 @@ import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.ui.R
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 
 /**
- * Modern minimalist top bar — pills sit directly on terminal background.
+ * Modern minimalist top bar — pills float directly on terminal background.
  *
- *  Left:   [pill] | session name    (session name is NOT clickable)
- *  Right:  [kbd] [more]             (two pills, merged border)
+ *  Left:   [pill] session-name-surface        (session name is NOT clickable)
+ *  Right:  [kbd] [more]                      (floating pills, no surface)
  *
- * No separate container background — pills float directly on terminal.
+ * No container background — pills and text sit directly on terminal.
  */
 @Composable
 fun TerminalTopBar(
@@ -84,58 +85,52 @@ fun TerminalTopBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // ── Left: pill button + divider + session name ────────────────
+            // ── Left: floating pill button + session name surface ───────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                ModernPillButton(
+                FloatingPillButton(
                     iconRes = R.drawable.lucide_panel_left,
                     contentDescription = "Open sessions",
                     onClick = onOpenSidebar,
                     size = 36.dp,
                 )
 
-                // Thin vertical divider
+                // Session name — has its own surface, NOT clickable
                 Box(
                     modifier = Modifier
-                        .width(1.dp)
-                        .height(20.dp)
-                        .padding(horizontal = 10.dp)
-                        .background(IrisBorderSubtle),
-                )
-
-                // Session name — NOT clickable
-                Text(
-                    text = activeName ?: "IrisShell",
-                    color = IrisText,
-                    fontFamily = OutfitFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                )
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(IrisSurfaceVariant)
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = activeName ?: "IrisShell",
+                        color = IrisText,
+                        fontFamily = OutfitFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp,
+                    )
+                }
             }
 
-            // ── Right: two merged pills ──────────────────────────────
+            // ── Right: two floating pills side by side ─────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                ModernPillButton(
+                FloatingPillButton(
                     iconRes = if (keyboardFocused) R.drawable.lucide_keyboard_off else R.drawable.lucide_keyboard,
                     contentDescription = if (keyboardFocused) "Hide keyboard" else "Show keyboard",
                     onClick = onToggleKeyboard,
-                    size = 38.dp,
-                    isFirst = true,
-                    isLast = false,
+                    size = 36.dp,
                 )
 
                 var moreExpanded by remember { mutableStateOf(false) }
-                ModernPillButton(
+                FloatingPillButton(
                     iconRes = R.drawable.lucide_ellipsis_vertical,
                     contentDescription = "More actions",
                     onClick = { moreExpanded = true },
-                    size = 38.dp,
-                    isFirst = false,
-                    isLast = true,
+                    size = 36.dp,
                 )
 
                 MoreActionsDropdown(
@@ -275,36 +270,33 @@ private fun MoreActionsDropdown(
 }
 
 /**
- * Modern pill button — no border, sits directly on terminal background.
- * When [isFirst]/[isLast] are set for a group, the shape is rounded on
- * the appropriate corners to create a merged pill group.
+ * Floating pill button — no surface/background, sits directly on terminal.
+ * Uses a very subtle hover alpha on the icon background for affordance.
  */
 @Composable
-private fun ModernPillButton(
+private fun FloatingPillButton(
     iconRes: Int,
     contentDescription: String,
     onClick: () -> Unit,
     size: androidx.compose.ui.unit.Dp = 36.dp,
-    isFirst: Boolean = false,
-    isLast: Boolean = false,
-    modifier: Modifier = Modifier,
 ) {
-    val corner = if (isFirst && !isLast) {
-        RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp, topEnd = 4.dp, bottomEnd = 4.dp)
-    } else if (!isFirst && isLast) {
-        RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 20.dp, bottomEnd = 20.dp)
-    } else if (isFirst && isLast) {
-        CircleShape
-    } else {
-        RoundedCornerShape(4.dp)
-    }
+    var pressed by remember { mutableStateOf(false) }
 
     Box(
-        modifier = modifier
+        modifier = Modifier
             .size(size)
-            .clip(corner)
-            .background(IrisSurfaceVariant.copy(alpha = 0.5f))
-            .clickable(onClick = onClick),
+            .clip(CircleShape)
+            .background(if (pressed) IrisTextSecondary.copy(alpha = 0.08f) else Color.Transparent)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        pressed = true
+                        tryAwaitRelease()
+                        pressed = false
+                        onClick()
+                    },
+                )
+            },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
