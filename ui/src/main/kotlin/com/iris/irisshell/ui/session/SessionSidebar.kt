@@ -39,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,14 +75,13 @@ fun SessionSidebar(
     if (!isOpen) return
 
     val viewModel: SessionSwitcherViewModel = hiltViewModel()
-    val density = LocalDensity.current
     val config = LocalConfiguration.current
     val sidebarW = remember(config) {
         val sw = config.screenWidthDp
         if (sw > 0) {
-            with(density) { (sw * 0.75f).coerceAtMost(280f).roundToPx() }
+            (sw * 0.75f).coerceAtMost(280f).dp
         } else {
-            with(density) { 280.dp.roundToPx() }
+            280.dp
         }
     }
 
@@ -98,7 +96,7 @@ fun SessionSidebar(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(with(density) { sidebarW.toDp() })
+                .width(sidebarW)
                 .align(Alignment.CenterStart)
                 .clip(RoundedCornerShape(0.dp, 16.dp, 16.dp, 0.dp))
                 .background(IrisSurfaceVariant)
@@ -112,9 +110,6 @@ fun SessionSidebar(
             )
         }
     }
-}
-
-@Composable
 }
 
 @Composable
