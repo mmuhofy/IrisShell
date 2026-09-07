@@ -1,8 +1,6 @@
 package com.iris.irisshell.ui.terminal
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,9 +42,7 @@ import com.iris.irisshell.ui.topbar.TerminalTopBar
 import com.iris.irisshell.ui.block.BlockEngineViewModel
 import com.iris.irisshell.ui.block.BlockTerminalView
 import com.termux.view.TerminalView
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import android.util.Log
 import android.content.Context
@@ -189,33 +185,11 @@ private fun ReadyScreen(
         if (keyboardFocused) hideKeyboard() else showKeyboard()
     }
 
-    // Session-switch entry animation
-    val appearScale = remember { androidx.compose.animation.core.Animatable(1f) }
-    val appearAlpha = remember { androidx.compose.animation.core.Animatable(1f) }
-    LaunchedEffect(activeId) {
-        appearScale.snapTo(0.92f)
-        appearAlpha.snapTo(0f)
-        coroutineScope {
-            launch {
-                appearScale.animateTo(
-                    targetValue = 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                )
-            }
-            launch {
-                appearAlpha.animateTo(
-                    targetValue = 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium,
-                    ),
-                )
-            }
-        }
-    }
+    // Terminal content is always fully visible (no entry animation —
+    // previous Animatable+LaunchedEffect approach caused alpha=0 to get
+    // stuck when activeId transitioned null→real value at startup).
+    val appearScale = 1f
+    val appearAlpha = 1f
 
     LaunchedEffect(sliderVisible) {
         if (sliderVisible) {
@@ -302,9 +276,9 @@ private fun ReadyScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
-                                scaleX = appearScale.value
-                                scaleY = appearScale.value
-                                alpha = appearAlpha.value
+                                scaleX = appearScale
+                                scaleY = appearScale
+                                alpha = appearAlpha
                             },
                     )
                 } else {
@@ -317,9 +291,9 @@ private fun ReadyScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
-                                scaleX = appearScale.value
-                                scaleY = appearScale.value
-                                alpha = appearAlpha.value
+                                scaleX = appearScale
+                                scaleY = appearScale
+                                alpha = appearAlpha
                             },
                     )
                 }
