@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateTopPadding
@@ -30,13 +31,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisError
@@ -55,6 +55,9 @@ import com.iris.irisshell.ui.session.SessionSwitcherViewModel
  *
  *  Sol:   panel-left icon + oturum adı → tıkla → sidebar aç
  *  Sağ:   iki yana dokunuk pill buton (keyboard toggle + more actions)
+ *
+ * Butonlar iOS-style pill: yana dokunuk, border var ama elevation yok.
+ * Etrafında container/elevation yok — doğrudan top bar üzerinde.
  */
 @Composable
 fun TerminalTopBar(
@@ -70,6 +73,7 @@ fun TerminalTopBar(
     modifier: Modifier = Modifier,
 ) {
     val activeName by viewModel.activeName.collectAsStateWithLifecycle()
+
     val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Box(
@@ -169,79 +173,107 @@ private fun MoreActionsDropdown(
         containerColor = IrisSurfaceVariant,
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(12.dp),
-        offset = IntOffset(0, offsetY),
+        offset = DpOffset(x = 0.dp, y = statusBarH + 48.dp),
     ) {
-        DropdownMenuItem(onClick = { onRefresh() }) {
-            Icon(
-                painter = painterResource(R.drawable.lucide_rotate_cw),
-                contentDescription = null,
-                tint = IrisTextSecondary,
-                modifier = Modifier.size(16.dp),
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.width(10.dp))
-            Text(
-                text = "Refresh terminal",
-                color = IrisText,
-                fontFamily = OutfitFontFamily,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-        DropdownMenuItem(onClick = { onToggleFullscreen() }) {
-            Icon(
-                painter = painterResource(
-                    if (isFullscreen) R.drawable.lucide_minimize else R.drawable.lucide_maximize
-                ),
-                contentDescription = null,
-                tint = IrisTextSecondary,
-                modifier = Modifier.size(16.dp),
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.width(10.dp))
-            Text(
-                text = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
-                color = IrisText,
-                fontFamily = OutfitFontFamily,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
+        DropdownMenuItem(
+            onClick = { onRefresh() },
+            text = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.lucide_rotate_cw),
+                        contentDescription = null,
+                        tint = IrisTextSecondary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = "Refresh terminal",
+                        color = IrisText,
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            },
+        )
+        DropdownMenuItem(
+            onClick = { onToggleFullscreen() },
+            text = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (isFullscreen) R.drawable.lucide_minimize else R.drawable.lucide_maximize
+                        ),
+                        contentDescription = null,
+                        tint = IrisTextSecondary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
+                        color = IrisText,
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            },
+        )
         Divider(
             color = IrisBorderSubtle,
             thickness = 1.dp,
             modifier = Modifier.padding(vertical = 4.dp),
         )
-        DropdownMenuItem(onClick = { onOpenSettings() }) {
-            Icon(
-                painter = painterResource(R.drawable.lucide_settings),
-                contentDescription = null,
-                tint = IrisTextSecondary,
-                modifier = Modifier.size(16.dp),
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.width(10.dp))
-            Text(
-                text = "Settings",
-                color = IrisText,
-                fontFamily = OutfitFontFamily,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-        DropdownMenuItem(onClick = { onClose() }) {
-            Icon(
-                painter = painterResource(R.drawable.lucide_x_circle),
-                contentDescription = null,
-                tint = IrisError,
-                modifier = Modifier.size(16.dp),
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.width(10.dp))
-            Text(
-                text = "Close session",
-                color = IrisError,
-                fontFamily = OutfitFontFamily,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
+        DropdownMenuItem(
+            onClick = { onOpenSettings() },
+            text = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.lucide_settings),
+                        contentDescription = null,
+                        tint = IrisTextSecondary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = "Settings",
+                        color = IrisText,
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            },
+        )
+        DropdownMenuItem(
+            onClick = { onClose() },
+            text = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.lucide_x_circle),
+                        contentDescription = null,
+                        tint = IrisError,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = "Close session",
+                        color = IrisError,
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            },
+        )
     }
 }
 

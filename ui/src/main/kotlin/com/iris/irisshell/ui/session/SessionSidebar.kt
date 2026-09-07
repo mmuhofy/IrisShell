@@ -5,14 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateTopPadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateTopPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -33,7 +30,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberRipple
+import androidx.compose.material3.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,11 +45,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBorderSubtle
@@ -66,8 +62,6 @@ import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.ui.R
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.unit.coerceAtMost
 
 /**
  * Slide-in sol sidebar — Obsidian Mobile tarzı.
@@ -84,13 +78,6 @@ fun SessionSidebar(
     if (!isOpen) return
 
     val viewModel: SessionSwitcherViewModel = hiltViewModel()
-    val density = LocalDensity.current
-    val screenWidth = with(LocalConfiguration.current) {
-        screenWidthDp
-    }
-    val sidebarWidth = with(density) {
-        (screenWidth * 0.75f).coerceAtMost(280f).dp
-    }
 
     // Scrim overlay + slide-in panel
     Box(
@@ -103,7 +90,7 @@ fun SessionSidebar(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(sidebarWidth)
+                .width(sidebarWidth())
                 .align(Alignment.CenterStart)
                 .clip(RoundedCornerShape(0.dp, 16.dp, 16.dp, 0.dp))
                 .background(IrisSurfaceVariant)
@@ -120,6 +107,14 @@ fun SessionSidebar(
 }
 
 @Composable
+private fun sidebarWidth(): Dp {
+    val density = LocalDensity.current
+    val config = LocalConfiguration.current
+    val w = with(density) { (config.screenWidthDp * 0.75f).coerceAtMost(280f) }
+    return androidx.compose.ui.unit.Dp(w)
+}
+
+@Composable
 private fun SidebarContent(
     viewModel: SessionSwitcherViewModel,
     onClose: () -> Unit,
@@ -127,7 +122,6 @@ private fun SidebarContent(
 ) {
     val sessions by viewModel.allSessions.collectAsStateWithLifecycle()
     val activeId by viewModel.activeId.collectAsStateWithLifecycle()
-    val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Column(
         modifier = Modifier
@@ -259,6 +253,7 @@ private fun SessionItem(
     var showMenu by remember { mutableStateOf(false) }
     val nameColor = if (isActive) IrisPrimary else IrisText
     val badgeColor = if (isActive) IrisPrimary else IrisTextMuted
+    val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Box {
         Row(
@@ -268,8 +263,8 @@ private fun SessionItem(
                 .background(if (isActive) IrisSurfaceVariant else IrisSurface)
                 .clickable(
                     onClick = onClick,
-                    interactionSource = remember { MutableInteractionSource() },
                     indication = rememberRipple(),
+                    interactionSource = remember { MutableInteractionSource() },
                 )
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -304,66 +299,83 @@ private fun SessionItem(
             )
         }
 
-        // Session context menu
-        val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        val offsetY = with(LocalDensity.current) { (48.dp + statusBarH).roundToPx() }
-
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
             containerColor = IrisSurfaceVariant,
             tonalElevation = 0.dp,
             shape = RoundedCornerShape(12.dp),
-            offset = IntOffset(0, offsetY),
+            offset = DpOffset(x = 0.dp, y = statusBarH + 48.dp),
         ) {
-            DropdownMenuItem(onClick = { onClick(); showMenu = false }) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_play),
-                    contentDescription = null,
-                    tint = IrisTextSecondary,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = "Activate",
-                    color = IrisText,
-                    fontFamily = OutfitFontFamily,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
-            DropdownMenuItem(onClick = { onRename(snapshot.name.trim()); showMenu = false }) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_pencil),
-                    contentDescription = null,
-                    tint = IrisTextSecondary,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = "Rename",
-                    color = IrisText,
-                    fontFamily = OutfitFontFamily,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
-            DropdownMenuItem(onClick = { onDelete(); showMenu = false }) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_trash_2),
-                    contentDescription = null,
-                    tint = IrisError,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = "Delete",
-                    color = IrisError,
-                    fontFamily = OutfitFontFamily,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
+            DropdownMenuItem(
+                onClick = { onClick(); showMenu = false },
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.lucide_play),
+                            contentDescription = null,
+                            tint = IrisTextSecondary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = "Activate",
+                            color = IrisText,
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                },
+            )
+            DropdownMenuItem(
+                onClick = { onRename(snapshot.name.trim()); showMenu = false },
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.lucide_pencil),
+                            contentDescription = null,
+                            tint = IrisTextSecondary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = "Rename",
+                            color = IrisText,
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                },
+            )
+            DropdownMenuItem(
+                onClick = { onDelete(); showMenu = false },
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.lucide_trash_2),
+                            contentDescription = null,
+                            tint = IrisError,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = "Delete",
+                            color = IrisError,
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                },
+            )
         }
     }
 }
