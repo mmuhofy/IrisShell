@@ -191,13 +191,22 @@ Closed (Room only, removed from irisSessions)
 
 ## 7. Current Status
 
-### Completed (Session System modernization)
-- ✅ `IrisSession.kt` — session wrapper (TermuxSession-inspired)
-- ✅ `SessionLifecycleCallbacks.kt` — callback interface
-- ✅ `TerminalManager.kt` — refactored to IrisSession list, fixed onSessionFinished, PID tracking
-- ✅ `TerminalSessionClientImpl.kt` — forwards PID + session finished callbacks
-- ✅ `SessionManagerAdapter.kt` — implements lifecycle callbacks, live-ids-based reconcile
-- ✅ Stitch UI modernization (SessionSwitcherSheet + SessionCard)
+### Completed (Visual Identity & Top Bar — 2026-09-07)
+- ✅ Color palette: gold `#E8C547` → blue `#3B82F6`, surfaces darkened with 10-nit separation
+- ✅ Status bar `#000000` → `#0A0A0A`
+- ✅ Install screen modernized (StepStateIcon, StepRow, LiveLogCard, BootstrapStepperScreen)
+- ✅ Onboarding wizard kept in original state
+- ✅ DocumentsProvider compile errors resolved + declared in AndroidManifest
+- ✅ Deleted `SessionSwitcherTopBar.kt`
+- ✅ Created `TerminalTopBar.kt` — modern minimalist: left pill button + divider + session name (not clickable), right merged pills (keyboard + more actions)
+- ✅ Created `SessionSidebar.kt` — slide-in overlay replacing ModalBottomSheet, session management (list, new, rename, delete)
+- ✅ Updated `TerminalScreen.kt` — replaced SessionSwitcherTopBar/SessionSwitcherSheet with TerminalTopBar/SessionSidebar, added BackHandler
+- ✅ Added `lucide_panel_left.xml` drawable
+- ✅ Build passes on CI (compileDebugKotlin succeeds)
+- ✅ All import/path compilation errors resolved (fillMaxWidth, Text, statusBars, rememberRipple, DpOffset, DropdownMenuItem API)
+- ✅ Runtime crash fix: 3 vector drawables missing `android:width`/`android:height` → added 24dp (lucide_keyboard, lucide_panel_left, lucide_square_plus)
+- ✅ Terminal visibility fix: replaced `Animatable`+`LaunchedEffect`+`coroutineScope` with static 1f values (race condition when `activeId` transitioned `null`→value at startup left `appearAlpha` stuck at 0)
+- ✅ Top bar redesign: pills float directly on terminal (transparent container), no border on pills, larger (38dp), merged pill group with connected corners, divider between sidebar button and session name
 
 ### To Build
 - Same as docs/TODO.md (full feature backlog)
