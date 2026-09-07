@@ -151,7 +151,7 @@ fun PreferencesScene(
                     color = IrisTextSecondary,
                 )
             }
-        )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
