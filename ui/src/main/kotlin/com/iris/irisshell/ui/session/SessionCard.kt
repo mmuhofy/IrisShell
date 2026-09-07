@@ -177,7 +177,7 @@ fun SessionCard(
                 )
                 .clickable(enabled = !isCommitting && swipeOffset.value == 0f) { onActivate() },
         ) {
-            // Active left accent bar — solid gold, ultra-thin
+            // Active left accent bar — solid blue, ultra-thin
             if (isActive) {
                 Box(
                     modifier = Modifier

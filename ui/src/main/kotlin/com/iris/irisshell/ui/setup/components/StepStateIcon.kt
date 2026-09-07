@@ -34,8 +34,8 @@ import com.iris.irisshell.ui.setup.theme.SetupPalette
  * Visual marker for a bootstrap step's current state.
  *
  * - Pending:  hollow circle in [SetupPalette.TextDisabled], dashed border
- * - Active:   gold-filled circle with a Gaussian halo that pulses (300ms)
- * - Done:     gold check mark on gold-tinted surface
+ * - Active:   blue-filled circle with a Gaussian halo that pulses (300ms)
+ * - Done:     blue check mark on blue-tinted surface
  * - Failed:   red X with a crimson halo
  *
  * Drawn entirely with Canvas primitives — keeps APK small (no icons-extended dep).

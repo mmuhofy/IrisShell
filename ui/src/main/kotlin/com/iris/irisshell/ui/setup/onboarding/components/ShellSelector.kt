@@ -33,7 +33,7 @@ import com.iris.irisshell.domain.terminal.ShellChoice
  * Radio-group selector for choosing a shell (Zsh or Bash).
  *
  * Each option shows:
- * - Radio dot (filled gold when selected)
+ * - Radio dot (filled blue when selected)
  * - Shell name (bold)
  * - Optional description subtitle (muted)
  * - Optional "recommended" badge on Zsh

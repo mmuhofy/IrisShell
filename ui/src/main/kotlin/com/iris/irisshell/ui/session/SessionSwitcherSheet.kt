@@ -321,7 +321,7 @@ private fun SheetTopBar(
             modifier = Modifier.weight(1f),
         )
 
-        // New session button — gold pill, scale on press
+        // New session button — blue pill, scale on press
         PressScaleBox(
             onClick = onCreate,
             modifier = Modifier

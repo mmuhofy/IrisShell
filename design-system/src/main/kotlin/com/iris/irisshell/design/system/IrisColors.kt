@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
  *
  * Iris Shell is dark-only on v1.0 — OLED mode (#000000) is the default
  * background. Surface levels use 10-nit increments for clear visual hierarchy.
- * The blue accent (#3B82F6) replaces gold, evoking terminal cursor cyan
+ * The blue accent (#3B82F6) replaces the previous gold, evoking terminal cursor cyan
  * and VS Code's professional dark theme.
  */
 val IrisBackground: Color = Color(0xFF000000)

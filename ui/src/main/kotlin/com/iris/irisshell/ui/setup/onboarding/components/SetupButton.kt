@@ -21,7 +21,7 @@ import com.iris.irisshell.design.system.IrisTextDisabled
 import com.iris.irisshell.design.system.OutfitFontFamily
 
 /**
- * Primary gold button used across onboarding scenes.
+ * Primary blue button used across onboarding scenes.
  *
  * Full-width by default, 52dp height, 24dp corner radius.
  * Disabled state uses IrisTextDisabled for the label (greyed).

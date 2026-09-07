@@ -51,7 +51,7 @@ import com.iris.irisshell.ui.setup.theme.SetupPalette
  * Layout (top to bottom):
  *  - Hero: `SetupHeroMark` + `"Iris Shell"` + tagline
  *  - Stepper: 5 StepRows + connectors
- *  - Current step message (gold caption)
+ *  - Current step message (blue caption)
  *  - Determinate progress bar + ETA
  *  - LiveLogCard (collapsed by default, expandable to a 320dp drawer)
  *

@@ -34,7 +34,7 @@ import com.iris.irisshell.ui.setup.theme.SetupPalette
  *
  * Renders: [StepStateIcon] → title + optional subLine + 1dp connector line.
  *
- * The connector line colour is animated: gold if this step is done, gold if
+ * The connector line colour is animated: blue if this step is done, blue if
  * next step is active, otherwise muted.
  *
  * Per Iris style — minimal, no card chrome. Each step is just text + a marker.
