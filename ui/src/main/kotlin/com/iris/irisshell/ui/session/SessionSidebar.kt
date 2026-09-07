@@ -43,7 +43,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,6 +76,16 @@ fun SessionSidebar(
     if (!isOpen) return
 
     val viewModel: SessionSwitcherViewModel = hiltViewModel()
+    val density = LocalDensity.current
+    val config = LocalConfiguration.current
+    val sidebarW = remember(config) {
+        val sw = config.screenWidthDp
+        if (sw > 0) {
+            with(density) { (sw * 0.75f).coerceAtMost(280f).roundToPx() }
+        } else {
+            with(density) { 280.dp.roundToPx() }
+        }
+    }
 
     // Scrim overlay + slide-in panel
     Box(
@@ -89,7 +98,7 @@ fun SessionSidebar(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(sidebarWidth())
+                .width(with(density) { sidebarW.toDp() })
                 .align(Alignment.CenterStart)
                 .clip(RoundedCornerShape(0.dp, 16.dp, 16.dp, 0.dp))
                 .background(IrisSurfaceVariant)
@@ -106,11 +115,6 @@ fun SessionSidebar(
 }
 
 @Composable
-private fun sidebarWidth(): Dp {
-    val density = LocalDensity.current
-    val config = LocalConfiguration.current
-    val w = with(density) { (config.screenWidthDp * 0.75f).coerceAtMost(280f) }
-    return androidx.compose.ui.unit.Dp(w)
 }
 
 @Composable
