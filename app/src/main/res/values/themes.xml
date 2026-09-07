@@ -6,15 +6,15 @@
   Compose cannot paint from inside the activity: the system status bar and
   navigation bar, and the launcher icon surface.
 
-  Status / navigation bar: matched to IrisBackground (#000000) so the chrome
-  blends into the app shell — same band, no gap, no system tint screaming
-  through. windowLightStatusBar=false keeps the foreground icons (clock,
-  battery, etc.) readable on the dark surface.
+  Status / navigation bar: matched to IrisSurface (#0A0A0A) so the chrome
+  creates a subtle depth layer above the OLED black terminal. This avoids
+  the status bar bleeding into the terminal content — a sliver of #0A0A0A
+  gives the system bar a visible edge without adding visual noise.
 -->
 <resources>
     <style name="Theme.IrisShell" parent="android:Theme.Material.NoActionBar">
-        <item name="android:statusBarColor">#FF000000</item>
-        <item name="android:navigationBarColor">#FF000000</item>
+        <item name="android:statusBarColor">#FF0A0A0A</item>
+        <item name="android:navigationBarColor">#FF0A0A0A</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
