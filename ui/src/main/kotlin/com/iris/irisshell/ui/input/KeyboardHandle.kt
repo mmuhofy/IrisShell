@@ -7,14 +7,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -22,11 +21,6 @@ import androidx.compose.ui.unit.dp
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisPrimary
 
-/**
- * Mini grab-handle that toggles the extra-keys bar. Just a simple pill (56×4)
- * centred horizontally. No background container - just the pill itself.
- * Gold when bar is open, subtle grey when closed.
- */
 @Composable
 fun KeyboardHandle(
     barVisible: Boolean,
@@ -37,9 +31,10 @@ fun KeyboardHandle(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(16.dp)
+            .height(12.dp)
             .clickable(
                 interactionSource = interactionSource,
+                indication = null,
                 role = Role.Switch,
                 onClick = onToggle,
             )
@@ -52,10 +47,12 @@ fun KeyboardHandle(
     ) {
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
-                .padding(vertical = 6.dp)
-                .size(width = 56.dp, height = 4.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(if (barVisible) IrisPrimary else IrisBorderSubtle),
+                .size(width = 48.dp, height = 3.dp)
+                .alpha(if (barVisible) 0.72f else 0.38f)
+                .background(
+                    color = if (barVisible) IrisPrimary else IrisBorderSubtle,
+                    shape = RoundedCornerShape(4.dp),
+                ),
         )
     }
 }

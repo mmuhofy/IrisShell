@@ -1,11 +1,11 @@
 package com.iris.irisshell.ui.input
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -17,30 +17,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iris.irisshell.design.system.IrisPrimary
-import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.domain.input.ExtraKey
 import com.iris.irisshell.ui.R
 
 /**
- * A single on-screen extra-key button sized to mirror Termux's
- * `ExtraKeysView` cell — compact, edge-to-edge with siblings, no gaps.
- * Only the pressed / sticky-armed state paints a soft rounded
- * highlight behind the glyph, matching iOS keyboard key-cap behaviour
- * rather than Material's outlined button look.
+ * A compact key-cap used by the floating Liquid Glass extra-key row.
  *
- * Arrow keys render as Lucide vector icons (see `ui/.../drawable/`);
- * everything else uses a sans-serif label so the row reads like a
- * normal keyboard legend, not a code listing.
- *
- * UNTESTED — verify on device.
+ * The button intentionally has no Material surface of its own: the pill
+ * provides the glass surface and each key only gets a subtle hover/pressed
+ * capsule, matching the HTML reference interaction model.
  */
 @Composable
 fun ExtraKeyButton(
@@ -52,16 +45,19 @@ fun ExtraKeyButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
+    val hovered by interactionSource.collectIsHoveredAsState()
 
-    val highlight: Color = when {
-        stuckActive -> IrisPrimary.copy(alpha = 0.18f)
-        pressed -> IrisSurface.copy(alpha = 0.95f)
+    val active = stuckActive || pressed
+    val keyBackground = when {
+        stuckActive -> IrisPrimary.copy(alpha = 0.16f)
+        pressed -> Color.White.copy(alpha = 0.13f)
+        hovered -> Color.White.copy(alpha = 0.075f)
         else -> Color.Transparent
     }
 
     val glyphColor = when {
         stuckActive -> IrisPrimary
-        pressed -> IrisText
+        active || hovered -> IrisText
         else -> IrisTextMuted
     }
 
@@ -69,28 +65,33 @@ fun ExtraKeyButton(
 
     Box(
         modifier = modifier
-            .size(width = 44.dp, height = 32.dp)
-            .pointerInput(interactionSource) {
-                detectTapGestures(
-                    onLongPress = { _ -> onLongPress() },
-                    onTap = { _ -> onTap() },
-                )
-            },
+            .size(width = 48.dp, height = 38.dp)
+            .hoverable(interactionSource)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onTap,
+                onLongClick = onLongPress,
+            )
+            .clip(RoundedCornerShape(20.dp)),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .padding(horizontal = 3.dp, vertical = 3.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(highlight),
-        )
+        androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
+            drawRoundRect(
+                color = keyBackground,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                    x = 20.dp.toPx(),
+                    y = 20.dp.toPx(),
+                ),
+            )
+        }
+
         if (arrowResId != null) {
             androidx.compose.foundation.Image(
                 painter = painterResource(arrowResId),
                 contentDescription = key.displayLabel(),
                 modifier = Modifier.size(18.dp),
-                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(glyphColor),
+                colorFilter = ColorFilter.tint(glyphColor),
             )
         } else {
             Text(

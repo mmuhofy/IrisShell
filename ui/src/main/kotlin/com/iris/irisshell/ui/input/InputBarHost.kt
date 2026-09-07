@@ -7,24 +7,8 @@ import androidx.compose.ui.Modifier
 import com.iris.irisshell.domain.input.InputIntent
 
 /**
- * Host layout for on-screen input chrome:
- *
- * ```
- * Bar open   →   ┌────────────────────────┐
- *                 │  KeyboardHandle (pill) │  ← toggle, sits above the bar
- *                 ├────────────────────────┤
- *                 │  ExtraKeyBar (glass)   │  ← compact 2-row keys
- *                 └────────────────────────┘
- *
- * Bar closed  →   ┌────────────────────────┐
- *                 │  KeyboardHandle (pill) │  ← flush against IME
- *                 └────────────────────────┘
- * ```
- *
- * The host is meant to sit just above the IME soft keyboard; the
- * parent applies `Modifier.imePadding()` so the whole stack lifts.
- *
- * UNTESTED — verify on device.
+ * Hosts the keyboard handle and the floating Drosh Liquid Glass extra-key
+ * surface immediately above the IME.
  */
 @Composable
 fun InputBarHost(
@@ -33,10 +17,7 @@ fun InputBarHost(
     onIntent: (InputIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth(),
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         if (uiState.renderBar) {
             KeyboardHandle(
                 barVisible = true,
