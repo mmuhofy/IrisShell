@@ -1,5 +1,5 @@
 # Iris Shell — Memory Bank
-_Last updated: 2026-09-06_
+_Last updated: 2026-09-07_
 
 ---
 
@@ -200,16 +200,19 @@ Closed (Room only, removed from irisSessions)
 ### To Build
 - Same as docs/TODO.md (full feature backlog)
 
-### Completed (Onboarding Wizard — 2026-09-06)
+### Completed (Onboarding Wizard — 2026-09-07)
 - ✅ Design system components: `DroshLogo`, `SetupButton`, `DeviceCheckItem`, `ShellSelector`, `PackageProfileSelector`
 - ✅ New 4-scene flow: Welcome → DeviceCheck → Preferences → ShellSetup (Zsh conditional)
 - ✅ `WelcomeScene` replaced TerminalBackdrop with DroshLogo + SetupButton
 - ✅ `OnboardingScreen` hoists preference state; conditional ShellSetup skip for Bash
-- ✅ Old `ArchitectureScene`/`ReadyScene` left as dead code (no longer referenced)HEREDOC
+- ✅ Old `ArchitectureScene`/`ReadyScene` left as dead code (no longer referenced)
+- ✅ GitHub Actions build passing (`2209f58` — fix Kotlin compose API mismatches)
 
-### Completed (Onboarding Wizard — 2026-09-06)
-- ✅ Design system components: DroshLogo, SetupButton, DeviceCheckItem, ShellSelector, PackageProfileSelector
-- ✅ New 4-scene flow: Welcome → DeviceCheck → Preferences → ShellSetup (Zsh conditional)
-- ✅ WelcomeScene replaced TerminalBackdrop with DroshLogo + SetupButton
-- ✅ OnboardingScreen hoists preference state; conditional ShellSetup skip for Bash
-- ✅ Old ArchitectureScene/ReadyScene left as dead code
+### Compose API Issues Resolved
+- `if (selected) X : Y` → `if (selected) X else Y` (Kotlin requires `else`, not `:`)
+- `KeyboardOptions()`: `keyboardCapitalization` → `capitalization`, `autoCorrect` required
+- `painterResource()` must be called at Composable body, not inside `LaunchedEffect`
+- `drawArc()`: `startAngleDegrees`/`sweepAngleDegrees` → `startAngle`/`sweepAngle`
+- `Path.arcTo()`: `forceNewSubgroup` → `forceMoveTo`
+- `Checkbox`/`CheckboxDefaults`: import from `material3`, not `foundation`
+- `Surface(...) { }` trailing lambda: close with `}` not `)`

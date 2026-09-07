@@ -31,7 +31,7 @@
 - [x] MainActivity: pass onExit via LocalContext
 - [x] Fix relaunch crash: yield() guard + start() shouldExit reset
 
-### Onboarding Wizard (2026-09-06)
+### Completed (Onboarding Wizard — 2026-09-06/07)
 - [x] Design system components: DroshLogo, SetupButton, DeviceCheckItem, ShellSelector, PackageProfileSelector
 - [x] WelcomeScene: DroshLogo + "Başla →" + SkipAnchor (replaced TerminalBackdrop)
 - [x] DeviceCheckScene: auto-scan arch/Android/storage/RAM/battery with status dots
@@ -39,6 +39,7 @@
 - [x] ShellSetupScene: Oh My Zsh progress bar + step indicators (conditional — Zsh only)
 - [x] OnboardingSceneKind: 4 scenes (Welcome → DeviceCheck → Preferences → ShellSetup)
 - [x] OnboardingScreen: state hoisting for userName/shellChoice/packageProfile/customPackages; conditional ShellSetup skip for Bash
+- [x] GitHub Actions build passing (fix Kotlin if-else syntax, drawArc params, Surface lambda brace, KeyboardOptions API)
 
 ### PTY / Terminal
 - [ ] Verify PTY session creation with PRoot + Ubuntu rootfs
