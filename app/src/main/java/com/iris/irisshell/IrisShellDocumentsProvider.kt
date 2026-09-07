@@ -1,14 +1,16 @@
 package com.iris.irisshell
 
-import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
-import android.net.Uri
+import android.graphics.Point
 import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
-import android.provider.DocumentsContract
+import android.provider.DocumentsContract.Document
+import android.provider.DocumentsContract.Root
+import android.provider.DocumentsProvider
 import android.webkit.MimeTypeMap
 import java.io.File
+import java.io.FileNotFoundException
 
 /**
  * DocumentsProvider that exposes Iris Shell's internal Ubuntu rootfs to the
@@ -16,71 +18,71 @@ import java.io.File
  * picker, or ACTION_OPEN_DOCUMENT.
  *
  * Root: "Iris Shell" → `$context.filesDir/ubuntu/`
- * Children are served recursively using absolute file paths as document IDs.
+ * Document IDs are absolute file paths (consistent with IrisCode's
+ * IrisDocumentsProvider pattern).
  *
- * Inspired by: github.com/termux/termux-app (StorageVolumeProvider pattern)
+ * Inspired by: ~/projects/IrisCode/app/.../documents/IrisDocumentsProvider.kt
  * Adapted for Iris Shell — com.iris.irisshell
  */
-class IrisShellDocumentsProvider : android.provider.DocumentsProvider() {
+class IrisShellDocumentsProvider : DocumentsProvider() {
 
-    private val context: Context
-        get() = checkNotNull(getContext()) { "Provider context is null" }
+    private val ALL_MIME_TYPES = "*/*"
 
-    private val ubuntuDir: File
-        get() = File(context.filesDir, "ubuntu").canonicalFile
+    private val baseDir: File
+        get() = File(context!!.filesDir, "ubuntu").canonicalFile
 
-    companion object {
-        const val AUTHORITY = "com.iris.irisshell.documents"
-        private const val ROOT_ID = "iris_shell_root"
-        private const val DISPLAY_NAME = "Iris Shell"
-        private const val MIME_TYPE_DIR = "vnd.android.document/directory"
+    private val defaultRootProjection = arrayOf(
+        Root.COLUMN_ROOT_ID,
+        Root.COLUMN_MIME_TYPES,
+        Root.COLUMN_FLAGS,
+        Root.COLUMN_TITLE,
+        Root.COLUMN_SUMMARY,
+        Root.COLUMN_DOCUMENT_ID,
+        Root.COLUMN_AVAILABLE_BYTES,
+    )
+
+    private val defaultDocumentProjection = arrayOf(
+        Document.COLUMN_DOCUMENT_ID,
+        Document.COLUMN_MIME_TYPE,
+        Document.COLUMN_DISPLAY_NAME,
+        Document.COLUMN_LAST_MODIFIED,
+        Document.COLUMN_FLAGS,
+        Document.COLUMN_SIZE,
+    )
+
+    override fun onCreate(): Boolean = baseDir.exists()
+
+    override fun queryRoots(projection: Array<String>?): Cursor {
+        val result = MatrixCursor(projection ?: defaultRootProjection)
+        val row = result.newRow()
+        row.add(Root.COLUMN_ROOT_ID, getDocIdForFile(baseDir))
+        row.add(Root.COLUMN_DOCUMENT_ID, getDocIdForFile(baseDir))
+        row.add(Root.COLUMN_SUMMARY, null)
+        row.add(
+            Root.COLUMN_FLAGS,
+            Root.FLAG_SUPPORTS_CREATE or Root.FLAG_SUPPORTS_SEARCH or Root.FLAG_SUPPORTS_IS_CHILD,
+        )
+        row.add(Root.COLUMN_TITLE, "Iris Shell")
+        row.add(Root.COLUMN_MIME_TYPES, ALL_MIME_TYPES)
+        row.add(Root.COLUMN_AVAILABLE_BYTES, baseDir.freeSpace)
+        return result
     }
 
-    override fun queryRoots(projection: Array<String>): Cursor {
-        val row = arrayOfNulls<Any?>(projection.size)
-        for (i in projection.indices) {
-            row[i] = when (projection[i]) {
-                DocumentsContract.Root.COLUMN_ROOT_ID -> ROOT_ID
-                DocumentsContract.Root.COLUMN_DOCUMENT_ID -> ubuntuDir.absolutePath
-                DocumentsContract.Root.COLUMN_TITLE -> DISPLAY_NAME
-                DocumentsContract.Root.COLUMN_DESCRIPTION -> "Ubuntu rootfs + PRoot binaries"
-                DocumentsContract.Root.COLUMN_MIME_TYPES -> "*/*"
-                DocumentsContract.Root.COLUMN_FLAGS -> (
-                    DocumentsContract.Root.FLAG_SUPPORTS_CREATE or
-                    DocumentsContract.Root.FLAG_SUPPORTS_RECENT_DELETE or
-                    DocumentsContract.Root.FLAG_SUPPORTS_SEARCH
-                )
-                DocumentsContract.Root.COLUMN_AVAILABLE_BYTES -> null
-                else -> null
-            }
-        }
-        return MatrixCursor(projection).apply { addRow(row) }
-    }
-
-    override fun queryDocument(documentId: String, projection: Array<String>): Cursor {
-        val file = documentIdToFile(documentId)
-        return singleFileCursor(file, documentId, projection)
+    override fun queryDocument(documentId: String, projection: Array<String>?): Cursor {
+        val result = MatrixCursor(projection ?: defaultDocumentProjection)
+        includeFile(result, documentId, null)
+        return result
     }
 
     override fun queryChildDocuments(
         parentDocumentId: String,
-        projection: Array<String>,
+        projection: Array<String>?,
         sortOrder: String?,
     ): Cursor {
-        val parent = documentIdToFile(parentDocumentId)
-        val cursor = MatrixCursor(projection)
-        if (!parent.isDirectory) return cursor
-
-        val children = parent.listFiles() ?: return cursor
-        for (child in children) {
-            val childId = child.absolutePath
-            val row = arrayOfNulls<Any?>(projection.size)
-            for (i in projection.indices) {
-                row[i] = getColumnValue(child, childId, projection[i])
-            }
-            cursor.addRow(row)
-        }
-        return cursor
+        val result = MatrixCursor(projection ?: defaultDocumentProjection)
+        val parent = getFileForDocId(parentDocumentId)
+        parent.listFiles()?.forEach { includeFile(result, null, it) }
+        return result
     }
 
     override fun openDocument(
@@ -88,87 +90,110 @@ class IrisShellDocumentsProvider : android.provider.DocumentsProvider() {
         mode: String,
         signal: CancellationSignal?,
     ): ParcelFileDescriptor {
-        val file = documentIdToFile(documentId)
-        val pfdMode = if (mode.contains("w") || mode.contains("a")) {
-            ParcelFileDescriptor.MODE_READ_WRITE
+        val file = getFileForDocId(documentId)
+        val accessMode = ParcelFileDescriptor.parseMode(mode)
+        return ParcelFileDescriptor.open(file, accessMode)
+    }
+
+    override fun openDocumentThumbnail(
+        documentId: String,
+        sizeHint: Point?,
+        signal: CancellationSignal?,
+    ): android.content.res.AssetFileDescriptor? {
+        val file = getFileForDocId(documentId)
+        val pfd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+        return android.content.res.AssetFileDescriptor(pfd, 0, file.length())
+    }
+
+    override fun createDocument(
+        parentDocumentId: String,
+        mimeType: String,
+        displayName: String,
+    ): String {
+        val parent = getFileForDocId(parentDocumentId)
+        var newFile = File(parent, displayName)
+        var noConflictId = 2
+        while (newFile.exists()) {
+            newFile = File(parent, "$displayName ($noConflictId)")
+            noConflictId++
+        }
+        val succeeded = if (Document.MIME_TYPE_DIR == mimeType) {
+            newFile.mkdir()
         } else {
-            ParcelFileDescriptor.MODE_READ_ONLY
+            newFile.createNewFile()
         }
-        return ParcelFileDescriptor.open(file, pfdMode)
-    }
-
-    override fun createDocument(parentDocumentId: String, mimeType: String, displayName: String): String {
-        val parent = documentIdToFile(parentDocumentId)
-        val child = File(parent, displayName)
-        if (child.exists()) {
-            throw IllegalArgumentException("Already exists: $displayName")
-        }
-        if (mimeType == MIME_TYPE_DIR) {
-            child.mkdirs()
-        } else {
-            child.parentFile?.mkdirs()
-            child.createNewFile()
-        }
-        return child.absolutePath
-    }
-
-    override fun deleteDocument(documentId: String) {
-        val file = documentIdToFile(documentId)
-        if (!file.delete()) throw SecurityException("Cannot delete: ${file.absolutePath}")
-    }
-
-    override fun renameDocument(documentId: String, displayName: String): String {
-        val file = documentIdToFile(documentId)
-        val newFile = File(file.parentFile, displayName)
-        if (!file.renameTo(newFile)) throw SecurityException("Rename failed")
+        if (!succeeded) throw FileNotFoundException("Failed to create $newFile")
         return newFile.absolutePath
     }
 
-    override fun onCreate(): Boolean = ubuntuDir.exists()
+    override fun deleteDocument(documentId: String) {
+        val file = getFileForDocId(documentId)
+        if (!file.delete()) throw FileNotFoundException("Failed to delete $documentId")
+    }
+
+    override fun getDocumentType(documentId: String): String {
+        val file = getFileForDocId(documentId)
+        return getMimeType(file)
+    }
+
+    override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean {
+        return documentId.startsWith(parentDocumentId)
+    }
 
     // ─── Helpers ─────────────────────────────────────
 
-    private fun documentIdToFile(documentId: String): File {
-        val f = File(documentId).canonicalFile
-        if (!f.exists()) throw IllegalArgumentException("Document not found: $documentId")
-        if (!f.toPath().startsWith(ubuntuDir.toPath())) {
-            throw IllegalArgumentException("Path outside ubuntu rootfs: $documentId")
+    private fun getDocIdForFile(file: File): String = file.absolutePath
+
+    private fun getFileForDocId(docId: String): File {
+        val f = File(docId).canonicalFile
+        if (!f.exists()) throw FileNotFoundException("${f.absolutePath} not found")
+        if (!f.toPath().startsWith(baseDir.toPath())) {
+            throw FileNotFoundException("Path outside ubuntu rootfs: $docId")
         }
         return f
     }
 
-    private fun singleFileCursor(file: File, docId: String, projection: Array<String>): Cursor {
-        val row = arrayOfNulls<Any?>(projection.size)
-        for (i in projection.indices) {
-            row[i] = getColumnValue(file, docId, projection[i])
+    private fun getMimeType(file: File): String {
+        if (file.isDirectory) return Document.MIME_TYPE_DIR
+        val name = file.name
+        val lastDot = name.lastIndexOf('.')
+        if (lastDot >= 0) {
+            val ext = name.substring(lastDot + 1).lowercase()
+            MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)?.let { return it }
         }
-        return MatrixCursor(projection).apply { addRow(row) }
+        return "application/octet-stream"
     }
 
-    private fun getColumnValue(file: File, docId: String, columnName: String): Any? = when (columnName) {
-        DocumentsContract.Document.COLUMN_DOCUMENT_ID -> docId
-        DocumentsContract.Document.COLUMN_DISPLAY_NAME -> file.name
-        DocumentsContract.Document.COLUMN_MIME_TYPE ->
-            if (file.isDirectory) MIME_TYPE_DIR else inferMimeType(file)
-        DocumentsContract.Document.COLUMN_SIZE -> if (file.isFile) file.length() else 0L
-        DocumentsContract.Document.COLUMN_LAST_MODIFIED -> file.lastModified().toLong()
-        DocumentsContract.Document.COLUMN_FLAGS -> inferFlags(file)
-        else -> null
-    }
-
-    private fun inferMimeType(file: File): String {
-        val ext = MimeTypeMap.getFileExtensionFromUrl(file.name)
-        return if (ext.isNullOrEmpty()) {
-            "application/octet-stream"
+    private fun includeFile(result: MatrixCursor, docId: String?, fileArg: File?) {
+        val docIdResolved: String
+        val fileResolved: File
+        if (docId == null) {
+            fileResolved = fileArg!!
+            docIdResolved = getDocIdForFile(fileResolved)
         } else {
-            MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
-                ?: "application/octet-stream"
+            docIdResolved = docId
+            fileResolved = getFileForDocId(docId)
         }
-    }
 
-    private fun inferFlags(file: File): Int = (
-        DocumentsContract.Document.FLAG_SUPPORTS_OPEN or
-        DocumentsContract.Document.FLAG_SUPPORTS_TRANSFER_UNCONDITIONALLY or
-        DocumentsContract.Document.FLAG_NO_TYPE_TRANSFORMATION
-    )
+        var flags = 0
+        if (fileResolved.isDirectory) {
+            if (fileResolved.canWrite()) flags = flags or Document.FLAG_DIR_SUPPORTS_CREATE
+        } else if (fileResolved.canWrite()) {
+            flags = flags or Document.FLAG_SUPPORTS_WRITE
+        }
+        if (fileResolved.parentFile?.canWrite() == true) {
+            flags = flags or Document.FLAG_SUPPORTS_DELETE
+        }
+
+        val mimeType = getMimeType(fileResolved)
+        if (mimeType.startsWith("image/")) flags = flags or Document.FLAG_SUPPORTS_THUMBNAIL
+
+        val row = result.newRow()
+        row.add(Document.COLUMN_DOCUMENT_ID, docIdResolved)
+        row.add(Document.COLUMN_DISPLAY_NAME, fileResolved.name)
+        row.add(Document.COLUMN_SIZE, fileResolved.length())
+        row.add(Document.COLUMN_MIME_TYPE, mimeType)
+        row.add(Document.COLUMN_LAST_MODIFIED, fileResolved.lastModified())
+        row.add(Document.COLUMN_FLAGS, flags)
+    }
 }
