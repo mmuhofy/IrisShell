@@ -1,5 +1,6 @@
 package com.iris.irisshell.ui.terminal
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
@@ -37,9 +38,9 @@ import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
 import com.iris.irisshell.ui.input.InputBarHost
 import com.iris.irisshell.ui.input.InputBarViewModel
-import com.iris.irisshell.ui.session.SessionSwitcherSheet
+import com.iris.irisshell.ui.session.SessionSidebar
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
-import com.iris.irisshell.ui.topbar.SessionSwitcherTopBar
+import com.iris.irisshell.ui.topbar.TerminalTopBar
 import com.iris.irisshell.ui.block.BlockEngineViewModel
 import com.iris.irisshell.ui.block.BlockTerminalView
 import com.termux.view.TerminalView
@@ -114,7 +115,7 @@ private fun ReadyScreen(
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     var fullscreen by remember { mutableStateOf(false) }
-    var switcherOpen by remember { mutableStateOf(false) }
+    var sidebarOpen by remember { mutableStateOf(false) }
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
@@ -225,11 +226,12 @@ private fun ReadyScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!fullscreen) {
-            SessionSwitcherTopBar(
+            TerminalTopBar(
                 viewModel = sessionSwitcherViewModel,
-                isFullscreen = false,
+                isFullscreen = fullscreen,
                 keyboardFocused = keyboardFocused,
                 onToggleKeyboard = ::toggleKeyboard,
+                onOpenSidebar = { sidebarOpen = true },
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
                     terminalManager.addTab()
@@ -238,7 +240,6 @@ private fun ReadyScreen(
                 onClose = {
                     terminalManager.currentSession?.finishIfRunning()
                 },
-                onOpenSwitcher = { switcherOpen = true },
                 onOpenSettings = onOpenSettings,
             )
         }
@@ -358,8 +359,14 @@ private fun ReadyScreen(
         }
     }
 
-    if (switcherOpen) {
-        SessionSwitcherSheet(onDismiss = { switcherOpen = false })
+    // Sidebar overlay (replaces ModalBottomSheet)
+    if (sidebarOpen) {
+        BackHandler { sidebarOpen = false }
+        SessionSidebar(
+            isOpen = sidebarOpen,
+            onDismiss = { sidebarOpen = false },
+            onOpenSettings = onOpenSettings,
+        )
     }
 }
 
