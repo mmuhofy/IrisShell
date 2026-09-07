@@ -1,6 +1,5 @@
 package com.iris.irisshell.ui.setup.onboarding.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
@@ -85,8 +83,8 @@ private fun ShellOption(
     selected: Boolean,
     onSelect: () -> Unit,
 ) {
-    val bgColor = if (selected) IrisPrimary.copy(alpha = 0.15f) else IrisSurfaceVariant
-    val borderColor = if (selected) IrisPrimary else IrisBorderSubtle
+    val bgColor = if (selected) IrisPrimary.copy(alpha = 0.08f) else IrisSurfaceVariant
+    val borderColor = if (selected) IrisPrimary else IrisSurfaceVariant
 
     Surface(
         onClick = onSelect,
@@ -94,7 +92,6 @@ private fun ShellOption(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
         color = bgColor,
-        border = BorderStroke(1.dp, borderColor),
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),

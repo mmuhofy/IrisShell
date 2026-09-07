@@ -1,7 +1,6 @@
 package com.iris.irisshell.ui.setup.onboarding.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,7 +29,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
@@ -110,8 +108,7 @@ private fun ProfileOption(
         shape = RoundedCornerShape(14.dp),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
-        color = if (selected) IrisPrimary.copy(alpha = 0.15f) else IrisSurfaceVariant,
-        border = BorderStroke(1.dp, if (selected) IrisPrimary else IrisBorderSubtle),
+        color = if (selected) IrisPrimary.copy(alpha = 0.08f) else IrisSurfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
