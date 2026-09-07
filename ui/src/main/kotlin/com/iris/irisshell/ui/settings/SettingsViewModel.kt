@@ -31,13 +31,13 @@ class SettingsViewModel @Inject constructor(
     // ── Colors ────────────────────────────────────────────────────────────────
 
     val terminalBgColor: StateFlow<String> = settings.terminalBgColor
-        .stateIn(viewModelScope, SharingStarted.Eagerly, "#0C0C0C")
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "#000000")
 
     val accentColor: StateFlow<String> = settings.accentColor
-        .stateIn(viewModelScope, SharingStarted.Eagerly, "#E8C547")
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "#3B82F6")
 
     val terminalTextColor: StateFlow<String> = settings.terminalTextColor
-        .stateIn(viewModelScope, SharingStarted.Eagerly, "#EEEEEE")
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "#E8E8E8")
 
     // ── Setters ───────────────────────────────────────────────────────────────
 

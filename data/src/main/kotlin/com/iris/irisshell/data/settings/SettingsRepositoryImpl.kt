@@ -95,8 +95,8 @@ class SettingsRepositoryImpl @Inject constructor(
         const val DEFAULT_USE_BLOCK_ENGINE       = false
         const val DEFAULT_EXTRA_KEYS_BAR_VISIBLE = false
         const val DEFAULT_FONT_SIZE_SP           = 14
-        const val DEFAULT_TERMINAL_BG_COLOR      = "#0C0C0C"
-        const val DEFAULT_ACCENT_COLOR           = "#E8C547"
-        const val DEFAULT_TERMINAL_TEXT_COLOR    = "#EEEEEE"
+        const val DEFAULT_TERMINAL_BG_COLOR      = "#000000"
+        const val DEFAULT_ACCENT_COLOR           = "#3B82F6"
+        const val DEFAULT_TERMINAL_TEXT_COLOR    = "#E8E8E8"
     }
 }

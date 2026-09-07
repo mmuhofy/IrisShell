@@ -293,10 +293,10 @@ private fun BlockPreview() {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Color(0xFF27AE60).copy(alpha = 0.2f))
+                        .background(Color(0xFF22C55E).copy(alpha = 0.2f))
                         .padding(horizontal = 4.dp, vertical = 1.dp),
                 ) {
-                    Text("✓ 0", color = Color(0xFF27AE60), fontSize = 8.sp)
+                    Text("✓ 0", color = Color(0xFF22C55E), fontSize = 8.sp)
                 }
                 Text("12ms", color = IrisTextMuted, fontSize = 8.sp)
             }

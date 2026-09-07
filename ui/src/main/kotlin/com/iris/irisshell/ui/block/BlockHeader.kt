@@ -70,11 +70,11 @@ private fun ExitLabel(block: Block) {
     val state = block.state
     val isRunning = state is BlockState.Running
     val (label, color) = when (state) {
-        BlockState.Running -> "running" to Color(0xFF4A90E2)
-        is BlockState.Success -> "exit ${state.exitCode}" to Color(0xFF27AE60)
-        is BlockState.Error -> "exit ${state.exitCode}" to Color(0xFFC0392B)
-        BlockState.Cancelled -> "cancelled" to Color(0xFF888888)
-        BlockState.Idle -> "idle" to Color(0xFF666666)
+        BlockState.Running -> "running" to Color(0xFF3B82F6)
+        is BlockState.Success -> "exit ${state.exitCode}" to Color(0xFF22C55E)
+        is BlockState.Error -> "exit ${state.exitCode}" to Color(0xFFEF4444)
+        BlockState.Cancelled -> "cancelled" to Color(0xFFA0A0A0)
+        BlockState.Idle -> "idle" to Color(0xFF787878)
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (isRunning) {

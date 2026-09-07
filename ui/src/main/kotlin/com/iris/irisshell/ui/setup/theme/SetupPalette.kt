@@ -13,25 +13,25 @@ import androidx.compose.ui.graphics.Color
  * that module and the inlined duplicates here will be deleted.
  */
 internal object SetupPalette {
-    val Background = Color(0xFF0C0C0C)
-    val Surface = Color(0xFF141414)
-    val SurfaceVariant = Color(0xFF1A1A1A)
-    val Outline = Color(0xFF232323)
+    val Background = Color(0xFF000000)
+    val Surface = Color(0xFF0A0A0A)
+    val SurfaceVariant = Color(0xFF121212)
+    val Outline = Color(0xFF252525)
     val BorderSubtle = Color(0xFF1E1E1E)
 
-    val Primary = Color(0xFFE8C547)
-    val OnPrimary = Color(0xFF000000)
+    val Primary = Color(0xFF3B82F6)
+    val OnPrimary = Color(0xFF050505)
 
-    val Text = Color(0xFFEEEEEE)
-    val TextSecondary = Color(0xFF888888)
-    val TextMuted = Color(0xFF666666)
-    val TextDisabled = Color(0xFF444444)
+    val Text = Color(0xFFE8E8E8)
+    val TextSecondary = Color(0xFFA0A0A0)
+    val TextMuted = Color(0xFF787878)
+    val TextDisabled = Color(0xFF585858)
 
-    val Success = Color(0xFF27AE60)
-    val Error = Color(0xFFC0392B)
-    val Warning = Color(0xFFC9A84C)
+    val Success = Color(0xFF22C55E)
+    val Error = Color(0xFFEF4444)
+    val Warning = Color(0xFFF59E0B)
     val MonoLog = Color(0xFFB0B0B0)
 
-    val PulseHalo = Color(0x40E8C547)
-    val PulseHaloStrong = Color(0x80E8C547)
+    val PulseHalo = Color(0x403B82F6)
+    val PulseHaloStrong = Color(0x803B82F6)
 }

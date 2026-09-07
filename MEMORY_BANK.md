@@ -180,12 +180,12 @@ Closed (Room only, removed from irisSessions)
 
 | Element | Value |
 |---------|-------|
-| Background | `#0C0C0C` |
-| Surface | `#141414` |
-| Surface 2 | `#1A1A1A` |
-| Primary accent | `#E8C547` (warm gold) |
-| Text primary | `#EEEEEE` |
-| Text secondary | `#888888` |
+| Background | `#000000` (OLED) |
+| Surface | `#0A0A0A` |
+| Surface 2 | `#121212` |
+| Primary accent | `#3B82F6` (terminal blue) |
+| Text primary | `#E8E8E8` |
+| Text secondary | `#A0A0A0` |
 
 ---
 

@@ -35,19 +35,19 @@ interface SettingsRepository {
     /** Persists the font size in sp. */
     suspend fun setFontSize(size: Int)
 
-    /** Hot stream of the terminal background color as a hex string. Default: "#0C0C0C". */
+    /** Hot stream of the terminal background color as a hex string. Default: "#000000". */
     val terminalBgColor: Flow<String>
 
     /** Persists the terminal background color. */
     suspend fun setTerminalBgColor(hex: String)
 
-    /** Hot stream of the accent color as a hex string. Default: "#E8C547". */
+    /** Hot stream of the accent color as a hex string. Default: "#3B82F6". */
     val accentColor: Flow<String>
 
     /** Persists the accent color. */
     suspend fun setAccentColor(hex: String)
 
-    /** Hot stream of the terminal text color as a hex string. Default: "#EEEEEE". */
+    /** Hot stream of the terminal text color as a hex string. Default: "#E8E8E8". */
     val terminalTextColor: Flow<String>
 
     /** Persists the terminal text color. */
