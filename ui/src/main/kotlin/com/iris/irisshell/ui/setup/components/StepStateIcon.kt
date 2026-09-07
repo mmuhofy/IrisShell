@@ -8,25 +8,18 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import com.iris.irisshell.design.system.OutfitFontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.iris.irisshell.domain.terminal.StepState
 import com.iris.irisshell.ui.setup.theme.SetupPalette
 
@@ -34,9 +27,9 @@ import com.iris.irisshell.ui.setup.theme.SetupPalette
  * Visual marker for a bootstrap step's current state.
  *
  * - Pending:  hollow circle in [SetupPalette.TextDisabled], dashed border
- * - Active:   blue-filled circle with a Gaussian halo that pulses (300ms)
- * - Done:     blue check mark on blue-tinted surface
- * - Failed:   red X with a crimson halo
+ * - Active:   filled circle with a blue Gaussian halo that pulses (1100ms)
+ * - Done:     blue check mark drawn as a Canvas path
+ * - Failed:   red X drawn as a Canvas path
  *
  * Drawn entirely with Canvas primitives — keeps APK small (no icons-extended dep).
  */
@@ -137,32 +130,5 @@ fun StepStateIcon(
                 }
             }
         }
-        // Glyph overlays for Done/Failed — minimal redundancy touch for legibility.
-        if (state == StepState.Done) {
-            Text(
-                text = "✓",
-                color = SetupPalette.Primary,
-                style = TextStyle(
-                    fontFamily = OutfitFontFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = (size.value * 0.55f).sp,
-                ),
-            )
-        } else if (state == StepState.Failed) {
-            Text(
-                text = "!",
-                color = Color.White,
-                style = TextStyle(
-                    fontFamily = OutfitFontFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = (size.value * 0.55f).sp,
-                ),
-            )
-        }
     }
 }
-
-/** Convenience for callers that have positions + width: centers text within bounds. */
-@Suppress("unused")
-internal val GlyphSizeForStepIcon: Size
-    get() = Size.Zero

@@ -2,6 +2,7 @@ package com.iris.irisshell.ui.setup.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,12 +32,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import com.iris.irisshell.design.system.OutfitFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.ui.setup.theme.SetupPalette
 
 /**
@@ -104,11 +106,17 @@ fun LiveLogCard(
                 ),
             )
 
+            val chevronRotation by animateFloatAsState(
+                targetValue = if (expanded) 180f else 0f,
+                animationSpec = tween(280),
+                label = "chevron-rotate",
+            )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = if (expanded) "▾" else "▴",
+                text = "▾",
                 color = SetupPalette.TextMuted,
-                style = TextStyle(fontSize = 12.sp),
+                style = TextStyle(fontSize = 14.sp),
+                modifier = Modifier.graphicsLayer(rotationZ = chevronRotation),
             )
         }
 

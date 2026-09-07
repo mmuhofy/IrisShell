@@ -29,11 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import com.iris.irisshell.design.system.OutfitFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.iris.irisshell.design.system.OutfitFontFamily
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.domain.terminal.BootstrapProgress
@@ -92,16 +91,16 @@ fun BootstrapStepperScreen(
                 .padding(horizontal = 28.dp, vertical = 56.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            SetupHeroMark(sizeDp = 64.dp)
-            Spacer(modifier = Modifier.height(14.dp))
+            SetupHeroMark(sizeDp = 72.dp)
+            Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = "Iris Shell",
                 color = SetupPalette.Text,
                 style = TextStyle(
                     fontFamily = OutfitFontFamily,
-                    fontSize = 24.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.4.sp,
+                    letterSpacing = 0.3.sp,
                 ),
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -195,15 +194,15 @@ private fun ProgressBlock(progress: BootstrapProgress) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
                 .background(SetupPalette.SurfaceVariant),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(fraction = pct / 100f)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
                     .background(SetupPalette.Primary),
             )
         }
@@ -216,8 +215,9 @@ private fun ProgressBlock(progress: BootstrapProgress) {
                 text = "$pct%",
                 color = SetupPalette.TextMuted,
                 style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
                 ),
             )
             Text(
@@ -226,10 +226,11 @@ private fun ProgressBlock(progress: BootstrapProgress) {
                     etaSec <= 0L -> "Finalizing…"
                     else -> "~$etaSec s left"
                 },
-                color = SetupPalette.TextMuted,
+                color = SetupPalette.TextSecondary,
                 style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
                 ),
             )
         }
