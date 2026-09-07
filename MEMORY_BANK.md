@@ -206,6 +206,8 @@ Closed (Room only, removed from irisSessions)
 - ✅ All import/path compilation errors resolved (fillMaxWidth, Text, statusBars, rememberRipple, DpOffset, DropdownMenuItem API)
 - ✅ Runtime crash fix: 3 vector drawables missing `android:width`/`android:height` → added 24dp (lucide_keyboard, lucide_panel_left, lucide_square_plus)
 - ✅ Terminal visibility fix: replaced `Animatable`+`LaunchedEffect`+`coroutineScope` with static 1f values (race condition when `activeId` transitioned `null`→value at startup left `appearAlpha` stuck at 0)
+- ✅ Top bar redesign: floating pills (no surface/background surface, only subtle 8% press alpha), session name gets own `IrisSurfaceVariant` surface with 12dp rounded corners
+- ✅ Left sidebar button is pill-shaped (CircleShape 36dp), session name NOT clickable — only the pill button opens sidebar
 - ✅ Top bar redesign: pills float directly on terminal (transparent container), no border on pills, larger (38dp), merged pill group with connected corners, divider between sidebar button and session name
 
 ### To Build
