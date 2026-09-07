@@ -114,8 +114,8 @@ private fun ShellOption(
                     Canvas(modifier = Modifier.size(18.dp)) {
                         drawArc(
                             color = IrisTextMuted.copy(alpha = 0.4f),
-                            startAngleDegrees = 0f,
-                            sweepAngleDegrees = 360f,
+                            startAngle = 0f,
+                            sweepAngle = 360f,
                             useCenter = false,
                             style = Stroke(width = 1.5f),
                         )

@@ -9,13 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Divider
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
@@ -30,10 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
@@ -112,7 +107,7 @@ private fun ProfileOption(
         shape = RoundedCornerShape(14.dp),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
-        color = if (selected) IrisPrimary.copy(alpha = 0.08f) : IrisSurfaceVariant,
+        color = if (selected) IrisPrimary.copy(alpha = 0.08f) else IrisSurfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
