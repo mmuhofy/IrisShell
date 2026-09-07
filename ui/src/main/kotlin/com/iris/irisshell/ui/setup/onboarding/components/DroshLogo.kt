@@ -76,7 +76,7 @@ fun DroshLogo(
                 val r = radius - i * (strokeWidth + 2)
                 val path = Path().apply {
                     moveTo(center.x - r + floatOffset.y, center.y - r + floatOffset.y)
-                    arcTo(
+                     arcTo(
                         rect = androidx.compose.ui.geometry.Rect(
                             left = center.x - r - floatOffset.x,
                             top = center.y - r + floatOffset.y,
@@ -85,7 +85,7 @@ fun DroshLogo(
                         ),
                         startAngleDegrees = 135f,
                         sweepAngleDegrees = 270f,
-                        forceNewSubgroup = true,
+                        forceMoveTo = true,
                     )
                 }
                 drawPath(

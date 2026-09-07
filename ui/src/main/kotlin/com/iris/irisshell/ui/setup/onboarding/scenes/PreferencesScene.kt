@@ -34,6 +34,7 @@ import com.iris.irisshell.ui.setup.onboarding.components.PackageProfile
 import com.iris.irisshell.ui.setup.onboarding.components.PackageProfileSelector
 import com.iris.irisshell.ui.setup.onboarding.components.ShellChoice
 import com.iris.irisshell.ui.setup.onboarding.components.ShellSelector
+import com.iris.irisshell.ui.setup.onboarding.components.SetupButton
 
 /**
  * Sayfa 3 — User Preferences.
@@ -119,7 +120,10 @@ fun PreferencesScene(
                         )
                     },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardCapitalization = KeyboardCapitalization.Words),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Words,
+                        autoCorrect = false,
+                    ),
                     textStyle = TextStyle(
                         fontFamily = OutfitFontFamily,
                         fontWeight = FontWeight.Normal,

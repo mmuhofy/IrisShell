@@ -26,14 +26,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.design.system.IrisOnPrimary
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceVariant
@@ -162,6 +160,10 @@ enum class SetupStepStatus { Pending, Ok }
 
 @Composable
 private fun SetupStep(label: String, stepNum: Int, status: SetupStepStatus) {
+    val isDone = status == SetupStepStatus.Ok
+    val circleBg = if (isDone) IrisPrimary else IrisSurfaceVariant
+    val circleFg = if (isDone) IrisOnPrimary else IrisTextSecondary
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth(),
@@ -170,44 +172,31 @@ private fun SetupStep(label: String, stepNum: Int, status: SetupStepStatus) {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(24.dp)
-                .drawBehind {
-                    if (status == SetupStepStatus.Ok) {
-                        drawCircle(
-                            color = IrisPrimary,
-                            style = Stroke(width = 2f, cap = StrokeCap.Round),
-                        )
-                        drawLine(
-                            color = IrisPrimary,
-                            start = androidx.compose.ui.geometry.Offset(x = 5f, y = 12f),
-                            end = androidx.compose.ui.geometry.Offset(x = 10f, y = 17f),
-                            strokeWidth = 2.5f,
-                        )
-                        drawLine(
-                            color = IrisPrimary,
-                            start = androidx.compose.ui.geometry.Offset(x = 10f, y = 17f),
-                            end = androidx.compose.ui.geometry.Offset(x = 19f, y = 12f),
-                            strokeWidth = 2.5f,
-                        )
-                    } else {
-                        drawCircle(
-                            color = IrisTextSecondary,
-                            style = Stroke(width = 2f, cap = StrokeCap.Round),
-                        )
-                        drawContext.canvas.nativeCanvas.drawText(
-                            stepNum.toString(),
-                            12f, 17f,
-                            android.graphics.Paint().apply {
-                                textAlign = android.graphics.Paint.Align.CENTER
-                                textSize = 12f
-                                color = android.graphics.Color.parseColor("#888888")
-                                typeface = android.graphics.Typeface.create(
-                                    android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.NORMAL
-                                )
-                            },
-                        )
-                    }
-                },
-        )
+                .clip(RoundedCornerShape(12.dp))
+                .background(circleBg),
+        ) {
+            if (isDone) {
+                Text(
+                    text = "\u2713",
+                    color = circleFg,
+                    style = TextStyle(
+                        fontFamily = OutfitFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                    ),
+                )
+            } else {
+                Text(
+                    text = stepNum.toString(),
+                    color = circleFg,
+                    style = TextStyle(
+                        fontFamily = OutfitFontFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 11.sp,
+                    ),
+                )
+            }
+        }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = label,
@@ -216,7 +205,7 @@ private fun SetupStep(label: String, stepNum: Int, status: SetupStepStatus) {
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
             ),
-            color = if (status == SetupStepStatus.Ok) IrisText else IrisTextMuted,
+            color = if (isDone) IrisText else IrisTextMuted,
         )
     }
 }

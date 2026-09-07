@@ -3,6 +3,7 @@ package com.iris.irisshell.ui.setup.onboarding.scenes
 import android.os.Build
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -40,7 +40,7 @@ import com.iris.irisshell.ui.setup.onboarding.components.CheckStatus
 import com.iris.irisshell.ui.setup.onboarding.components.DeviceCheckItem
 import com.iris.irisshell.ui.setup.onboarding.components.SetupButton
 import com.iris.irisshell.ui.setup.onboarding.components.SkipAnchor
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 @Composable
 fun DeviceCheckScene(
@@ -49,58 +49,61 @@ fun DeviceCheckScene(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+
+    val archIcon = painterResource(R.drawable.lucide_terminal)
+    val androidIcon = painterResource(R.drawable.lucide_square)
+    val storageIcon = painterResource(R.drawable.lucide_download)
+    val ramIcon = painterResource(R.drawable.lucide_square_terminal)
+    val batteryIcon = painterResource(R.drawable.lucide_square_terminal)
 
     val checks = remember { mutableStateListOf<DeviceCheck>() }
     var isScanning by remember { mutableStateOf(true) }
     var canContinue by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            checks.clear()
+        checks.clear()
 
-            val arch = Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown"
-            val archLabel = when (arch) {
-                "arm64-v8a" -> "arm64-v8a"
-                "armeabi-v7a" -> "armv7"
-                "x86_64" -> "x86_64"
-                "x86" -> "x86"
-                else -> "unknown"
-            }
-            checks.add(DeviceCheck("Mimari", archLabel, CheckStatus.Ok, painterResource(R.drawable.lucide_terminal)))
-
-            checks.add(DeviceCheck("Android", "Android ${Build.VERSION.SDK_INT}", CheckStatus.Ok, painterResource(R.drawable.lucide_square)))
-
-            kotlinx.coroutines.delay(200)
-
-            val storageStats = context.getExternalFilesDir(null)?.let { dir ->
-                val stat = android.os.StatFs(dir.absolutePath)
-                val available = stat.availableBlocksLong * stat.blockSizeLong
-                (available / (1024 * 1024 * 1024))
-            } ?: 0L
-
-            val storageLabel = if (storageStats >= 2) "$storageStats GB boş — yeterli" else "$storageStats GB — yeterli değil"
-            val storageStatus = if (storageStats >= 2) CheckStatus.Ok else CheckStatus.Error
-            checks.add(DeviceCheck("Depolama", storageLabel, storageStatus, painterResource(R.drawable.lucide_download)))
-
-            val ramSize = Runtime.getRuntime().maxMemory() / (1024 * 1024)
-            checks.add(DeviceCheck("RAM", "${ramSize / 1024} GB", CheckStatus.Ok, painterResource(R.drawable.lucide_square_terminal)))
-
-            kotlinx.coroutines.delay(200)
-
-            val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
-            val batteryPct = batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
-            val batteryLabel = if (batteryPct >= 0) "%$batteryPct" else "bilinmiyor"
-            val batteryStatus = when {
-                batteryPct < 0 -> CheckStatus.Unknown
-                batteryPct < 20 -> CheckStatus.Warn
-                else -> CheckStatus.Ok
-            }
-            checks.add(DeviceCheck("Pil", batteryLabel, batteryStatus, painterResource(R.drawable.lucide_square_terminal)))
-
-            isScanning = false
-            canContinue = checks.none { it.status == CheckStatus.Error }
+        val arch = Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown"
+        val archLabel = when (arch) {
+            "arm64-v8a" -> "arm64-v8a"
+            "armeabi-v7a" -> "armv7"
+            "x86_64" -> "x86_64"
+            "x86" -> "x86"
+            else -> "unknown"
         }
+        checks.add(DeviceCheck("Mimari", archLabel, CheckStatus.Ok, archIcon))
+
+        checks.add(DeviceCheck("Android", "Android ${Build.VERSION.SDK_INT}", CheckStatus.Ok, androidIcon))
+
+        delay(200)
+
+        val storageStats = context.getExternalFilesDir(null)?.let { dir ->
+            val stat = android.os.StatFs(dir.absolutePath)
+            val available = stat.availableBlocksLong * stat.blockSizeLong
+            (available / (1024 * 1024 * 1024))
+        } ?: 0L
+
+        val storageLabel = if (storageStats >= 2) "$storageStats GB boş — yeterli" else "$storageStats GB — yeterli değil"
+        val storageStatus = if (storageStats >= 2) CheckStatus.Ok else CheckStatus.Error
+        checks.add(DeviceCheck("Depolama", storageLabel, storageStatus, storageIcon))
+
+        val ramSize = Runtime.getRuntime().maxMemory() / (1024 * 1024)
+        checks.add(DeviceCheck("RAM", "${ramSize / 1024} GB", CheckStatus.Ok, ramIcon))
+
+        delay(200)
+
+        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
+        val batteryPct = batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        val batteryLabel = if (batteryPct >= 0) "%$batteryPct" else "bilinmiyor"
+        val batteryStatus = when {
+            batteryPct < 0 -> CheckStatus.Unknown
+            batteryPct < 20 -> CheckStatus.Warn
+            else -> CheckStatus.Ok
+        }
+        checks.add(DeviceCheck("Pil", batteryLabel, batteryStatus, batteryIcon))
+
+        isScanning = false
+        canContinue = checks.none { it.status == CheckStatus.Error }
     }
 
     Box(
