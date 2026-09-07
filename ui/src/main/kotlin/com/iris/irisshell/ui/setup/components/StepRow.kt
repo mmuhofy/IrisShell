@@ -64,7 +64,7 @@ fun StepRow(
         Box(
             modifier = Modifier
                 .width(40.dp),
-            contentAlignment = Alignment.Top,
+            contentAlignment = Alignment.TopCenter,
         ) {
             StepStateIcon(state = state, size = 32.dp)
             if (showConnector) {
