@@ -1,13 +1,10 @@
 package com.iris.irisshell.ui.topbar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
@@ -50,13 +46,12 @@ import com.iris.irisshell.ui.R
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 
 /**
- * Terminal top bar — Obsidian Mobile tarzı.
+ * Modern minimalist top bar — pills sit directly on terminal background.
  *
- *  Sol:   panel-left icon + oturum adı → tıkla → sidebar aç
- *  Sağ:   iki yana dokunuk pill buton (keyboard toggle + more actions)
+ *  Left:   [pill] | session name    (session name is NOT clickable)
+ *  Right:  [kbd] [more]             (two pills, merged border)
  *
- * Butonlar iOS-style pill: yana dokunuk, border var ama elevation yok.
- * Etrafında container/elevation yok — doğrudan top bar üzerinde.
+ * No separate container background — pills float directly on terminal.
  */
 @Composable
 fun TerminalTopBar(
@@ -75,10 +70,10 @@ fun TerminalTopBar(
 
     val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
+    // Transparent container — pills float directly on terminal background
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(IrisSurface)
             .height(48.dp + statusBarH)
             .padding(top = statusBarH),
     ) {
@@ -89,54 +84,58 @@ fun TerminalTopBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // ── Left: panel icon + session name ───────────────────────
+            // ── Left: pill button + divider + session name ────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable(onClick = onOpenSidebar)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_panel_left),
-                    contentDescription = "Open session menu",
-                    tint = IrisTextSecondary,
-                    modifier = Modifier.size(20.dp),
+                ModernPillButton(
+                    iconRes = R.drawable.lucide_panel_left,
+                    contentDescription = "Open sessions",
+                    onClick = onOpenSidebar,
+                    size = 36.dp,
                 )
-                Spacer(Modifier.width(8.dp))
-                Column {
-                    Text(
-                        text = activeName ?: "IrisShell",
-                        color = IrisText,
-                        fontFamily = OutfitFontFamily,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                    )
-                    Text(
-                        text = "tap to switch",
-                        color = IrisTextMuted,
-                        fontFamily = OutfitFontFamily,
-                        fontSize = 11.sp,
-                    )
-                }
+
+                // Thin vertical divider
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(20.dp)
+                        .padding(horizontal = 10.dp)
+                        .background(IrisBorderSubtle),
+                )
+
+                // Session name — NOT clickable
+                Text(
+                    text = activeName ?: "IrisShell",
+                    color = IrisText,
+                    fontFamily = OutfitFontFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                )
             }
 
-            // ── Right: two pill buttons side by side ──────────────────
+            // ── Right: two merged pills ──────────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                PillButton(
+                ModernPillButton(
                     iconRes = if (keyboardFocused) R.drawable.lucide_keyboard_off else R.drawable.lucide_keyboard,
                     contentDescription = if (keyboardFocused) "Hide keyboard" else "Show keyboard",
                     onClick = onToggleKeyboard,
+                    size = 38.dp,
+                    isFirst = true,
+                    isLast = false,
                 )
 
                 var moreExpanded by remember { mutableStateOf(false) }
-                PillButton(
+                ModernPillButton(
                     iconRes = R.drawable.lucide_ellipsis_vertical,
                     contentDescription = "More actions",
                     onClick = { moreExpanded = true },
+                    size = 38.dp,
+                    isFirst = false,
+                    isLast = true,
                 )
 
                 MoreActionsDropdown(
@@ -164,12 +163,11 @@ private fun MoreActionsDropdown(
     onClose: () -> Unit,
 ) {
     val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val offsetY = with(LocalDensity.current) { (48.dp + statusBarH).roundToPx() }
 
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        containerColor = IrisSurfaceVariant,
+        containerColor = IrisSurface,
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(12.dp),
         offset = DpOffset(x = 0.dp, y = statusBarH + 48.dp),
@@ -276,18 +274,36 @@ private fun MoreActionsDropdown(
     }
 }
 
+/**
+ * Modern pill button — no border, sits directly on terminal background.
+ * When [isFirst]/[isLast] are set for a group, the shape is rounded on
+ * the appropriate corners to create a merged pill group.
+ */
 @Composable
-private fun PillButton(
+private fun ModernPillButton(
     iconRes: Int,
     contentDescription: String,
     onClick: () -> Unit,
+    size: androidx.compose.ui.unit.Dp = 36.dp,
+    isFirst: Boolean = false,
+    isLast: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
+    val corner = if (isFirst && !isLast) {
+        RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp, topEnd = 4.dp, bottomEnd = 4.dp)
+    } else if (!isFirst && isLast) {
+        RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 20.dp, bottomEnd = 20.dp)
+    } else if (isFirst && isLast) {
+        CircleShape
+    } else {
+        RoundedCornerShape(4.dp)
+    }
+
     Box(
-        modifier = Modifier
-            .size(36.dp)
-            .clip(CircleShape)
-            .background(IrisSurfaceVariant)
-            .border(width = 1.dp, color = IrisBorderSubtle, shape = CircleShape)
+        modifier = modifier
+            .size(size)
+            .clip(corner)
+            .background(IrisSurfaceVariant.copy(alpha = 0.5f))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -295,7 +311,7 @@ private fun PillButton(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
             tint = IrisTextSecondary,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(18.dp),
         )
     }
 }
