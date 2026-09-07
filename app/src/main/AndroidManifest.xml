@@ -46,6 +46,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name=".IrisShellDocumentsProvider"
+            android:authorities="com.iris.irisshell.documents"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:multiprocess="false">
+            <intent-filter>
+                <action android:name="android.content.Intent.ACTION_OPEN_DOCUMENT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </provider>
     </application>
 
 </manifest>
