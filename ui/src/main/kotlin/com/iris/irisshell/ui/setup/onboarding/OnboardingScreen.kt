@@ -16,9 +16,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.domain.terminal.PackageProfile
+import com.iris.irisshell.domain.terminal.SetupPreferences
+import com.iris.irisshell.domain.terminal.ShellChoice
 import com.iris.irisshell.ui.setup.OnboardingViewModel
-import com.iris.irisshell.ui.setup.onboarding.components.ShellChoice
-import com.iris.irisshell.ui.setup.onboarding.components.PackageProfile
+import com.iris.irisshell.ui.setup.onboarding.components.SetupButton
 import com.iris.irisshell.ui.setup.onboarding.scenes.DeviceCheckScene
 import com.iris.irisshell.ui.setup.onboarding.scenes.PreferencesScene
 import com.iris.irisshell.ui.setup.onboarding.scenes.PreferencesState
@@ -55,7 +57,14 @@ fun OnboardingScreen(
 
     val finish: () -> Unit = {
         coroutineScope.launch {
-            viewModel.finishOnboarding()
+            viewModel.finishOnboarding(
+                SetupPreferences(
+                    userName = userName,
+                    shellChoice = shellChoice,
+                    packageProfile = packageProfile,
+                    customPackages = customPackages,
+                )
+            )
             onCompleted()
         }
     }
@@ -73,7 +82,14 @@ fun OnboardingScreen(
 
     val skip: () -> Unit = {
         coroutineScope.launch {
-            viewModel.finishOnboarding()
+            viewModel.finishOnboarding(
+                SetupPreferences(
+                    userName = userName,
+                    shellChoice = shellChoice,
+                    packageProfile = packageProfile,
+                    customPackages = customPackages,
+                )
+            )
             onCompleted()
         }
     }

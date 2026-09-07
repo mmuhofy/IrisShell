@@ -3,6 +3,9 @@ package com.iris.irisshell.terminal
 import android.content.Context
 import android.system.Os
 import android.util.Log
+import com.iris.irisshell.domain.terminal.PackageProfile
+import com.iris.irisshell.domain.terminal.SetupPreferences
+import com.iris.irisshell.domain.terminal.ShellChoice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -30,15 +33,13 @@ class UbuntuBootstrap(private val context: Context) {
     val isInstalled: Boolean
         get() = prootFile.canExecute()
             && File(libDir, "libtalloc.so.2").canRead()
-            && File(rootfsDir, "bin/zsh").canExecute()
             && File(rootfsDir, "etc/apt/sources.list").exists()
             && setupMarker.exists()
 
     @Volatile private var lastFailedStep: String = "Unknown"
 
     suspend fun install(
-        installPackages: Boolean = true,
-        optimize: Boolean = true,
+        preferences: SetupPreferences = SetupPreferences.defaults(),
         onState: (UbuntuSetupState) -> Unit,
         onLog: (String) -> Unit = {},
     ) {
@@ -47,12 +48,11 @@ class UbuntuBootstrap(private val context: Context) {
             onState(UbuntuSetupState.Ready)
             return
         }
-        runInstall(installPackages, optimize, onState, onLog)
+        runInstall(preferences, onState, onLog)
     }
 
     private suspend fun runInstall(
-        installPackages: Boolean,
-        optimize: Boolean,
+        preferences: SetupPreferences,
         onState: (UbuntuSetupState) -> Unit,
         onLog: (String) -> Unit,
     ) {
@@ -110,7 +110,7 @@ class UbuntuBootstrap(private val context: Context) {
                 runScriptInProot(SCRIPTS_CONFIGURE, onLog = onLog)
                 onLog("✓ Rootfs configured.")
 
-                if (installPackages) {
+                if (installPackagesFor(preferences.packageProfile)) {
                     onLog("→ Installing base packages…")
                     onState(UbuntuSetupState.InstallingPackages("apt", "Installing packages..."))
                     lastFailedStep = "Packages"
@@ -119,25 +119,36 @@ class UbuntuBootstrap(private val context: Context) {
                     onLog("✓ Base packages installed.")
                 }
 
-                onLog("→ Installing Oh My Zsh + plugins…")
-                onState(UbuntuSetupState.InstallingOhMyZsh("Installing Oh My Zsh..."))
-                lastFailedStep = "OhMyZsh"
-                runScriptInProot(SCRIPTS_OMZ, onLog = onLog)
-                runScriptInProot(SCRIPTS_ZSHRC, onLog = onLog)
-                onLog("✓ Oh My Zsh ready.")
-
-                if (optimize) {
-                    onLog("→ Optimizing rootfs (deb cache purge, marker write)…")
+                val shellChoice = preferences.shellChoice
+                if (shellChoice == ShellChoice.Zsh) {
+                    onLog("→ Installing Oh My Zsh + plugins…")
+                    onState(UbuntuSetupState.InstallingOhMyZsh("Installing Oh My Zsh..."))
+                    lastFailedStep = "OhMyZsh"
+                    runScriptInProot(SCRIPTS_OMZ, onLog = onLog)
+                    runScriptInProot(SCRIPTS_ZSHRC, onLog = onLog)
+                    onLog("✓ Oh My Zsh ready.")
+                } else {
+                    onLog("→ Bash selected — skipping Oh My Zsh.")
                     onState(UbuntuSetupState.Optimizing)
-                    lastFailedStep = "Optimize"
-                    val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown"
-                    runScriptInProot(
-                        SCRIPTS_OPTIMIZE,
-                        onLog = onLog,
-                        envExtras = mapOf("ABI" to abi),
-                    )
-                    onLog("✓ Rootfs optimized.")
+                    lastFailedStep = "Bash"
+                    runScriptInProot(SCRIPTS_BASHRC, onLog = onLog)
+                    onLog("✓ .bashrc configured for ${preferences.userName}.")
                 }
+
+                onLog("→ Optimizing rootfs (deb cache purge, marker write)…")
+                onState(UbuntuSetupState.Optimizing)
+                lastFailedStep = "Optimize"
+                val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown"
+                runScriptInProot(
+                    SCRIPTS_OPTIMIZE,
+                    onLog = onLog,
+                    envExtras = mapOf(
+                        "ABI" to abi,
+                        "IRIS_USERNAME" to preferences.userName,
+                        "IRIS_CUSTOM_PACKAGES" to preferences.customPackages.joinToString(","),
+                    ),
+                )
+                onLog("✓ Rootfs optimized.")
 
                 onLog("✓ Bootstrap complete. Ready.")
                 onState(UbuntuSetupState.Ready)
@@ -291,6 +302,24 @@ class UbuntuBootstrap(private val context: Context) {
         baseDir.deleteRecursively()
     }
 
+    /**
+     * Determines whether package installation should run based on the
+     * user's chosen [PackageProfile].
+     *
+     * - [PackageProfile.Minimal]  → skip bulk package install (only core utils from rootfs)
+     * - [PackageProfile.Developer] → install standard developer package set
+     * - [PackageProfile.Custom]   → install standard set + customPackages list
+     *
+     * The [SCRIPTS_PACKAGES] script always runs for Developer and Custom.
+     * The custom package list is passed via the IRIS_CUSTOM_PACKAGES env var
+     * to [SCRIPTS_OPTIMIZE], which feeds it to `apt install`.
+     */
+    private fun installPackagesFor(profile: PackageProfile): Boolean = when (profile) {
+        PackageProfile.Minimal -> false
+        PackageProfile.Developer,
+        PackageProfile.Custom -> true
+    }
+
     companion object {
         private const val UBUNTU_VERSION = "24.04.4"
         private val ROOTFS_ARCH_MAP = mapOf(
@@ -305,8 +334,9 @@ class UbuntuBootstrap(private val context: Context) {
         private const val SCRIPTS_CONFIGURE = "rootfs-configure.sh"
         private const val SCRIPTS_PACKAGES = "packages-install.sh"
         private const val SCRIPTS_SET_DEFAULT_SHELL = "set-default-shell.sh"
-        private const val SCRIPTS_OMZ = "omz-install.sh"
+         private const val SCRIPTS_OMZ = "omz-install.sh"
         private const val SCRIPTS_ZSHRC = "zshrc-write.sh"
+        private const val SCRIPTS_BASHRC = "bashrc-write.sh"
         private const val SCRIPTS_OPTIMIZE = "rootfs-optimize.sh"
     }
 

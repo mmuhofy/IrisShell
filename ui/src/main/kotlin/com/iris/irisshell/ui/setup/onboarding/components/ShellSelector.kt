@@ -27,6 +27,7 @@ import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.OutfitFontFamily
+import com.iris.irisshell.domain.terminal.ShellChoice
 
 /**
  * Radio-group selector for choosing a shell (Zsh or Bash).
@@ -162,5 +163,3 @@ private fun ShellOption(
         }
     }
 }
-
-enum class ShellChoice { Zsh, Bash }

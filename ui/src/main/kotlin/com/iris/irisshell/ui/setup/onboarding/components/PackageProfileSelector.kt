@@ -35,6 +35,7 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.design.system.OutfitFontFamily
+import com.iris.irisshell.domain.terminal.PackageProfile
 
 /**
  * Radio-group selector for package profile (Minimal, Developer, Custom).
@@ -231,8 +232,6 @@ private fun PackageCheckboxItem(
         )
     }
 }
-
-enum class PackageProfile { Minimal, Developer, Custom }
 
 private val CUSTOM_PACKAGES = listOf(
     "vim", "python3", "nodejs", "ruby",

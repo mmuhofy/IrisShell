@@ -30,9 +30,9 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.design.system.OutfitFontFamily
-import com.iris.irisshell.ui.setup.onboarding.components.PackageProfile
+import com.iris.irisshell.domain.terminal.PackageProfile
+import com.iris.irisshell.domain.terminal.ShellChoice
 import com.iris.irisshell.ui.setup.onboarding.components.PackageProfileSelector
-import com.iris.irisshell.ui.setup.onboarding.components.ShellChoice
 import com.iris.irisshell.ui.setup.onboarding.components.ShellSelector
 import com.iris.irisshell.ui.setup.onboarding.components.SetupButton
 

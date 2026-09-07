@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
         }
 
         LaunchedEffect(firstCompleted) {
-            if (firstCompleted == true) {
+            if (firstCompleted == true && triggerBootstrap.state == TriggerBootstrapUseCase.State.NotStarted) {
                 triggerBootstrap.start()
             }
         }

@@ -1,5 +1,6 @@
 package com.iris.irisshell.terminal
 
+import com.iris.irisshell.domain.terminal.SetupPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,8 +39,7 @@ class BootstrapStatePort(private val bootstrap: UbuntuBootstrap) {
      */
     fun runBootstrap(
         scope: CoroutineScope,
-        installPackages: Boolean = true,
-        optimize: Boolean = true,
+        preferences: SetupPreferences = SetupPreferences.defaults(),
     ) {
         if (bootstrap.isInstalled) {
             _state.value = UbuntuSetupState.Ready
@@ -48,8 +48,7 @@ class BootstrapStatePort(private val bootstrap: UbuntuBootstrap) {
         scope.launch {
             _state.value = UbuntuSetupState.Idle
             bootstrap.install(
-                installPackages = installPackages,
-                optimize = optimize,
+                preferences = preferences,
                 onState = { _state.value = it },
                 onLog = { _logs.tryEmit(it) },
             )
