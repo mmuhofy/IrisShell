@@ -89,11 +89,11 @@ fun TerminalTopBar(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                FloatingPillButton(
+                 FloatingPillButton(
                     iconRes = R.drawable.lucide_panel_left,
                     contentDescription = "Open sessions",
                     onClick = onOpenSidebar,
-                    size = 36.dp,
+                    size = 40.dp,
                 )
 
                 // Session name — has its own surface, NOT clickable
@@ -122,7 +122,7 @@ fun TerminalTopBar(
                     iconRes = if (keyboardFocused) R.drawable.lucide_keyboard_off else R.drawable.lucide_keyboard,
                     contentDescription = if (keyboardFocused) "Hide keyboard" else "Show keyboard",
                     onClick = onToggleKeyboard,
-                    size = 36.dp,
+                    size = 40.dp,
                 )
 
                 var moreExpanded by remember { mutableStateOf(false) }
@@ -130,7 +130,7 @@ fun TerminalTopBar(
                     iconRes = R.drawable.lucide_ellipsis_vertical,
                     contentDescription = "More actions",
                     onClick = { moreExpanded = true },
-                    size = 36.dp,
+                    size = 40.dp,
                 )
 
                 MoreActionsDropdown(

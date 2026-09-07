@@ -198,29 +198,11 @@ private fun ReadyScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        if (!fullscreen) {
-            TerminalTopBar(
-                viewModel = sessionSwitcherViewModel,
-                isFullscreen = fullscreen,
-                keyboardFocused = keyboardFocused,
-                onToggleKeyboard = ::toggleKeyboard,
-                onOpenSidebar = { sidebarOpen = true },
-                onRefresh = {
-                    terminalManager.currentSession?.finishIfRunning()
-                    terminalManager.addTab()
-                },
-                onToggleFullscreen = { fullscreen = true },
-                onClose = {
-                    terminalManager.currentSession?.finishIfRunning()
-                },
-                onOpenSettings = onOpenSettings,
-            )
-        }
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Terminal content fills all space — no top bar taking vertical space
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
                 .imePadding(),
         ) {
             Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
@@ -322,25 +304,46 @@ private fun ReadyScreen(
             }
         }
 
+        // Top bar overlay — floats on terminal, takes no layout space
+        if (!fullscreen) {
+            TerminalTopBar(
+                viewModel = sessionSwitcherViewModel,
+                isFullscreen = fullscreen,
+                keyboardFocused = keyboardFocused,
+                onToggleKeyboard = ::toggleKeyboard,
+                onOpenSidebar = { sidebarOpen = true },
+                onRefresh = {
+                    terminalManager.currentSession?.finishIfRunning()
+                    terminalManager.addTab()
+                },
+                onToggleFullscreen = { fullscreen = true },
+                onClose = {
+                    terminalManager.currentSession?.finishIfRunning()
+                },
+                onOpenSettings = onOpenSettings,
+            )
+        }
+
+        // Slider overlay
         if (!fullscreen && sliderVisible) {
             VerticalZoomSlider(
                 value = fontSizeSp,
                 onValueChange = { terminalViewModel.setFontSize(it) },
                 modifier = Modifier
-                    .align(Alignment.End)
+                    .align(Alignment.CenterEnd)
                     .padding(end = 16.dp),
             )
         }
-    }
 
-    // Sidebar overlay (replaces ModalBottomSheet)
-    if (sidebarOpen) {
-        BackHandler { sidebarOpen = false }
-        SessionSidebar(
-            isOpen = sidebarOpen,
-            onDismiss = { sidebarOpen = false },
-            onOpenSettings = onOpenSettings,
-        )
+        // Sidebar overlay (replaces ModalBottomSheet)
+        if (sidebarOpen) {
+            BackHandler { sidebarOpen = false }
+            SessionSidebar(
+                isOpen = sidebarOpen,
+                onDismiss = { sidebarOpen = false },
+                onOpenSettings = onOpenSettings,
+            )
+        }
     }
 }
 
