@@ -1,8 +1,8 @@
 package com.iris.irisshell.ui.setup.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -45,13 +45,13 @@ import com.iris.irisshell.ui.setup.theme.SetupPalette
 /**
  * Expandable live-log card.
  *
- * - Collapsed (default): a 36dp tall chip — "View live log" + small chevron.
- * - Expanded: a 240dp tall scrollable panel of mono-space log lines.
+ * - Collapsed (default): a 44dp tall chip — status dot + label + line count + chevron.
+ * - Expanded: a scrollable panel of mono-space log lines (max 320dp).
  *
- * Tail behaviour: when new lines come in while expanded, we auto-scroll to
+ * Tail behavior: when new lines come in while expanded, we auto-scroll to
  * the bottom (unless the user has scrolled up — then we respect them).
  *
- * @param lines           That latest N lines from `BootstrapViewModel.liveLogs`.
+ * @param lines           Latest N lines from `BootstrapViewModel.liveLogs`.
  * @param expanded        Open / closed state (driven by `BootstrapViewModel.isLogDrawerOpen`).
  * @param onToggleOpen    Called when the user taps the header.
  */
@@ -63,38 +63,36 @@ fun LiveLogCard(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Header chip — always visible.
+        // Header chip — always visible, 44dp tall.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(SetupPalette.SurfaceVariant.copy(alpha = 0.6f))
+                .clip(RoundedCornerShape(14.dp))
+                .background(SetupPalette.SurfaceVariant.copy(alpha = 0.5f))
                 .border(
                     width = 1.dp,
                     color = SetupPalette.Outline,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(14.dp),
                 )
                 .clickable(onClick = onToggleOpen)
-                .padding(horizontal = 14.dp, vertical = 9.dp),
+                .padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val statusColor = if (lines.isNotEmpty()) SetupPalette.Success else SetupPalette.TextDisabled
             Box(
                 modifier = Modifier
-                    .size(6.dp)
-                    .background(
-                        if (lines.isNotEmpty()) SetupPalette.Success
-                        else SetupPalette.TextDisabled,
-                        shape = CircleShape,
-                    ),
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(statusColor),
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = if (expanded) "Hide live log" else "View live log",
+                text = "Live Log",
                 color = SetupPalette.TextSecondary,
                 style = TextStyle(
                     fontFamily = OutfitFontFamily,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
                 ),
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -103,7 +101,7 @@ fun LiveLogCard(
                 color = SetupPalette.TextMuted,
                 style = TextStyle(
                     fontFamily = OutfitFontFamily,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                 ),
             )
 
@@ -133,12 +131,12 @@ fun LiveLogCard(
                     .padding(top = 8.dp)
                     .fillMaxWidth()
                     .heightIn(min = 140.dp, max = 320.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(SetupPalette.Background)
                     .border(
                         width = 1.dp,
                         color = SetupPalette.Outline,
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(12.dp),
                     ),
             ) {
                 if (lines.isEmpty()) {

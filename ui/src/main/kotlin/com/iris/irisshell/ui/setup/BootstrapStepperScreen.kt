@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
@@ -88,17 +87,17 @@ fun BootstrapStepperScreen(
             modifier = Modifier
                 .widthIn(max = 480.dp)
                 .fillMaxWidth()
-                .padding(horizontal = 28.dp, vertical = 56.dp),
+                .padding(horizontal = 24.dp, vertical = 60.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            SetupHeroMark(sizeDp = 72.dp)
-            Spacer(modifier = Modifier.height(20.dp))
+            SetupHeroMark(sizeDp = 80.dp)
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "Iris Shell",
                 color = SetupPalette.Text,
                 style = TextStyle(
                     fontFamily = OutfitFontFamily,
-                    fontSize = 28.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.3.sp,
                 ),
@@ -109,23 +108,23 @@ fun BootstrapStepperScreen(
                 color = SetupPalette.TextSecondary,
                 style = TextStyle(
                     fontFamily = OutfitFontFamily,
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                 ),
             )
 
-            Spacer(modifier = Modifier.height(34.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             StepperList(progress)
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             CurrentMessage(progress)
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             ProgressBlock(progress)
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             LiveLogCard(
                 lines = liveLogs,
@@ -175,7 +174,7 @@ private fun CurrentMessage(progress: BootstrapProgress) {
             color = SetupPalette.Primary,
             style = TextStyle(
                 fontFamily = OutfitFontFamily,
-                fontSize = 12.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
             ),
             modifier = Modifier
@@ -194,15 +193,15 @@ private fun ProgressBlock(progress: BootstrapProgress) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .height(12.dp)
+                .clip(RoundedCornerShape(6.dp))
                 .background(SetupPalette.SurfaceVariant),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(fraction = pct / 100f)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(6.dp))
                     .background(SetupPalette.Primary),
             )
         }
@@ -216,8 +215,8 @@ private fun ProgressBlock(progress: BootstrapProgress) {
                 color = SetupPalette.TextMuted,
                 style = TextStyle(
                     fontFamily = OutfitFontFamily,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
                 ),
             )
             Text(
@@ -229,7 +228,7 @@ private fun ProgressBlock(progress: BootstrapProgress) {
                 color = SetupPalette.TextSecondary,
                 style = TextStyle(
                     fontFamily = OutfitFontFamily,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                 ),
             )

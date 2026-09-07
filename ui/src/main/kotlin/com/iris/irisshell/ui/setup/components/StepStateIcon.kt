@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -37,14 +36,14 @@ import com.iris.irisshell.ui.setup.theme.SetupPalette
 fun StepStateIcon(
     state: StepState,
     modifier: Modifier = Modifier,
-    size: Dp = 24.dp,
+    size: Dp = 32.dp,
 ) {
     val infinite = rememberInfiniteTransition(label = "step-icon")
     val pulse by infinite.animateFloat(
-        initialValue = 0.4f,
+        initialValue = 0.3f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1100),
+            animation = tween(durationMillis = 1200),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "pulse-alpha",
@@ -53,19 +52,19 @@ fun StepStateIcon(
     Box(modifier = modifier.size(size + 8.dp), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.size(size + 8.dp)) {
             val center = Offset(this.size.width / 2f, this.size.height / 2f)
-            val ringRadius = (size.toPx() / 2f) + 4f
+            val ringRadius = (size.toPx() / 2f) + 5f
 
             when (state) {
                 StepState.Pending -> {
                     drawCircle(
                         color = SetupPalette.TextDisabled,
-                        radius = size.toPx() / 2.4f,
+                        radius = size.toPx() / 2.6f,
                         center = center,
                         style = Stroke(
-                            width = 1.5.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(3f, 3f)),
+                            width = 2.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)),
                         ),
-                        alpha = 0.6f,
+                        alpha = 0.5f,
                     )
                 }
                 StepState.Active -> {
@@ -73,7 +72,7 @@ fun StepStateIcon(
                         color = SetupPalette.PulseHalo,
                         radius = ringRadius * pulse,
                         center = center,
-                        alpha = 0.25f * pulse,
+                        alpha = 0.2f * pulse,
                     )
                     drawCircle(
                         color = SetupPalette.Primary,
@@ -83,30 +82,30 @@ fun StepStateIcon(
                 }
                 StepState.Done -> {
                     drawCircle(
-                        color = SetupPalette.Primary.copy(alpha = 0.18f),
+                        color = SetupPalette.Primary.copy(alpha = 0.15f),
                         radius = size.toPx() / 1.9f,
                         center = center,
                     )
                     val cx = center.x
                     val cy = center.y
-                    val r = size.toPx() / 4.4f
+                    val r = size.toPx() / 4.2f
                     val path = Path().apply {
                         moveTo(cx - r, cy)
-                        lineTo(cx - r / 2.5f, cy + r / 1.8f)
-                        lineTo(cx + r, cy - r / 1.8f)
+                        lineTo(cx - r / 2.2f, cy + r / 1.6f)
+                        lineTo(cx + r, cy - r / 1.6f)
                     }
                     drawPath(
                         path = path,
                         color = SetupPalette.Primary,
                         style = Stroke(
-                            width = 2.dp.toPx(),
+                            width = 2.5.dp.toPx(),
                             cap = StrokeCap.Round,
                         ),
                     )
                 }
                 StepState.Failed -> {
                     drawCircle(
-                        color = SetupPalette.Error.copy(alpha = 0.18f),
+                        color = SetupPalette.Error.copy(alpha = 0.15f),
                         radius = size.toPx() / 1.9f,
                         center = center,
                     )
@@ -123,7 +122,7 @@ fun StepStateIcon(
                         path = path,
                         color = SetupPalette.Error,
                         style = Stroke(
-                            width = 2.dp.toPx(),
+                            width = 2.5.dp.toPx(),
                             cap = StrokeCap.Round,
                         ),
                     )
