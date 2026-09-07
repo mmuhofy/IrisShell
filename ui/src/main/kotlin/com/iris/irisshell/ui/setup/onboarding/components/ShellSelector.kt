@@ -102,9 +102,7 @@ private fun ShellOption(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(18.dp)
-                    .weight(0f),
+                modifier = Modifier.size(18.dp),
             ) {
                 if (selected) {
                     Canvas(modifier = Modifier.size(18.dp)) {
