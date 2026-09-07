@@ -1,6 +1,8 @@
 # Iris Shell — Memory Bank
 _Last updated: 2026-09-07_
 
+Last commit: `13af789` — fix(terminal): don't run set-default-shell.sh for Bash users
+
 ---
 
 ## 1. Project Identity
@@ -207,6 +209,18 @@ Closed (Room only, removed from irisSessions)
 - ✅ `OnboardingScreen` hoists preference state; conditional ShellSetup skip for Bash
 - ✅ Old `ArchitectureScene`/`ReadyScene` left as dead code (no longer referenced)
 - ✅ GitHub Actions build passing (`2209f58` — fix Kotlin compose API mismatches)
+- ✅ Runtime crash fix: `weight(0f)` in ShellSelector Canvas `Box` → 0-width bitmap; removed
+- ✅ Vector drawable: `lucide_square_terminal.xml` missing width/height → added 24dp
+- ✅ Preferences connected to real bootstrap: `OnboardingViewModel.start(preferences)` → `TriggerBootstrap` → `BootstrapStatePort` → `UbuntuBootstrap.install(preferences)`
+- ✅ `set-default-shell.sh` only for Zsh (Bash users got `/bin/zsh not found` proot error)
+- ✅ `isInstalled` check no longer requires `bin/zsh` (needed for Bash)
+- ✅ `bashrc-write.sh` created for Bash path
+- ✅ `packages-install.sh` reads `IRIS_CUSTOM_PACKAGES` env var for Custom profile
+
+### Domain Types (2026-09-07)
+- `ShellChoice` enum: moved from `ui/components/` → `domain/terminal/`
+- `PackageProfile` enum: moved from `ui/components/` → `domain/terminal/`
+- `SetupPreferences` data class: `(userName, shellChoice, packageProfile, customPackages)`
 
 ### Compose API Issues Resolved
 - `if (selected) X : Y` → `if (selected) X else Y` (Kotlin requires `else`, not `:`)

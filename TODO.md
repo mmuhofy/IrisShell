@@ -40,6 +40,15 @@
 - [x] OnboardingSceneKind: 4 scenes (Welcome → DeviceCheck → Preferences → ShellSetup)
 - [x] OnboardingScreen: state hoisting for userName/shellChoice/packageProfile/customPackages; conditional ShellSetup skip for Bash
 - [x] GitHub Actions build passing (fix Kotlin if-else syntax, drawArc params, Surface lambda brace, KeyboardOptions API)
+- [x] Runtime crash fix: `weight(0f)` in ShellSelector Canvas Box → removed
+- [x] Runtime crash fix: `lucide_square_terminal.xml` missing width/height → added 24dp
+- [x] Preferences connected to real bootstrap: OnboardingViewModel.start(preferences) → TriggerBootstrap → BootstrapStatePort → UbuntuBootstrap.install(preferences)
+- [x] set-default-shell.sh only runs for Zsh (Bash users got proot `/bin/zsh not found` error)
+- [x] isInstalled check no longer requires bin/zsh (needed for Bash users)
+- [x] bashrc-write.sh created for Bash path
+- [x] packages-install.sh reads IRIS_CUSTOM_PACKAGES env var for Custom profile
+- [x] ShellChoice + PackageProfile enums moved from ui/ to domain/
+- [x] SetupPreferences data class created in domain/
 
 ### PTY / Terminal
 - [ ] Verify PTY session creation with PRoot + Ubuntu rootfs
