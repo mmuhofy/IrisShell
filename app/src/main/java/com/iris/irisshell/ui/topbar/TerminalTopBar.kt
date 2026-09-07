@@ -1,6 +1,10 @@
 package com.iris.irisshell.ui.topbar
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,10 +16,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -28,11 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,12 +52,24 @@ import com.iris.irisshell.ui.R
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 
 /**
- * Modern minimalist top bar — pills float directly on terminal background.
+ * Modern minimalist top bar — iOS/Obsidian-style floating pills.
  *
- *  Left:   [pill] session-name-surface        (session name is NOT clickable)
- *  Right:  [kbd] [more]                      (floating pills, no surface)
+ * Değişiklik notları (önceki versiyona göre):
+ *  - Pill butonlar artık gerçek bir surface'a sahip (önceden tamamen
+ *    şeffaftı, sadece basılınca hafif alpha görünüyordu).
+ *  - Boyutlar büyütüldü: buton 36/40dp → 44dp, ikon 18dp → 22dp (iOS ölçeği).
+ *  - Session-name kutusu stadium (tam yuvarlak) pill'e çevrildi.
+ *  - Basma anında hafif scale-down animasyonu (spring, bounce yok) —
+ *    iOS tarzı dokunma geri bildirimi.
+ *  - "Vibrancy" simülasyonu: gerçek backdrop blur DEĞİL (Compose'da bunun
+ *    native karşılığı yok, bkz. sohbet notu). Bunun yerine yarı saydam
+ *    surface + ince kenarlık + üstte hafif highlight gradyanı ile
+ *    "buzlu cam" hissi veriliyor. Gerçek blur için Haze kütüphanesi
+ *    gerekir — ayrı bir adım olarak ele alınmalı.
+ *  - MoreActionsDropdown: hardcoded offset kaldırıldı (anchor'a göre
+ *    otomatik konumlanıyor), Divider → HorizontalDivider.
  *
- * No container background — pills and text sit directly on terminal.
+ * Public API değişmedi: TerminalTopBar(...) imzası aynı.
  */
 @Composable
 fun TerminalTopBar(
@@ -71,11 +88,10 @@ fun TerminalTopBar(
 
     val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    // Transparent container — pills float directly on terminal background
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp + statusBarH)
+            .height(56.dp + statusBarH)
             .padding(top = statusBarH),
     ) {
         Row(
@@ -85,52 +101,55 @@ fun TerminalTopBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // ── Left: floating pill button + session name surface ───────────────
+            // ── Left: pill icon button + session name pill ──────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                 FloatingPillButton(
+                GlassPillButton(
                     iconRes = R.drawable.lucide_panel_left,
                     contentDescription = "Open sessions",
                     onClick = onOpenSidebar,
-                    size = 40.dp,
                 )
 
-                // Session name — has its own surface, NOT clickable
+                // Session name — its own stadium pill, NOT clickable.
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(IrisSurfaceVariant)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(IrisSurfaceVariant.copy(alpha = 0.72f))
+                        .border(
+                            width = 1.dp,
+                            color = IrisBorderSubtle.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(percent = 50),
+                        )
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
                 ) {
                     Text(
                         text = activeName ?: "IrisShell",
                         color = IrisText,
                         fontFamily = OutfitFontFamily,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
                     )
                 }
             }
 
-            // ── Right: two floating pills side by side ─────────────────────────
+            // ── Right: two pill buttons side by side ─────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                FloatingPillButton(
+                GlassPillButton(
                     iconRes = if (keyboardFocused) R.drawable.lucide_keyboard_off else R.drawable.lucide_keyboard,
                     contentDescription = if (keyboardFocused) "Hide keyboard" else "Show keyboard",
                     onClick = onToggleKeyboard,
-                    size = 40.dp,
                 )
 
                 var moreExpanded by remember { mutableStateOf(false) }
-                FloatingPillButton(
+                GlassPillButton(
                     iconRes = R.drawable.lucide_ellipsis_vertical,
                     contentDescription = "More actions",
                     onClick = { moreExpanded = true },
-                    size = 40.dp,
                 )
 
                 MoreActionsDropdown(
@@ -157,15 +176,14 @@ private fun MoreActionsDropdown(
     onOpenSettings: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-
+    // Not: hardcoded offset kaldırıldı — DropdownMenu artık anchor'ı olan
+    // composable'a (bu Box) göre Compose tarafından otomatik konumlanıyor.
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
         containerColor = IrisSurface,
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(12.dp),
-        offset = DpOffset(x = 0.dp, y = statusBarH + 48.dp),
     ) {
         DropdownMenuItem(
             onClick = { onRefresh() },
@@ -215,7 +233,7 @@ private fun MoreActionsDropdown(
                 }
             },
         )
-        Divider(
+        HorizontalDivider(
             color = IrisBorderSubtle,
             thickness = 1.dp,
             modifier = Modifier.padding(vertical = 4.dp),
@@ -270,23 +288,54 @@ private fun MoreActionsDropdown(
 }
 
 /**
- * Floating pill button — no surface/background, sits directly on terminal.
- * Uses a very subtle hover alpha on the icon background for affordance.
+ * iOS-style glass pill button.
+ *
+ * Gerçek backdrop blur uygulamaz (Compose'da native karşılığı yok).
+ * Bunun yerine yarı saydam surface + ince kenarlık + üstte hafif
+ * highlight gradyanı ile "buzlu cam" hissi simüle edilir. Basılınca
+ * hafif scale-down (spring, bounce yok) ile dokunma geri bildirimi verir.
  */
 @Composable
-private fun FloatingPillButton(
+private fun GlassPillButton(
     iconRes: Int,
     contentDescription: String,
     onClick: () -> Unit,
-    size: androidx.compose.ui.unit.Dp = 36.dp,
+    size: Dp = 44.dp,
+    iconSize: Dp = 22.dp,
 ) {
     var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.92f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "pillButtonScale",
+    )
 
     Box(
         modifier = Modifier
             .size(size)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(CircleShape)
-            .background(if (pressed) IrisTextSecondary.copy(alpha = 0.08f) else Color.Transparent)
+            .background(IrisSurfaceVariant.copy(alpha = if (pressed) 0.85f else 0.62f))
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.06f),
+                        Color.Transparent,
+                    ),
+                ),
+                shape = CircleShape,
+            )
+            .border(
+                width = 1.dp,
+                color = IrisBorderSubtle.copy(alpha = 0.6f),
+                shape = CircleShape,
+            )
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
@@ -302,8 +351,8 @@ private fun FloatingPillButton(
         Icon(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
-            tint = IrisTextSecondary,
-            modifier = Modifier.size(18.dp),
+            tint = IrisText,
+            modifier = Modifier.size(iconSize),
         )
     }
 }
