@@ -26,6 +26,7 @@ import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
+import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
@@ -133,6 +134,8 @@ fun PreferencesScene(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = IrisPrimary,
                         unfocusedBorderColor = IrisBorderSubtle,
+                        focusedContainerColor = IrisSurfaceVariant,
+                        unfocusedContainerColor = IrisSurfaceVariant,
                         focusedPlaceholderColor = IrisTextMuted,
                         unfocusedPlaceholderColor = IrisTextMuted,
                         cursorColor = IrisPrimary,
