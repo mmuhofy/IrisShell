@@ -3,7 +3,6 @@ package com.iris.irisshell.terminal
 import android.content.Context
 import android.system.Os
 import android.util.Log
-import com.iris.irisshell.domain.terminal.PackageProfile
 import com.iris.irisshell.domain.terminal.SetupPreferences
 import com.iris.irisshell.domain.terminal.ShellChoice
 import kotlinx.coroutines.Dispatchers
@@ -110,17 +109,23 @@ class UbuntuBootstrap(private val context: Context) {
                 runScriptInProot(SCRIPTS_CONFIGURE, onLog = onLog)
                 onLog("✓ Rootfs configured.")
 
-                if (installPackagesFor(preferences.packageProfile)) {
-                    onLog("→ Installing base packages…")
-                    onState(UbuntuSetupState.InstallingPackages("apt", "Installing packages..."))
-                    lastFailedStep = "Packages"
-                    runScriptInProot(SCRIPTS_PACKAGES, onLog = onLog)
-                    runScriptInProot(SCRIPTS_SET_DEFAULT_SHELL, onLog = onLog)
-                    onLog("✓ Base packages installed.")
-                }
+                // Always install base packages — ensures zsh is available
+                // regardless of PackageProfile (Minimal / Developer / Custom).
+                onLog("→ Installing base packages…")
+                onState(UbuntuSetupState.InstallingPackages("apt", "Installing packages..."))
+                lastFailedStep = "Packages"
+                runScriptInProot(
+                    SCRIPTS_PACKAGES,
+                    onLog = onLog,
+                    envExtras = mapOf(
+                        "IRIS_CUSTOM_PACKAGES" to preferences.customPackages.joinToString(","),
+                    ),
+                )
+                onLog("✓ Base packages installed.")
 
                 val shellChoice = preferences.shellChoice
                 if (shellChoice == ShellChoice.Zsh) {
+                    runScriptInProot(SCRIPTS_SET_DEFAULT_SHELL, onLog = onLog)
                     onLog("→ Installing Oh My Zsh + plugins…")
                     onState(UbuntuSetupState.InstallingOhMyZsh("Installing Oh My Zsh..."))
                     lastFailedStep = "OhMyZsh"
@@ -128,7 +133,7 @@ class UbuntuBootstrap(private val context: Context) {
                     runScriptInProot(SCRIPTS_ZSHRC, onLog = onLog)
                     onLog("✓ Oh My Zsh ready.")
                 } else {
-                    onLog("→ Bash selected — skipping Oh My Zsh.")
+                    onLog("→ Bash selected — skipping Oh My Zsh and set-default-shell.")
                     onState(UbuntuSetupState.Optimizing)
                     lastFailedStep = "Bash"
                     runScriptInProot(SCRIPTS_BASHRC, onLog = onLog)
@@ -300,24 +305,6 @@ class UbuntuBootstrap(private val context: Context) {
 
     fun retry() {
         baseDir.deleteRecursively()
-    }
-
-    /**
-     * Determines whether package installation should run based on the
-     * user's chosen [PackageProfile].
-     *
-     * - [PackageProfile.Minimal]  → skip bulk package install (only core utils from rootfs)
-     * - [PackageProfile.Developer] → install standard developer package set
-     * - [PackageProfile.Custom]   → install standard set + customPackages list
-     *
-     * The [SCRIPTS_PACKAGES] script always runs for Developer and Custom.
-     * The custom package list is passed via the IRIS_CUSTOM_PACKAGES env var
-     * to [SCRIPTS_OPTIMIZE], which feeds it to `apt install`.
-     */
-    private fun installPackagesFor(profile: PackageProfile): Boolean = when (profile) {
-        PackageProfile.Minimal -> false
-        PackageProfile.Developer,
-        PackageProfile.Custom -> true
     }
 
     companion object {
