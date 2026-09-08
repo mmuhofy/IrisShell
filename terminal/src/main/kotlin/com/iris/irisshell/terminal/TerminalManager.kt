@@ -305,7 +305,7 @@ class TerminalManager(
         )
     }
 
-    private fun writeShellHooksFile(): Map<String, String> {
+    fun writeShellHooksFile(): Map<String, String> {
         val d = "${'$'}"
         
         // Use /sdcard/IrisShell for PRoot accessibility — app's filesDir is NOT
