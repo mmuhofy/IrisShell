@@ -61,15 +61,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.ui.R
-import com.iris.irisshell.ui.theme.IrisBorderSubtle
-import com.iris.irisshell.ui.theme.IrisError
-import com.iris.irisshell.ui.theme.IrisOnPrimary
-import com.iris.irisshell.ui.theme.IrisPrimary
-import com.iris.irisshell.ui.theme.IrisSuccess
-import com.iris.irisshell.ui.theme.IrisSurfaceVariant
-import com.iris.irisshell.ui.theme.IrisText
-import com.iris.irisshell.ui.theme.IrisTextMuted
-import com.iris.irisshell.ui.theme.IrisTextSecondary
+import com.iris.irisshell.design.system.IrisBorderSubtle
+import com.iris.irisshell.design.system.IrisError
+import com.iris.irisshell.design.system.IrisOnPrimary
+import com.iris.irisshell.design.system.IrisPrimary
+import com.iris.irisshell.design.system.IrisSuccess
+import com.iris.irisshell.design.system.IrisSurfaceVariant
+import com.iris.irisshell.design.system.IrisText
+import com.iris.irisshell.design.system.IrisTextMuted
+import com.iris.irisshell.design.system.IrisTextSecondary
 
 /**
  * Slide-in sol sidebar — iOS / Apple Settings tarzı layout (Stitch taslağı),
