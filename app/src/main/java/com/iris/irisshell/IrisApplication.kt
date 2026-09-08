@@ -23,7 +23,7 @@ import javax.inject.Inject
 class IrisApplication : Application() {
 
     @Inject lateinit var sessionManagerAdapter: SessionManagerAdapter
-    @Inject lateinit var terminalManager: TerminalManager?
+    @Inject lateinit var terminalManager: TerminalManager
 
     override fun onCreate() {
         super.onCreate()
