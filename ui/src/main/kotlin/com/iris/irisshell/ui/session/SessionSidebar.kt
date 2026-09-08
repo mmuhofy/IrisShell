@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -49,7 +50,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.BorderStroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -274,11 +274,15 @@ private fun SidebarContent(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 14.dp)
-                .height(32.dp),
+                .height(32.dp)
+                .border(
+                    width = 1.dp,
+                    color = IrisBorderSubtle.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(8.dp),
+                ),
             shape = RoundedCornerShape(8.dp),
             color = IrisSurfaceVariant,
             tonalElevation = 2.dp,
-            border = BorderStroke(1.dp, IrisBorderSubtle.copy(alpha = 0.2f)),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 10.dp),
@@ -569,8 +573,13 @@ private fun SessionRow(
                 shape = RoundedCornerShape(8.dp),
                 color = IrisSurfaceVariant,
                 tonalElevation = 2.dp,
-                border = BorderStroke(1.dp, IrisPrimary.copy(alpha = 0.4f)),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .border(
+                        width = 1.dp,
+                        color = IrisPrimary.copy(alpha = 0.4f),
+                        shape = RoundedCornerShape(8.dp),
+                    ),
             ) {
                 BasicTextField(
                     value = renameValue,

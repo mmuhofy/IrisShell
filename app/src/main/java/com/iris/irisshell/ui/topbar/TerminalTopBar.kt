@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.BorderStroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -194,7 +193,11 @@ private fun MoreActionsDropdown(
         containerColor = IrisSurface,
         tonalElevation = 8.dp,
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, IrisBorderSubtle.copy(alpha = 0.2f)),
+        modifier = Modifier.border(
+            width = 1.dp,
+            color = IrisBorderSubtle.copy(alpha = 0.2f),
+            shape = RoundedCornerShape(12.dp),
+        ),
     ) {
         DropdownMenuItem(
             onClick = { onRefresh() },
