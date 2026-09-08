@@ -46,7 +46,16 @@ class TerminalManager(
      * shell pid — eliminating the prior risk of _sessions / _tabNames /
      * _idToIndex / _indexToId falling out of sync.
      */
-    private val irisSessions: MutableList<IrisSession> = mutableListOf()
+    /**
+     * Directory for shell hooks + completion file — uses app's external files
+     * dir so it's writable without MANAGE_EXTERNAL_STORAGE and accessible
+     * from inside PRoot via /storage bind mount.
+     */
+    val irisStorageDir: File = File(appContext.getExternalFilesDir(null), "IrisShell")
+
+    companion object {
+        const val COMPLETION_FILE_NAME = "iris_cmd_complete"
+    }
 
     private val _sessionCount = MutableStateFlow(0)
     val sessionCountFlow: StateFlow<Int> = _sessionCount.asStateFlow()
@@ -308,19 +317,14 @@ class TerminalManager(
     fun writeShellHooksFile(): Map<String, String> {
         val d = "${'$'}"
         
-        // Use /sdcard/IrisShell for PRoot accessibility — app's filesDir is NOT
-        // accessible from inside PRoot due to debug package path mismatch.
-        // /sdcard is bind-mounted, so /sdcard/IrisShell is accessible from both
-        // app side and PRoot shell.
-        val irisSdkDir = File("/sdcard/IrisShell")
-        irisSdkDir.mkdirs()
+        // Use irisStorageDir (app's external files dir) — writable without
+        // MANAGE_EXTERNAL_STORAGE and accessible from PRoot via /storage bind.
+        irisStorageDir.mkdirs()
 
-        val hooksFile = File(irisSdkDir, "iris_hooks.zsh")
-        val completionFile = File(irisSdkDir, "iris_cmd_complete")
-        
-        // Pre-create completion file to prevent race condition where
-        // precmd fires before file exists (causes "no such file" error)
-        appContext.filesDir.mkdirs()
+        val hooksFile = File(irisStorageDir, "iris_hooks.zsh")
+        val completionFile = File(irisStorageDir, "iris_cmd_complete")
+
+        // Pre-create completion file to prevent race condition
         if (!completionFile.exists()) completionFile.createNewFile()
 
         val hooksContent = """

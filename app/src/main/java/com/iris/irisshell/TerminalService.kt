@@ -116,7 +116,7 @@ class TerminalService : LifecycleService() {
      */
     private fun startCompletionMonitor() {
         lifecycleScope.launch(Dispatchers.IO) {
-            val file = File(COMPLETION_DIR, COMPLETION_FILE_NAME)
+            val file = File(terminalManager.irisStorageDir, TerminalManager.COMPLETION_FILE_NAME)
             while (isActive) {
                 delay(500)
                 if (!isActive) break
@@ -267,7 +267,6 @@ class TerminalService : LifecycleService() {
         const val COMMAND_CHANNEL_ID = "iris_command_complete"
         const val COMMAND_COMPLETE_ID = 1338
          const val COMPLETION_FILE_NAME = "iris_cmd_complete"
-        const val COMPLETION_DIR = "/sdcard/IrisShell"
-        const val ACTION_STOP = "com.iris.irisshell.action.STOP_SERVICE"
+         const val ACTION_STOP = "com.iris.irisshell.action.STOP_SERVICE"
     }
 }
