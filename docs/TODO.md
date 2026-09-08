@@ -35,11 +35,12 @@ _Last updated: 2026-07-16_
 - [x] Bootstrap progress UI — step-by-step stepper (5 rows + live log card)
 - [x] Onboarding wizard (3 sahne: Welcome / Architecture / Ready; Pager yok, Compose-canvas fake terminal backdrop, gerçek Termux-mount HAYIR) — DataStore firstLaunch flag
 - [x] Setup recovery UI — Retry / Re-download / Reset / Report
-- [ ] Zsh as default shell
-- [ ] Oh My Zsh + zsh-autosuggestions + zsh-syntax-highlighting
-- [ ] Package install: zsh, git, curl, nano, vim, tree
-- [ ] Shell selector — zsh/bash in Settings
-- [ ] resolv.conf, apt sources, bashrc/zshrc setup
+- [x] Zsh as default shell
+- [x] Oh My Zsh + zsh-autosuggestions + zsh-syntax-highlighting
+- [x] Package install: zsh, git, curl, nano, vim, tree
+- [x] Shell selector — zsh/bash in Settings
+- [x] resolv.conf, apt sources, bashrc/zshrc setup
+- [x] PRoot start command — customizable via Settings (experimental warning banner)
 
 ### Basic Input
 - [ ] Text input field — basic, working
@@ -51,22 +52,28 @@ _Last updated: 2026-07-16_
 ## Phase 2 — UI & Session System
 *Goal: Beautiful, navigable session experience.*
 
+### Phase 2 — UI & Session System
+*Goal: Beautiful, navigable session experience.*
+
 ### Block-Based Output
-- [ ] `BlockEngine.kt` — every command = one block
-- [ ] Block structure: command line + output + footer (exit code, duration)
-- [ ] Short output (≤8 lines): fully expanded
-- [ ] Long output (>8 lines): collapsed + "Show X more ↓"
-- [ ] Very long (50+ lines): "Open fullscreen ↑"
-- [ ] Copy button per block
-- [ ] Long press block → copy, share, pin, search
+- [x] `BlockEngine.kt` — every command = one block
+- [x] Block structure: command line + output + footer (exit code, duration)
+- [x] Short output (≤8 lines): fully expanded
+- [x] Long output (>8 lines): collapsed + "Show X more ↓"
+- [x] Very long (50+ lines): "Open fullscreen ↑"
+- [x] Copy button per block
+- [x] Long press block → copy, share, pin, search
+- [x] Terminal link detection — `UrlDetector` in `domain/` shared by both block + classic paths
+- [x] URL rendering with `IrisPrimary` color + `TextDecoration.Underline` in `BlockBody`
+- [x] URL tap handling via `onUrlClick` callback → `WebViewSheet` in-app browser (bottom sheet)
 
 ### Semantic Output Highlighting
-- [ ] `SemanticParser.kt` — pattern detection
-- [ ] ERROR / FATAL → red
-- [ ] WARNING / WARN → gold
-- [ ] SUCCESS / DONE → green
-- [ ] BUILD / COMPILE → blue
-- [ ] Support: Gradle, npm, cargo, git, apt, docker, pip, adb, logcat
+- [x] `SemanticParser.kt` — pattern detection
+- [x] ERROR / FATAL → red
+- [x] WARNING / WARN → gold
+- [x] SUCCESS / DONE → green
+- [x] BUILD / COMPILE → blue
+- [x] Support: Gradle, npm, cargo, git, apt, docker, pip, adb, logcat
 
 ### Session System
 _Scope (revised 2026-07-28): TopBar modal session switcher only — no Home screen, no groups, no search, no navigator. Session naming kept._
