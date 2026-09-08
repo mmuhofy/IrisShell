@@ -7,7 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
-import android.graphics.Gravity
+import android.view.Gravity
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -80,7 +80,6 @@ class TerminalService : LifecycleService() {
                     startForeground(NOTIFICATION_ID, notification)
                 }
                 isForeground = true
-                }
             }
         }
         return START_NOT_STICKY
