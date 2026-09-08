@@ -57,7 +57,7 @@ class TerminalService : LifecycleService() {
         super.onCreate()
         setupNotificationChannel()
         setupCommandCompleteChannel()
-        ensureCompletionFile()
+        terminalManager.writeShellHooksFile()
         observeSessionCount()
         startCompletionMonitor()
     }
@@ -107,13 +107,6 @@ class TerminalService : LifecycleService() {
                 }
             }
         }
-    }
-
-    private fun ensureCompletionFile() {
-        val dir = File(COMPLETION_DIR)
-        dir.mkdirs()
-        val file = File(dir, COMPLETION_FILE_NAME)
-        if (!file.exists()) file.createNewFile()
     }
 
     /**
