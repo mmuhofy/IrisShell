@@ -5,4 +5,11 @@
 -->
 <resources>
     <string name="app_name">Iris Shell</string>
+
+    <!-- Foreground service notification -->
+    <string name="terminal_service_name">Iris Shell Terminal</string>
+    <string name="terminal_service_channel_name">Iris Shell Terminal</string>
+    <string name="notification_session_count">%1$d active sessions</string>
+    <string name="notification_one_session">1 active session</string>
+    <string name="notification_action_exit">Exit</string>
 </resources>

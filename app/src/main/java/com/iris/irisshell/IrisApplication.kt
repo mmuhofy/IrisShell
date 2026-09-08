@@ -1,6 +1,8 @@
 package com.iris.irisshell
 
 import android.app.Application
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import com.iris.irisshell.data.session.SessionManagerAdapter
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -12,9 +14,9 @@ import javax.inject.Inject
  * Ported from mmuhofy/IrisCode — app/src/main/kotlin/com/iris/iriscode/IrisCodeApp.kt
  * Adapted for Iris Shell — com.iris.irisshell
  *
- * Phase 2 — boots [SessionManagerAdapter] so the persistent session
- * graph and the runtime TerminalManager stay in sync from the very
- * first frame.
+ * Phase 1+ — boots [SessionManagerAdapter] for session reconciliation,
+ * then starts [TerminalService] as a foreground service so PTY sessions
+ * survive process-level death by the Activity.
  */
 @HiltAndroidApp
 class IrisApplication : Application() {
@@ -24,6 +26,7 @@ class IrisApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         sessionManagerAdapter.start()
+        ContextCompat.startForegroundService(this, Intent(this, TerminalService::class.java))
     }
 }
 

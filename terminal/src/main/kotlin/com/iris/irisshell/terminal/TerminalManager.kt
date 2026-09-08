@@ -47,6 +47,9 @@ class TerminalManager(
      */
     private val irisSessions: MutableList<IrisSession> = mutableListOf()
 
+    private val _sessionCount = MutableStateFlow(0)
+    val sessionCountFlow: StateFlow<Int> = _sessionCount.asStateFlow()
+
     /**
      * Reverse map: persistent session id (UUID, stored in Room) →
      * positional index into [irisSessions]. Inspired by ReTerminal's
@@ -126,12 +129,6 @@ class TerminalManager(
 
     fun addTab(): TerminalSession = addTabWithId(null, "")
 
-    /**
-     * Id-aware spawn. When [persistentId] is non-null, the new session
-     * is recorded in [idToIndex] so that the Session System can
-     * refer to it across app restarts. Returns the spawned
-     * [TerminalSession] just like [addTab] does.
-     */
     fun addTabWithId(persistentId: String?, name: String): TerminalSession {
         val irisSession = IrisSession(
             terminalSession = createNewSession(),
@@ -144,6 +141,7 @@ class TerminalManager(
             idToIndex[persistentId] = newIndex
         }
         _activeTabIndex.value = newIndex
+        _sessionCount.value = irisSessions.size
         terminalViewRef?.attachSession(irisSession.terminalSession)
         return irisSession.terminalSession
     }
@@ -231,6 +229,7 @@ class TerminalManager(
         val persistentId = irisSession.persistentId
         irisSession.terminalSession.finishIfRunning()
         irisSessions.removeAt(index)
+        _sessionCount.value = irisSessions.size
 
         if (persistentId != null) idToIndex.remove(persistentId)
 
@@ -358,6 +357,7 @@ class TerminalManager(
         val exitCode = finishedSession.exitStatus
 
         irisSessions.removeAt(idx)
+        _sessionCount.value = irisSessions.size
 
         if (persistentId != null) {
             idToIndex.remove(persistentId)
