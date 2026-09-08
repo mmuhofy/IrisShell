@@ -3,7 +3,6 @@ package com.iris.irisshell.terminal
 import android.app.Application
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +37,7 @@ class TerminalManager(
     private val ubuntuBootstrap: UbuntuBootstrap,
     application: Application,
     private val blockEngineWire: BlockEngineWire? = null,
-    private val settingsRepository: SettingsRepository? = null,
+    private val settingsRepository: SettingsRepository,
 ) {
     /**
      * Single source of truth for session storage. Each [IrisSession] bundles
@@ -97,8 +96,6 @@ class TerminalManager(
     var projectPath: String? = null
 
     var shellPath: String = "/bin/zsh"
-
-    private var prootStartCommand: String = ""
 
     init {
         sessionClient.onSessionFinished = { session -> onSessionFinished(session) }
