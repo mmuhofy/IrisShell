@@ -36,6 +36,24 @@ Kotlin 2.2.0, Compose BOM 2026.04.01, Hilt 2.57, Room 2.8.4, Kotlinx Serializati
 - `SettingsViewModel` — `prootStartCommand` StateFlow + `setProotStartCommand()`
 - `SettingsScreen.kt` — "Gelişmiş" section with `ProotStartCommandRow` (experimental/dangerous warning banner)
 
+### Foreground Service (Termux pattern)
+- `TerminalService.kt` (app module) — `LifecycleService`, `@AndroidEntryPoint`, injects `TerminalManager` + `SessionRepository`
+- `TerminalManager.sessionCountFlow: StateFlow<Int>` — reactive session count for notification updates
+- `startForeground(NOTIFICATION_ID, notification)` with `dataSync` type (API 34+)
+- `START_NOT_STICKY` — no auto-recreate on system kill
+- Notification: session count, clickable PendingIntent → MainActivity, Exit action button
+- `observeSessionCount()` — updates notification on count change; auto-stops when sessions empty + shouldExit
+- `AndroidManifest.xml` — `<service>` declaration + `FOREGROUND_SERVICE` permission
+- `IrisApplication.onCreate()` — starts service via `ContextCompat.startForegroundService()`
+
+### Command Completion Notification + Toast (Shell hook based)
+- `.zshrc` template: `preexec`/`precmd` hooks write `command|elapsed_sec|exit_code` to completion file
+- Completion file at `/data/data/com.iris.irisshell/files/iris_cmd_complete` (accessible from PRoot via `/data` bind mount)
+- `TerminalService.startCompletionMonitor()` — 500ms polling, `RandomAccessFile` for incremental reads
+- Completion notification: non-ongoing, `IMPORTANCE_HIGH` channel, shows command + status + duration
+- Completion toast: `Toast.LENGTH_SHORT` at `Gravity.TOP or Gravity.END` (top-right corner)
+- Works in both Classic and Block Engine modes (shell-based detection, not output parsing)
+
 ## Active
 - WebViewSheet sizing — verify `weight(1f)` on `AndroidView` fills remaining space, no overlap with top bar
 

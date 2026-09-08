@@ -27,7 +27,8 @@ _Last updated: 2026-07-16_
 - [ ] Basic terminal screen — full screen, raw PTY output
 - [ ] ANSI color rendering
 - [ ] Unicode + emoji support
-- [ ] Persistent session — Foreground Service, phantom killer proof
+- [x] Persistent session — Foreground Service, phantom killer proof
+- [x] Command completion: shell hooks (preexec/precmd) → file → service reads → notification + toast
 
 ### Linux Environment
 - [x] PRoot v5.2.0 static binary download
