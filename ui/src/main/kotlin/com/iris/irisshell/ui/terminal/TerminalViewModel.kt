@@ -42,6 +42,7 @@ class TerminalViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val persist = setTerminalFontSize
+    private val settingsRepository = settingsRepository
 
     /** Block Mode toggle — defaults to false (Classic Mode). */
     val useBlockEngine: StateFlow<Boolean> = settingsRepository.useBlockEngine
