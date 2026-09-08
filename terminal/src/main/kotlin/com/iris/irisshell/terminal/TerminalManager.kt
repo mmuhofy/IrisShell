@@ -46,6 +46,8 @@ class TerminalManager(
      * shell pid — eliminating the prior risk of _sessions / _tabNames /
      * _idToIndex / _indexToId falling out of sync.
      */
+    private val irisSessions: MutableList<IrisSession> = mutableListOf()
+
     /**
      * Directory for shell hooks + completion file.
      * /sdcard/IrisShell — accessible from both app and PRoot via /sdcard bind.
