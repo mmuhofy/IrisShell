@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -48,7 +49,9 @@ fun ExtraKeyBar(
     var moreOpen by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AnimatedVisibility(
@@ -90,7 +93,9 @@ fun ExtraKeyBar(
         }
 
         if (moreOpen) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp),
+            )
         }
 
         Box(
@@ -132,14 +137,14 @@ fun ExtraKeyBar(
                 horizontalArrangement = Arrangement.spacedBy(0.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val keys = listOf(
+                val modifierKeys = listOf(
                     ExtraKey.Navigation.ESC,
                     ExtraKey.Special.CTRL,
                     ExtraKey.Special.ALT,
                     ExtraKey.Navigation.TAB,
                 )
 
-                keys.forEach { key ->
+                modifierKeys.forEach { key ->
                     val stuck = when (key) {
                         ExtraKey.Special.CTRL -> ctrlStuck
                         ExtraKey.Special.ALT -> altStuck
@@ -162,18 +167,18 @@ fun ExtraKeyBar(
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .width(5.dp)
-                        .height(22.dp)
+                Spacer(
+                    modifier = Modifier.width(5.dp),
                 )
 
-                listOf(
+                val navigationKeys = listOf(
                     ExtraKey.Navigation.ARROW_UP,
                     ExtraKey.Navigation.ARROW_DOWN,
                     ExtraKey.Navigation.ARROW_LEFT,
                     ExtraKey.Navigation.ARROW_RIGHT,
-                ).forEach { key ->
+                )
+
+                navigationKeys.forEach { key ->
                     ExtraKeyButton(
                         key = key,
                         stuckActive = false,
@@ -216,8 +221,9 @@ private fun MoreKeysPanel(
     )
 
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(18.dp)),
+        modifier = Modifier.clip(
+            RoundedCornerShape(18.dp),
+        ),
     ) {
         LiquidGlassSurface(
             modifier = Modifier.matchParentSize(),
