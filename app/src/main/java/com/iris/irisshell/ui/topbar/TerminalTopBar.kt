@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisError
+import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
@@ -94,12 +96,14 @@ fun TerminalTopBar(
             .height(56.dp + statusBarH)
             .padding(top = statusBarH),
     ) {
+        var moreExpanded by remember { mutableStateOf(false) }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Start,
         ) {
             // ── Left: pill icon button + session name pill ──────────────────
             Row(
@@ -109,10 +113,12 @@ fun TerminalTopBar(
                 GlassPillButton(
                     iconRes = R.drawable.lucide_panel_left,
                     contentDescription = "Open sessions",
-                    onClick = onOpenSidebar,
+                    onClick = {
+                        if (keyboardFocused) onToggleKeyboard()
+                        onOpenSidebar()
+                    },
                 )
 
-                // Session name — its own stadium pill, NOT clickable.
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(percent = 50))
@@ -133,8 +139,15 @@ fun TerminalTopBar(
                     )
                 }
             }
+        }
 
-            // ── Right: two pill buttons side by side ─────────────────────────
+        // ── Right: two pill buttons ────────────────────────────────────────
+        Box(
+            Modifier
+                .wrapContentSize()
+                .align(Alignment.CenterEnd)
+                .padding(horizontal = 12.dp),
+        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -145,23 +158,22 @@ fun TerminalTopBar(
                     onClick = onToggleKeyboard,
                 )
 
-                var moreExpanded by remember { mutableStateOf(false) }
                 GlassPillButton(
                     iconRes = R.drawable.lucide_ellipsis_vertical,
                     contentDescription = "More actions",
                     onClick = { moreExpanded = true },
                 )
-
-                MoreActionsDropdown(
-                    expanded = moreExpanded,
-                    onDismiss = { moreExpanded = false },
-                    isFullscreen = isFullscreen,
-                    onRefresh = { onRefresh(); moreExpanded = false },
-                    onToggleFullscreen = { onToggleFullscreen(); moreExpanded = false },
-                    onOpenSettings = { onOpenSettings(); moreExpanded = false },
-                    onClose = { onClose(); moreExpanded = false },
-                )
             }
+
+            MoreActionsDropdown(
+                expanded = moreExpanded,
+                onDismiss = { moreExpanded = false },
+                isFullscreen = isFullscreen,
+                onRefresh = { onRefresh(); moreExpanded = false },
+                onToggleFullscreen = { onToggleFullscreen(); moreExpanded = false },
+                onOpenSettings = { onOpenSettings(); moreExpanded = false },
+                onClose = { onClose(); moreExpanded = false },
+            )
         }
     }
 }
@@ -316,10 +328,6 @@ private fun GlassPillButton(
     Box(
         modifier = Modifier
             .size(size)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .clip(CircleShape)
             .background(IrisSurfaceVariant.copy(alpha = if (pressed) 0.85f else 0.62f))
             .background(
@@ -352,7 +360,12 @@ private fun GlassPillButton(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
             tint = IrisText,
-            modifier = Modifier.size(iconSize),
+            modifier = Modifier
+                .size(iconSize)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
         )
     }
 }

@@ -2,6 +2,7 @@ package com.iris.irisshell.ui.session
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,6 +11,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +34,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,7 +47,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -54,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -148,13 +153,11 @@ fun SessionSidebar(
                         .fillMaxHeight()
                         .width(sidebarW)
                         .clip(RoundedCornerShape(0.dp, 32.dp, 32.dp, 0.dp))
-                        .background(IrisSurfaceVariant)
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
                             onClick = {},
                         )
-                        .statusBarsPadding()
                         .navigationBarsPadding(),
                 ) {
                     SidebarContent(
@@ -199,6 +202,23 @@ private fun SidebarContent(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding(),
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(IrisSurfaceVariant),
+        ) {
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp),
+        )
+
         // Header
         Row(
             modifier = Modifier
@@ -279,6 +299,7 @@ private fun SidebarContent(
                         onValueChange = { searchQuery = it },
                         singleLine = true,
                         textStyle = TextStyle(color = IrisText, fontSize = 13.sp),
+                        cursorBrush = SolidColor(IrisText),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -411,15 +432,59 @@ private fun SidebarContent(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            IconButton(onClick = onOpenSettings, modifier = Modifier.size(24.dp)) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_settings),
-                    contentDescription = "Settings",
-                    tint = IrisTextSecondary,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
+            HoverIconButton(
+                onClick = onOpenSettings,
+                contentDescription = "Settings",
+                iconRes = R.drawable.lucide_settings,
+                tint = IrisTextSecondary,
+                iconSize = 18.dp,
+                buttonSize = 24.dp,
+            )
         }
+    }
+}
+}
+
+@Composable
+private fun HoverIconButton(
+    onClick: () -> Unit,
+    contentDescription: String,
+    iconRes: Int,
+    tint: Color = IrisTextSecondary,
+    iconSize: Dp = 14.dp,
+    buttonSize: Dp = 24.dp,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (hovered) 1.12f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessHigh,
+        ),
+        label = "hoverScale",
+    )
+    Box(
+        modifier = Modifier
+            .size(buttonSize)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            )
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(iconSize),
+        )
     }
 }
 
@@ -512,17 +577,18 @@ private fun SessionRow(
                     fontWeight = FontWeight.Medium,
                     fontSize = 13.5.sp,
                 ),
+                cursorBrush = SolidColor(IrisText),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { onRenameCommit() }),
             )
-            IconButton(onClick = onRenameCommit, modifier = Modifier.size(24.dp)) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_check),
-                    contentDescription = "Confirm rename",
-                    tint = IrisPrimary,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
+            HoverIconButton(
+                onClick = onRenameCommit,
+                contentDescription = "Confirm rename",
+                iconRes = R.drawable.lucide_check,
+                tint = IrisPrimary,
+                iconSize = 16.dp,
+                buttonSize = 24.dp,
+            )
         } else {
             Text(
                 text = snapshot.name,
@@ -536,28 +602,20 @@ private fun SessionRow(
             if (trailingText != null) {
                 Text(text = trailingText, color = trailingColor, fontSize = 11.sp)
             }
-            IconButton(
+            HoverIconButton(
                 onClick = onStartRename,
-                modifier = Modifier.size(24.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_pencil),
-                    contentDescription = "Rename",
-                    tint = IrisTextSecondary,
-                    modifier = Modifier.size(14.dp),
-                )
-            }
-            IconButton(
+                contentDescription = "Rename",
+                iconRes = R.drawable.lucide_pencil,
+                iconSize = 14.dp,
+                buttonSize = 24.dp,
+            )
+            HoverIconButton(
                 onClick = onDelete,
-                modifier = Modifier.size(24.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_trash_2),
-                    contentDescription = "Delete",
-                    tint = IrisTextSecondary,
-                    modifier = Modifier.size(14.dp),
-                )
-            }
+                contentDescription = "Delete",
+                iconRes = R.drawable.lucide_trash_2,
+                iconSize = 14.dp,
+                buttonSize = 24.dp,
+            )
         }
     }
 }
