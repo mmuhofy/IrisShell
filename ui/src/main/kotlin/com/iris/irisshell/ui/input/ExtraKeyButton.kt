@@ -28,13 +28,6 @@ import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.domain.input.ExtraKey
 import com.iris.irisshell.ui.R
 
-/**
- * A compact key-cap used by the floating Liquid Glass extra-key row.
- *
- * The button intentionally has no Material surface of its own: the pill
- * provides the glass surface and each key only gets a subtle hover/pressed
- * capsule, matching the HTML reference interaction model.
- */
 @Composable
 fun ExtraKeyButton(
     key: ExtraKey,
@@ -48,12 +41,6 @@ fun ExtraKeyButton(
     val hovered by interactionSource.collectIsHoveredAsState()
 
     val active = stuckActive || pressed
-    val keyBackground = when {
-        stuckActive -> IrisPrimary.copy(alpha = 0.16f)
-        pressed -> Color.White.copy(alpha = 0.13f)
-        hovered -> Color.White.copy(alpha = 0.075f)
-        else -> Color.Transparent
-    }
 
     val glyphColor = when {
         stuckActive -> IrisPrimary
@@ -76,14 +63,33 @@ fun ExtraKeyButton(
             .clip(RoundedCornerShape(20.dp)),
         contentAlignment = Alignment.Center,
     ) {
+        // State material stays extremely subtle so the glass remains the visual focus.
         androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
+            val background = when {
+                stuckActive -> IrisPrimary.copy(alpha = 0.17f)
+                pressed -> Color.White.copy(alpha = 0.13f)
+                hovered -> Color.White.copy(alpha = 0.075f)
+                else -> Color.Transparent
+            }
+
             drawRoundRect(
-                color = keyBackground,
+                color = background,
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-                    x = 20.dp.toPx(),
-                    y = 20.dp.toPx(),
+                    20.dp.toPx(),
+                    20.dp.toPx(),
                 ),
             )
+
+            if (pressed || stuckActive) {
+                drawRoundRect(
+                    color = Color.White.copy(alpha = 0.045f),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(0.75.dp.toPx()),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                        20.dp.toPx(),
+                        20.dp.toPx(),
+                    ),
+                )
+            }
         }
 
         if (arrowResId != null) {

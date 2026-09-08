@@ -1,5 +1,9 @@
 package com.iris.irisshell.ui.terminal
 
+import android.content.Context
+import android.util.Log
+import android.view.ViewTreeObserver
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -10,14 +14,13 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,20 +37,17 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
+import com.iris.irisshell.ui.block.BlockEngineViewModel
+import com.iris.irisshell.ui.block.BlockTerminalView
 import com.iris.irisshell.ui.input.InputBarHost
 import com.iris.irisshell.ui.input.InputBarViewModel
 import com.iris.irisshell.ui.session.SessionSidebar
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.TerminalTopBar
-import com.iris.irisshell.ui.block.BlockEngineViewModel
-import com.iris.irisshell.ui.block.BlockTerminalView
 import com.termux.view.TerminalView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.yield
-import android.util.Log
-import android.content.Context
-import android.view.ViewTreeObserver
-import android.view.inputmethod.InputMethodManager
 
 @Composable
 fun TerminalScreen(
@@ -60,6 +60,7 @@ fun TerminalScreen(
     onExit: () -> Unit = {},
 ) {
     var showProgress by remember { mutableStateOf(false) }
+
     LaunchedEffect(ubuntuSetupState) {
         if (ubuntuSetupState is UbuntuSetupState.Ready) {
             showProgress = false
@@ -77,9 +78,12 @@ fun TerminalScreen(
         is UbuntuSetupState.InstallingOhMyZsh,
         UbuntuSetupState.Optimizing -> {
             if (showProgress) {
-                SetupProgress(state = ubuntuSetupState)
+                SetupProgress(
+                    state = ubuntuSetupState,
+                )
             }
         }
+
         UbuntuSetupState.Ready -> {
             ReadyScreen(
                 terminalManager = terminalManager,
@@ -89,6 +93,7 @@ fun TerminalScreen(
                 onExit = onExit,
             )
         }
+
         is UbuntuSetupState.Failed -> {
             SetupFailure(
                 error = ubuntuSetupState.error,
@@ -112,6 +117,7 @@ private fun ReadyScreen(
 ) {
     var fullscreen by remember { mutableStateOf(false) }
     var sidebarOpen by remember { mutableStateOf(false) }
+
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
@@ -125,69 +131,145 @@ private fun ReadyScreen(
             // This prevents exit when the app process is reused after
             // the previous session was deleted.
             yield()
-            if (sessionSwitcherViewModel.allSessions.value.isNotEmpty()) return@LaunchedEffect
+
+            if (sessionSwitcherViewModel.allSessions.value.isNotEmpty()) {
+                return@LaunchedEffect
+            }
+
             onExit()
         }
     }
 
     var keyboardFocused by remember { mutableStateOf(true) }
-    val terminalViewRef = remember { mutableStateOf<TerminalView?>(null) }
+
+    /**
+     * This reference is also used by the Liquid Glass extra-key surface.
+     *
+     * It is populated only after TerminalView has a valid attached size.
+     * Therefore the backdrop implementation never receives a zero-sized
+     * TerminalView during its normal initialization path.
+     */
+    val terminalViewRef = remember {
+        mutableStateOf<TerminalView?>(null)
+    }
 
     fun showKeyboard() {
         try {
             val view = terminalViewRef.value ?: run {
-                Log.w("TerminalScreen", "TerminalView is not ready, cannot show keyboard")
+                Log.w(
+                    "TerminalScreen",
+                    "TerminalView is not ready, cannot show keyboard",
+                )
                 return
             }
-            if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
-                Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot show keyboard")
+
+            if (
+                !view.isAttachedToWindow ||
+                view.width <= 0 ||
+                view.height <= 0
+            ) {
+                Log.w(
+                    "TerminalScreen",
+                    "TerminalView is not attached or has zero size, cannot show keyboard",
+                )
                 return
             }
+
             view.requestFocusFromTouch()
-            val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+
+            val imm = view.context.getSystemService(
+                Context.INPUT_METHOD_SERVICE,
+            ) as InputMethodManager
+
+            imm.showSoftInput(
+                view,
+                InputMethodManager.SHOW_IMPLICIT,
+            )
+
             keyboardFocused = true
         } catch (e: Exception) {
-            Log.e("TerminalScreen", "showKeyboard failed", e)
+            Log.e(
+                "TerminalScreen",
+                "showKeyboard failed",
+                e,
+            )
         }
     }
 
     fun hideKeyboard() {
         try {
             val view = terminalViewRef.value ?: run {
-                Log.w("TerminalScreen", "TerminalView is not ready, cannot hide keyboard")
+                Log.w(
+                    "TerminalScreen",
+                    "TerminalView is not ready, cannot hide keyboard",
+                )
                 return
             }
-            if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
-                Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot hide keyboard")
+
+            if (
+                !view.isAttachedToWindow ||
+                view.width <= 0 ||
+                view.height <= 0
+            ) {
+                Log.w(
+                    "TerminalScreen",
+                    "TerminalView is not attached or has zero size, cannot hide keyboard",
+                )
                 return
             }
-            val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+            val imm = view.context.getSystemService(
+                Context.INPUT_METHOD_SERVICE,
+            ) as InputMethodManager
+
             val token = view.windowToken
+
             if (token != null) {
-                imm.hideSoftInputFromWindow(token, 0)
+                imm.hideSoftInputFromWindow(
+                    token,
+                    0,
+                )
+
                 keyboardFocused = false
             }
         } catch (e: Exception) {
-            Log.e("TerminalScreen", "hideKeyboard failed", e)
+            Log.e(
+                "TerminalScreen",
+                "hideKeyboard failed",
+                e,
+            )
         }
     }
 
     fun toggleKeyboard() {
         val view = terminalViewRef.value ?: run {
-            Log.w("TerminalScreen", "TerminalView is not ready, cannot toggle keyboard")
+            Log.w(
+                "TerminalScreen",
+                "TerminalView is not ready, cannot toggle keyboard",
+            )
             return
         }
-        if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) {
-            Log.w("TerminalScreen", "TerminalView is not attached or has zero size, cannot toggle keyboard")
+
+        if (
+            !view.isAttachedToWindow ||
+            view.width <= 0 ||
+            view.height <= 0
+        ) {
+            Log.w(
+                "TerminalScreen",
+                "TerminalView is not attached or has zero size, cannot toggle keyboard",
+            )
             return
         }
-        if (keyboardFocused) hideKeyboard() else showKeyboard()
+
+        if (keyboardFocused) {
+            hideKeyboard()
+        } else {
+            showKeyboard()
+        }
     }
 
-    // Terminal content is always fully visible (no entry animation —
-    // previous Animatable+LaunchedEffect approach caused alpha=0 to get
-    // stuck when activeId transitioned null→real value at startup).
+    // Terminal content is always fully visible.
     val appearScale = 1f
     val appearAlpha = 1f
 
@@ -198,16 +280,30 @@ private fun ReadyScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Terminal content fills all space — no top bar taking vertical space
+    Box(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        /*
+         * Terminal content fills all available space.
+         *
+         * The extra-key bar remains below the terminal in the normal layout,
+         * while its Liquid Glass layer samples the classic TerminalView that
+         * sits behind it.
+         */
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .imePadding(),
         ) {
-            Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
                 if (useBlockEngine) {
-                    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+                    val clipboard =
+                        androidx.compose.ui.platform.LocalClipboardManager.current
+
                     val hiddenIds by blockEngineViewModel.hiddenIds.collectAsState()
                     val exportRequest by blockEngineViewModel.exportRequest.collectAsState()
                     val clipboardEvent by blockEngineViewModel.clipboardRequest.collectAsState()
@@ -218,42 +314,65 @@ private fun ReadyScreen(
                             blockEngineViewModel.consumeExportRequest()
                         }
                     }
+
                     LaunchedEffect(clipboardEvent) {
                         val event = clipboardEvent ?: return@LaunchedEffect
+
                         val text = when (event) {
                             is BlockEngineViewModel.ClipboardEvent.Command ->
                                 "${event.prompt} ${event.command}"
-                            is BlockEngineViewModel.ClipboardEvent.Output -> event.text
+
+                            is BlockEngineViewModel.ClipboardEvent.Output ->
+                                event.text
                         }
-                        clipboard.setText(androidx.compose.ui.text.AnnotatedString(text))
+
+                        clipboard.setText(
+                            androidx.compose.ui.text.AnnotatedString(text),
+                        )
+
                         blockEngineViewModel.consumeClipboardRequest()
                     }
 
                     val visibleBlocks = remember {
-                        kotlinx.coroutines.flow.MutableStateFlow(
-                            emptyList<com.iris.irisshell.domain.block.Block>()
+                        MutableStateFlow(
+                            emptyList<com.iris.irisshell.domain.block.Block>(),
                         )
                     }
+
                     val blocksRaw by blockEngineViewModel.blocks.collectAsState()
-                    LaunchedEffect(blocksRaw, hiddenIds) {
-                        visibleBlocks.value = blocksRaw.filterNot { it.id in hiddenIds }
+
+                    LaunchedEffect(
+                        blocksRaw,
+                        hiddenIds,
+                    ) {
+                        visibleBlocks.value =
+                            blocksRaw.filterNot {
+                                it.id in hiddenIds
+                            }
                     }
 
                     val lastDir by blockEngineViewModel.lastDir.collectAsState()
 
                     BlockTerminalView(
                         blocks = visibleBlocks,
-                        onToggleCollapsed = blockEngineViewModel::onToggleCollapsed,
-                        onCommandSubmitted = blockEngineViewModel::onCommandSubmitted,
-                        onCopyCommand = blockEngineViewModel::onCopyCommand,
-                        onCopyOutput = blockEngineViewModel::onCopyOutput,
-                        onRerunCommand = blockEngineViewModel::onRerunCommand,
+                        onToggleCollapsed =
+                            blockEngineViewModel::onToggleCollapsed,
+                        onCommandSubmitted =
+                            blockEngineViewModel::onCommandSubmitted,
+                        onCopyCommand =
+                            blockEngineViewModel::onCopyCommand,
+                        onCopyOutput =
+                            blockEngineViewModel::onCopyOutput,
+                        onRerunCommand =
+                            blockEngineViewModel::onRerunCommand,
                         onEditCommand = { cmd ->
                             blockEngineViewModel.onEditCommand(cmd)
                             blockEngineViewModel.consumePendingEdit()
                         },
-                        onExportOutput = blockEngineViewModel::onExportOutput,
-                        onDeleteBlock = blockEngineViewModel::onDeleteBlock,
+                        onExportOutput =
+                            blockEngineViewModel::onExportOutput,
+                        onDeleteBlock =
+                            blockEngineViewModel::onDeleteBlock,
                         promptLabel = lastDir,
                         modifier = Modifier
                             .fillMaxSize()
@@ -264,6 +383,12 @@ private fun ReadyScreen(
                             },
                     )
                 } else {
+                    /*
+                     * CLASSIC TERMINAL PATH
+                     *
+                     * terminalViewRef is shared with InputBarHost so the
+                     * Liquid Glass surface can sample this exact TerminalView.
+                     */
                     TerminalViewHost(
                         terminalManager = terminalManager,
                         fontSizeSp = fontSizeSp,
@@ -296,27 +421,36 @@ private fun ReadyScreen(
 
             if (!fullscreen) {
                 val inputBarState by inputBarViewModel.uiState.collectAsState()
+
                 InputBarHost(
                     uiState = inputBarState,
                     onToggle = inputBarViewModel::toggleBarVisible,
                     onIntent = inputBarViewModel::onIntent,
+
+                    // NEW:
+                    // Give the Liquid Glass renderer the classic TerminalView.
+                    terminalView = terminalViewRef.value,
                 )
             }
         }
 
-        // Top bar overlay — floats on terminal, takes no layout space
+        // Top bar overlay — floats on terminal, takes no layout space.
         if (!fullscreen) {
             TerminalTopBar(
                 viewModel = sessionSwitcherViewModel,
                 isFullscreen = fullscreen,
                 keyboardFocused = keyboardFocused,
                 onToggleKeyboard = ::toggleKeyboard,
-                onOpenSidebar = { sidebarOpen = true },
+                onOpenSidebar = {
+                    sidebarOpen = true
+                },
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
                     terminalManager.addTab()
                 },
-                onToggleFullscreen = { fullscreen = true },
+                onToggleFullscreen = {
+                    fullscreen = true
+                },
                 onClose = {
                     terminalManager.currentSession?.finishIfRunning()
                 },
@@ -324,23 +458,30 @@ private fun ReadyScreen(
             )
         }
 
-        // Slider overlay
+        // Slider overlay.
         if (!fullscreen && sliderVisible) {
             VerticalZoomSlider(
                 value = fontSizeSp,
-                onValueChange = { terminalViewModel.setFontSize(it) },
+                onValueChange = {
+                    terminalViewModel.setFontSize(it)
+                },
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = 16.dp),
             )
         }
 
-        // Sidebar overlay (replaces ModalBottomSheet)
+        // Sidebar overlay.
         if (sidebarOpen) {
-            BackHandler { sidebarOpen = false }
+            BackHandler {
+                sidebarOpen = false
+            }
+
             SessionSidebar(
                 isOpen = sidebarOpen,
-                onDismiss = { sidebarOpen = false },
+                onDismiss = {
+                    sidebarOpen = false
+                },
                 onOpenSettings = onOpenSettings,
             )
         }
@@ -348,19 +489,28 @@ private fun ReadyScreen(
 }
 
 @Composable
-private fun CompactFullscreenExit(onExitFullscreen: () -> Unit) {
+private fun CompactFullscreenExit(
+    onExitFullscreen: () -> Unit,
+) {
     androidx.compose.material3.Surface(
-          color = com.iris.irisshell.design.system.IrisSurface.copy(alpha = 0.85f),
+        color = com.iris.irisshell.design.system.IrisSurface.copy(
+            alpha = 0.85f,
+        ),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
     ) {
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-                .clickable(onClick = onExitFullscreen),
+                .padding(
+                    horizontal = 12.dp,
+                    vertical = 6.dp,
+                )
+                .clickable(
+                    onClick = onExitFullscreen,
+                ),
         ) {
             Text(
                 text = "Tap to exit fullscreen",
-                  color = com.iris.irisshell.design.system.IrisTextSecondary,
+                color = com.iris.irisshell.design.system.IrisTextSecondary,
                 style = MaterialTheme.typography.labelMedium,
             )
         }
@@ -368,56 +518,103 @@ private fun CompactFullscreenExit(onExitFullscreen: () -> Unit) {
 }
 
 @Composable
-private fun SetupProgress(state: UbuntuSetupState) {
+private fun SetupProgress(
+    state: UbuntuSetupState,
+) {
     val label = when (state) {
-        UbuntuSetupState.Idle -> "Preparing…"
-        UbuntuSetupState.Extracting -> "Extracting Ubuntu rootfs…"
-        UbuntuSetupState.Configuring -> "Configuring system…"
+        UbuntuSetupState.Idle ->
+            "Preparing…"
+
+        UbuntuSetupState.Extracting ->
+            "Extracting Ubuntu rootfs…"
+
+        UbuntuSetupState.Configuring ->
+            "Configuring system…"
+
         is UbuntuSetupState.InstallingPackages ->
-            if (state.message.isNotEmpty()) state.message
-            else "Installing packages…"
-        is UbuntuSetupState.InstallingOhMyZsh -> state.message
-        UbuntuSetupState.Optimizing -> "Cleaning up…"
-        UbuntuSetupState.Ready -> "Ready"
-        is UbuntuSetupState.Failed -> state.error
+            if (state.message.isNotEmpty()) {
+                state.message
+            } else {
+                "Installing packages…"
+            }
+
+        is UbuntuSetupState.InstallingOhMyZsh ->
+            state.message
+
+        UbuntuSetupState.Optimizing ->
+            "Cleaning up…"
+
+        UbuntuSetupState.Ready ->
+            "Ready"
+
+        is UbuntuSetupState.Failed ->
+            state.error
     }
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             CircularProgressIndicator()
+
             Text(
                 text = "Setting up terminal",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(top = 16.dp),
             )
+
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp, start = 32.dp, end = 32.dp),
+                modifier = Modifier.padding(
+                    top = 8.dp,
+                    start = 32.dp,
+                    end = 32.dp,
+                ),
             )
         }
     }
 }
 
 @Composable
-private fun SetupFailure(error: String, onRetry: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun SetupFailure(
+    error: String,
+    onRetry: () -> Unit,
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(
                 text = "Failed to set up terminal",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error,
             )
+
             Text(
                 text = error,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp, start = 32.dp, end = 32.dp),
+                modifier = Modifier.padding(
+                    top = 8.dp,
+                    start = 32.dp,
+                    end = 32.dp,
+                ),
             )
+
             Button(
                 onClick = onRetry,
                 modifier = Modifier.padding(top = 16.dp),
-            ) { Text("Retry") }
+            ) {
+                Text("Retry")
+            }
         }
     }
 }
@@ -435,7 +632,10 @@ private fun TerminalViewHost(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val viewClient = remember(terminalViewModel, extraKeyState) {
+    val viewClient = remember(
+        terminalViewModel,
+        extraKeyState,
+    ) {
         TerminalViewClientImpl(
             onScaleChange = { factor ->
                 terminalViewModel.bumpFontSize(factor)
@@ -451,40 +651,91 @@ private fun TerminalViewHost(
     }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, _ -> }
+        val observer = LifecycleEventObserver { _, _ ->
+            // Lifecycle hook intentionally kept here.
+        }
+
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     AndroidView(
         modifier = modifier.fillMaxSize(),
+
         factory = { ctx ->
-            TerminalView(ctx, null).apply {
+            TerminalView(
+                ctx,
+                null,
+            ).apply {
                 setTextSize(fontSizeSp)
+
                 isFocusable = true
                 isFocusableInTouchMode = true
+
                 setTerminalViewClient(viewClient)
-                terminalManager.currentSession?.let { session -> attachSession(session) }
-                terminalManager.registerTerminalView(this, ctx)
-                
-                // View'in hazır olduğunu anlamak için layout listener ekle
-                val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
-                    override fun onGlobalLayout() {
-                        if (width > 0 && height > 0) {
-                            viewTreeObserver.removeOnGlobalLayoutListener(this)
-                            terminalViewRef.value = this@apply
+
+                terminalManager.currentSession?.let { session ->
+                    attachSession(session)
+                }
+
+                terminalManager.registerTerminalView(
+                    this,
+                    ctx,
+                )
+
+                /*
+                 * Do not expose the view until it has a valid size.
+                 *
+                 * This is important for the Liquid Glass sampler because
+                 * Bitmap.createBitmap() must never receive zero dimensions.
+                 */
+                val listener =
+                    object : ViewTreeObserver.OnGlobalLayoutListener {
+
+                        override fun onGlobalLayout() {
+                            if (
+                                width > 0 &&
+                                height > 0 &&
+                                isAttachedToWindow
+                            ) {
+                                viewTreeObserver
+                                    .removeOnGlobalLayoutListener(this)
+
+                                terminalViewRef.value = this@apply
+                            }
                         }
                     }
-                }
+
                 viewTreeObserver.addOnGlobalLayoutListener(listener)
             }
         },
+
         update = { view ->
             view.setTextSize(fontSizeSp)
-            terminalManager.currentSession?.let { session -> view.attachSession(session) }
-            terminalManager.registerTerminalView(view, view.context)
-            if (view.isAttachedToWindow && view.width > 0 && view.height > 0) {
+
+            terminalManager.currentSession?.let { session ->
+                view.attachSession(session)
+            }
+
+            terminalManager.registerTerminalView(
+                view,
+                view.context,
+            )
+
+            /*
+             * Keep the shared reference current after recomposition.
+             * Again, never publish an invalid-sized view.
+             */
+            if (
+                view.isAttachedToWindow &&
+                view.width > 0 &&
+                view.height > 0
+            ) {
                 terminalViewRef.value = view
+
                 view.requestFocus()
             }
         },
