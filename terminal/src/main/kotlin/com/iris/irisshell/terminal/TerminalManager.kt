@@ -301,6 +301,7 @@ class TerminalManager(
 
     private fun ensureShellRc() {
         val d = "${'$'}"
+        val completionFile = "/data/data/com.iris.irisshell/files/iris_cmd_complete"
         val zshrc = File(ubuntuBootstrap.rootfsDir, "home/.zshrc")
         if (!zshrc.exists()) {
             zshrc.writeText(
@@ -320,7 +321,7 @@ class TerminalManager(
                 alias ..='cd ..'
                 alias grep='grep --color=auto'
 
-                PROMPT='%F{yellow}%n@iris-shell%f:%F{blue}%~%f$ '
+                PROMPT='%F{yellow}%n@iris-shell%f:%F{blue}%~%f${d} '
 
                 if [[ -z "${d}IRIS_WELCOME_SHOWN" ]]; then
                     export IRIS_WELCOME_SHOWN=1
@@ -331,6 +332,26 @@ class TerminalManager(
                     echo "  ╚══════════════════════════════════════════╝"
                     echo ""
                 fi
+
+                # ── Command completion tracking ─────────────────────────────
+                # preexec/precmd hooks write "command|elapsed_sec|exit_code"
+                # to a file the foreground service monitors. Works in both
+                # Classic and Block Engine modes.
+                __iris_cmd=""
+                __iris_start=0
+                preexec() {
+                  __iris_cmd="${d}1"
+                  __iris_start=${d}(date +%s)
+                }
+                precmd() {
+                  if [[ -n "${d}__iris_cmd" && ${d}__iris_start -gt 0 ]]; then
+                    local __iris_elapsed=$(( ${d}(date +%s) - ${d}__iris_start ))
+                    local __iris_code=${d}?
+                    echo "${d}__iris_cmd|${d}__iris_elapsed|${d}__iris_code" >> ${completionFile} 2>/dev/null
+                    __iris_cmd=""
+                    __iris_start=0
+                  fi
+                }
                 """.trimIndent() + "\n"
             )
         }
