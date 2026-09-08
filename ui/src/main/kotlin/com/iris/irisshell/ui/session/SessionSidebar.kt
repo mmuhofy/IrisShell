@@ -472,18 +472,19 @@ private fun HoverIconButton(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick,
-            )
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
             tint = tint,
-            modifier = Modifier.size(iconSize),
+            modifier = Modifier
+                .size(iconSize)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
         )
     }
 }
