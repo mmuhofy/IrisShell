@@ -1,6 +1,9 @@
 package com.iris.irisshell.ui.block
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +14,16 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -96,17 +103,9 @@ fun BlockBody(
                 SelectionContainer(modifier = Modifier.fillMaxWidth().padding(top = 2.dp)) {
                     Column {
                         block.outputLines.forEach { line ->
-                            val annotated = buildOutputAnnotatedString(line)
-                            @OptIn(ExperimentalTextApi::class) Text(
-                                text = annotated,
-                                style = LocalTextStyle.current.copy(
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 13.sp,
-                                    lineHeight = 19.sp,
-                                    textAlign = TextAlign.Start,
-                                ),
-                                onLinkClick = { url, _ -> onUrlClick(url) },
-                                modifier = Modifier.fillMaxWidth(),
+                            OutputLineWithLinks(
+                                line = line,
+                                onUrlClick = onUrlClick,
                             )
                         }
                     }
@@ -118,32 +117,80 @@ fun BlockBody(
     }
 }
 
-private val OUTPUT_LINK_STYLE = SpanStyle(color = IrisPrimary, textDecoration = TextDecoration.Underline)
-private val OUTPUT_DEFAULT_STYLE = SpanStyle(color = IrisTextSecondary)
-
-@OptIn(ExperimentalTextApi::class)
-private fun buildOutputAnnotatedString(
+@Composable
+private fun OutputLineWithLinks(
     line: String,
-): AnnotatedString = buildAnnotatedString {
+    onUrlClick: (String) -> Unit,
+) {
+    val textStyle = LocalTextStyle.current.copy(
+        fontFamily = FontFamily.Monospace,
+        fontSize = 13.sp,
+        lineHeight = 19.sp,
+        textAlign = TextAlign.Start,
+    )
+
+    val urlMatches = UrlDetector.findUrls(line)
+
+    if (urlMatches.isEmpty()) {
+        Text(
+            text = line.ifEmpty { " " },
+            color = IrisTextSecondary,
+            style = textStyle,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        return
+    }
+
     val text = line.ifEmpty { " " }
-    val matches = UrlDetector.findUrls(text)
-    if (matches.isEmpty()) {
-        withStyle(OUTPUT_DEFAULT_STYLE) { append(text) }
-        return@buildAnnotatedString
-    }
-    var cursor = 0
-    for (match in matches) {
-        if (match.start > cursor) {
-            withStyle(OUTPUT_DEFAULT_STYLE) { append(text.substring(cursor, match.start)) }
+    val annotated = buildAnnotatedString {
+        var cursor = 0
+        for (match in urlMatches) {
+            if (match.start > cursor) {
+                withStyle(SpanStyle(color = IrisTextSecondary)) {
+                    append(text.substring(cursor, match.start))
+                }
+            }
+            withStyle(
+                SpanStyle(
+                    color = IrisPrimary,
+                    textDecoration = TextDecoration.Underline,
+                ),
+            ) {
+                append(text.substring(match.start, match.end))
+            }
+            cursor = match.end
         }
-        pushLinkAnnotation(LinkAnnotation.Url(match.url))
-        withStyle(OUTPUT_LINK_STYLE) { append(text.substring(match.start, match.end)) }
-        pop()
-        cursor = match.end
+        if (cursor < text.length) {
+            withStyle(SpanStyle(color = IrisTextSecondary)) {
+                append(text.substring(cursor))
+            }
+        }
     }
-    if (cursor < text.length) {
-        withStyle(OUTPUT_DEFAULT_STYLE) { append(text.substring(cursor)) }
-    }
+
+    var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+    Text(
+        text = annotated,
+        style = textStyle,
+        softWrap = true,
+        onTextLayout = { layoutResult = it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures { tapPosition: Offset ->
+                    val layout = layoutResult ?: return@detectTapGestures
+                    val offset = layout.getOffsetForPosition(tapPosition)
+                    val clamped = offset.coerceAtLeast(0).coerceAtMost(text.length - 1)
+                    val charIndex = if (clamped < 0) 0 else clamped
+                    for (match in urlMatches) {
+                        if (charIndex in match.start..match.end) {
+                            onUrlClick(match.url)
+                            return@detectTapGestures
+                        }
+                    }
+                }
+            },
+    )
 }
 
 private fun isLikelyPrompt(text: String): Boolean {

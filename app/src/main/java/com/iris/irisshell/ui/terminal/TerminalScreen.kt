@@ -652,6 +652,7 @@ private fun TerminalViewHost(
     val viewClient = remember(
         terminalViewModel,
         extraKeyState,
+        onUrlClick,
     ) {
         TerminalViewClientImpl(
             onScaleChange = { factor ->
