@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BorderStroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -113,10 +114,7 @@ fun TerminalTopBar(
                 GlassPillButton(
                     iconRes = R.drawable.lucide_panel_left,
                     contentDescription = "Open sessions",
-                    onClick = {
-                        if (keyboardFocused) onToggleKeyboard()
-                        onOpenSidebar()
-                    },
+                    onClick = onOpenSidebar,
                 )
 
                 Box(
@@ -194,8 +192,9 @@ private fun MoreActionsDropdown(
         expanded = expanded,
         onDismissRequest = onDismiss,
         containerColor = IrisSurface,
-        tonalElevation = 0.dp,
+        tonalElevation = 8.dp,
         shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, IrisBorderSubtle.copy(alpha = 0.2f)),
     ) {
         DropdownMenuItem(
             onClick = { onRefresh() },

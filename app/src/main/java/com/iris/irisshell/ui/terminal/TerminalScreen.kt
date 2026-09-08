@@ -24,6 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleEventObserver
+import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
@@ -49,6 +51,7 @@ import com.iris.irisshell.ui.topbar.TerminalTopBar
 import com.termux.view.TerminalView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 
 @Composable
@@ -120,6 +123,8 @@ private fun ReadyScreen(
     var fullscreen by remember { mutableStateOf(false) }
     var sidebarOpen by remember { mutableStateOf(false) }
     var browserUrl by remember { mutableStateOf<String?>(null) }
+
+    val scope = rememberCoroutineScope()
 
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
@@ -296,6 +301,7 @@ private fun ReadyScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(IrisBackground)
                 .imePadding(),
         ) {
             Box(
@@ -447,7 +453,15 @@ private fun ReadyScreen(
                 keyboardFocused = keyboardFocused,
                 onToggleKeyboard = ::toggleKeyboard,
                 onOpenSidebar = {
-                    sidebarOpen = true
+                    if (keyboardFocused) {
+                        onToggleKeyboard()
+                        scope.launch {
+                            delay(100)
+                            sidebarOpen = true
+                        }
+                    } else {
+                        sidebarOpen = true
+                    }
                 },
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()

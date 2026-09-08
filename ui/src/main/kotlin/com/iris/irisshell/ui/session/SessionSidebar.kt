@@ -34,6 +34,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +49,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BorderStroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -267,18 +269,22 @@ private fun SidebarContent(
         }
 
         // Search bar
-        Box(
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 14.dp)
-                .height(32.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(IrisSurfaceVariant.copy(alpha = 0.6f))
-                .padding(horizontal = 10.dp),
-            contentAlignment = Alignment.CenterStart,
+                .height(32.dp),
+            shape = RoundedCornerShape(8.dp),
+            color = IrisSurfaceVariant,
+            tonalElevation = 2.dp,
+            border = BorderStroke(1.dp, IrisBorderSubtle.copy(alpha = 0.2f)),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 // UNTESTED — verify R.drawable.lucide_search exists in the project.
                 Icon(
                     painter = painterResource(R.drawable.lucide_search),
@@ -559,29 +565,38 @@ private fun SessionRow(
         )
 
         if (isRenaming) {
-            BasicTextField(
-                value = renameValue,
-                onValueChange = onRenameValueChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { state ->
-                        if (state.isFocused) {
-                            hasFocusedOnce = true
-                        } else if (hasFocusedOnce) {
-                            onRenameCommit()
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = IrisSurfaceVariant,
+                tonalElevation = 2.dp,
+                border = BorderStroke(1.dp, IrisPrimary.copy(alpha = 0.4f)),
+                modifier = Modifier.weight(1f),
+            ) {
+                BasicTextField(
+                    value = renameValue,
+                    onValueChange = onRenameValueChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        .onFocusChanged { state ->
+                            if (state.isFocused) {
+                                hasFocusedOnce = true
+                            } else if (hasFocusedOnce) {
+                                onRenameCommit()
+                            }
                         }
-                    },
-                singleLine = true,
-                textStyle = TextStyle(
-                    color = IrisText,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 13.5.sp,
-                ),
-                cursorBrush = SolidColor(IrisText),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { onRenameCommit() }),
-            )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        color = IrisText,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.5.sp,
+                    ),
+                    cursorBrush = SolidColor(IrisPrimary),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { onRenameCommit() }),
+                )
+            }
             HoverIconButton(
                 onClick = onRenameCommit,
                 contentDescription = "Confirm rename",
