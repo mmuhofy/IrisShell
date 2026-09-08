@@ -307,22 +307,28 @@ class TerminalManager(
 
     private fun writeShellHooksFile(): Map<String, String> {
         val d = "${'$'}"
-        val hooksFile = File(appContext.filesDir, "iris_hooks.zsh")
+        
+        // Use /sdcard/IrisShell for PRoot accessibility — app's filesDir is NOT
+        // accessible from inside PRoot due to debug package path mismatch.
+        // /sdcard is bind-mounted, so /sdcard/IrisShell is accessible from both
+        // app side and PRoot shell.
+        val irisSdkDir = File("/sdcard/IrisShell")
+        irisSdkDir.mkdirs()
 
+        val hooksFile = File(irisSdkDir, "iris_hooks.zsh")
+        val completionFile = File(irisSdkDir, "iris_cmd_complete")
+        
         // Pre-create completion file to prevent race condition where
         // precmd fires before file exists (causes "no such file" error)
-        val completionFile = File(appContext.filesDir, "iris_cmd_complete")
         appContext.filesDir.mkdirs()
         if (!completionFile.exists()) completionFile.createNewFile()
-
-        val completionPath = completionFile.absolutePath
 
         val hooksContent = """
             # ── Command completion tracking (ENV injection) ───────────────────────
             # preexec/precmd hooks write "command|elapsed_sec|exit_code" to a
             # file the foreground service monitors. Injected via ${d}ENV variable
             # so user's .zshrc is never modified. Path is app-controlled.
-            local __iris_cf="${completionPath}"
+            local __iris_cf="${completionFile.absolutePath}"
             __iris_cmd=""
             __iris_start=0
 
