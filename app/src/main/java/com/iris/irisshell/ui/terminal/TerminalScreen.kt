@@ -454,13 +454,9 @@ private fun ReadyScreen(
                 keyboardFocused = keyboardFocused,
                 onToggleKeyboard = ::toggleKeyboard,
                 onOpenSidebar = {
-                    if (keyboardFocused) {
-                        toggleKeyboard()
-                        scope.launch {
-                            delay(100)
-                            sidebarOpen = true
-                        }
-                    } else {
+                    hideKeyboard()
+                    scope.launch {
+                        delay(100)
                         sidebarOpen = true
                     }
                 },

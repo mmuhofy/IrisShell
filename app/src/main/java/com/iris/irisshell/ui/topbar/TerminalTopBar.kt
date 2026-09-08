@@ -190,7 +190,7 @@ private fun MoreActionsDropdown(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        containerColor = IrisSurface,
+        containerColor = IrisSurfaceVariant,
         tonalElevation = 8.dp,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.border(
@@ -319,10 +319,10 @@ private fun GlassPillButton(
 ) {
     var pressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.92f else 1f,
+        targetValue = if (pressed) 0.88f else 1f,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessMedium,
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMediumLow,
         ),
         label = "pillButtonScale",
     )

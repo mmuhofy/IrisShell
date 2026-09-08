@@ -52,8 +52,9 @@ fun IrisDropdownMenu(
         onDismissRequest = onDismissRequest,
         offset           = offset,
         shape            = RoundedCornerShape(14.dp),
+        containerColor   = IrisSurfaceVariant,
         modifier         = modifier
-            .background(IrisSurface)
+            .background(IrisSurfaceVariant)
             .widthIn(min = MIN_MENU_WIDTH, max = MAX_MENU_WIDTH),
     ) {
         items.forEachIndexed { index, item ->
