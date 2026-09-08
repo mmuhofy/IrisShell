@@ -13,11 +13,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,6 +28,7 @@ import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
+import com.iris.irisshell.domain.UrlDetector
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockState
 
@@ -32,6 +36,7 @@ import com.iris.irisshell.domain.block.BlockState
 fun BlockBody(
     block: Block,
     onLongClick: (() -> Unit)? = null,
+    onUrlClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val prompt = block.prompt
@@ -91,15 +96,17 @@ fun BlockBody(
                 SelectionContainer(modifier = Modifier.fillMaxWidth().padding(top = 2.dp)) {
                     Column {
                         block.outputLines.forEach { line ->
-                            Text(
-                                text = line.ifEmpty { " " },
-                                color = IrisTextSecondary,
+                            val annotated = buildOutputAnnotatedString(line)
+                            @OptIn(ExperimentalTextApi::class) Text(
+                                text = annotated,
                                 style = LocalTextStyle.current.copy(
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 13.sp,
                                     lineHeight = 19.sp,
                                     textAlign = TextAlign.Start,
                                 ),
+                                onLinkClick = { url, _ -> onUrlClick(url) },
+                                modifier = Modifier.fillMaxWidth(),
                             )
                         }
                     }
@@ -108,6 +115,34 @@ fun BlockBody(
                 EmptyOutputPlaceholder(isRunning = block.state is BlockState.Running)
             }
         }
+    }
+}
+
+private val OUTPUT_LINK_STYLE = SpanStyle(color = IrisPrimary, textDecoration = TextDecoration.Underline)
+private val OUTPUT_DEFAULT_STYLE = SpanStyle(color = IrisTextSecondary)
+
+@OptIn(ExperimentalTextApi::class)
+private fun buildOutputAnnotatedString(
+    line: String,
+): AnnotatedString = buildAnnotatedString {
+    val text = line.ifEmpty { " " }
+    val matches = UrlDetector.findUrls(text)
+    if (matches.isEmpty()) {
+        withStyle(OUTPUT_DEFAULT_STYLE) { append(text) }
+        return@buildAnnotatedString
+    }
+    var cursor = 0
+    for (match in matches) {
+        if (match.start > cursor) {
+            withStyle(OUTPUT_DEFAULT_STYLE) { append(text.substring(cursor, match.start)) }
+        }
+        pushLinkAnnotation(LinkAnnotation.Url(match.url))
+        withStyle(OUTPUT_LINK_STYLE) { append(text.substring(match.start, match.end)) }
+        pop()
+        cursor = match.end
+    }
+    if (cursor < text.length) {
+        withStyle(OUTPUT_DEFAULT_STYLE) { append(text.substring(cursor)) }
     }
 }
 

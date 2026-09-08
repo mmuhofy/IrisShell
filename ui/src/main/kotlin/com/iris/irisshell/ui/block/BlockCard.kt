@@ -42,6 +42,7 @@ fun BlockCard(
     onExport: () -> Unit,
     onDelete: () -> Unit,
     onToggleCollapse: () -> Unit,
+    onUrlClick: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var contextOpen by remember { mutableStateOf(false) }
@@ -71,7 +72,7 @@ fun BlockCard(
                     onCopy = onCopy,
                     onToggleCollapse = onToggleCollapse,
                 )
-                BlockBody(block = block, onLongClick = { contextOpen = true })
+                BlockBody(block = block, onLongClick = { contextOpen = true }, onUrlClick = onUrlClick)
             }
         }
 

@@ -1,10 +1,9 @@
 package com.iris.irisshell.terminal
 
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
+import com.iris.irisshell.domain.UrlDetector
 import com.termux.terminal.TerminalSession
 import com.termux.view.TerminalView
 import com.termux.view.TerminalViewClient
@@ -12,17 +11,13 @@ import com.termux.view.TerminalViewClient
 class TerminalViewClientImpl(
     private val onScaleChange: ((Float) -> Float)? = null,
     val extraKeyState: ExtraKeyState? = null,
-    private val context: android.content.Context? = null
+    private val context: android.content.Context? = null,
+    private val onUrlClick: ((String) -> Unit)? = null,
 ) : TerminalViewClient {
 
     var scrollLocked: Boolean = false
     var terminalView: TerminalView? = null
     var onCopyModeChanged: ((Boolean) -> Unit)? = null
-
-    private val urlPattern = Regex(
-        "((https?|ftp|file)://|www\\.)[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]",
-        RegexOption.IGNORE_CASE
-    )
 
     override fun onScale(scale: Float): Float {
         return onScaleChange?.invoke(scale) ?: 1.0f
@@ -38,15 +33,9 @@ class TerminalViewClientImpl(
         val screen = emulator.getScreen() ?: return
         val word = screen.getWordAtLocation(col, row)
         if (word.isNullOrBlank()) return
-        if (urlPattern.matches(word)) {
-            var url = word
-            if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("ftp://")) {
-                url = "https://$url"
-            }
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context?.startActivity(intent)
+        if (UrlDetector.matches(word)) {
+            val url = UrlDetector.normalizeUrlFromWord(word)
+            onUrlClick?.invoke(url)
         }
     }
 

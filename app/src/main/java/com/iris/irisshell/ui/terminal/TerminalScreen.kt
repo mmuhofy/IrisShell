@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
 import com.iris.irisshell.ui.block.BlockEngineViewModel
 import com.iris.irisshell.ui.block.BlockTerminalView
+import com.iris.irisshell.ui.browser.WebViewSheet
 import com.iris.irisshell.ui.input.InputBarHost
 import com.iris.irisshell.ui.input.InputBarViewModel
 import com.iris.irisshell.ui.session.SessionSidebar
@@ -117,6 +119,7 @@ private fun ReadyScreen(
 ) {
     var fullscreen by remember { mutableStateOf(false) }
     var sidebarOpen by remember { mutableStateOf(false) }
+    var browserUrl by remember { mutableStateOf<String?>(null) }
 
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
@@ -353,8 +356,8 @@ private fun ReadyScreen(
 
                     val lastDir by blockEngineViewModel.lastDir.collectAsState()
 
-                    BlockTerminalView(
-                        blocks = visibleBlocks,
+                BlockTerminalView(
+                    blocks = visibleBlocks,
                         onToggleCollapsed =
                             blockEngineViewModel::onToggleCollapsed,
                         onCommandSubmitted =
@@ -374,6 +377,7 @@ private fun ReadyScreen(
                         onDeleteBlock =
                             blockEngineViewModel::onDeleteBlock,
                         promptLabel = lastDir,
+                        onUrlClick = { browserUrl = it },
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
@@ -389,12 +393,13 @@ private fun ReadyScreen(
                      * terminalViewRef is shared with InputBarHost so the
                      * Liquid Glass surface can sample this exact TerminalView.
                      */
-                    TerminalViewHost(
+                     TerminalViewHost(
                         terminalManager = terminalManager,
                         fontSizeSp = fontSizeSp,
                         terminalViewModel = terminalViewModel,
                         terminalViewRef = terminalViewRef,
                         extraKeyState = extraKeyState,
+                        onUrlClick = { browserUrl = it },
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
@@ -483,6 +488,16 @@ private fun ReadyScreen(
                     sidebarOpen = false
                 },
                 onOpenSettings = onOpenSettings,
+            )
+        }
+
+        if (browserUrl != null) {
+            BackHandler {
+                browserUrl = null
+            }
+            WebViewSheet(
+                url = browserUrl!!,
+                onDismiss = { browserUrl = null },
             )
         }
     }
@@ -627,10 +642,12 @@ private fun TerminalViewHost(
     fontSizeSp: Int,
     terminalViewModel: TerminalViewModel,
     terminalViewRef: MutableState<TerminalView?>,
+    onUrlClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
 
     val viewClient = remember(
         terminalViewModel,
@@ -643,6 +660,8 @@ private fun TerminalViewHost(
                 factor
             },
             extraKeyState = extraKeyState,
+            context = context,
+            onUrlClick = onUrlClick,
         )
     }
 

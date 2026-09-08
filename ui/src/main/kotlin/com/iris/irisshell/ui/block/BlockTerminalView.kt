@@ -42,6 +42,7 @@ fun BlockTerminalView(
     onExportOutput: (Block) -> Unit = {},
     onDeleteBlock: (String) -> Unit = {},
     promptLabel: String = "iris",
+    onUrlClick: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     extraBar: @Composable () -> Unit = {},
 ) {
@@ -88,6 +89,7 @@ fun BlockTerminalView(
                         onExport = { onExportOutput(block) },
                         onDelete = { onDeleteBlock(block.id) },
                         onToggleCollapse = { onToggleCollapsed(block.id) },
+                         onUrlClick = onUrlClick,
                         modifier = Modifier.padding(vertical = 2.dp),
                     )
                 }
