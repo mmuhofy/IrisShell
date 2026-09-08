@@ -1,10 +1,11 @@
 package com.iris.irisshell.ui.input
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,23 +37,48 @@ fun ExtraKeyButton(
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    val interactionSource = remember {
+        MutableInteractionSource()
+    }
+
     val pressed by interactionSource.collectIsPressedAsState()
     val hovered by interactionSource.collectIsHoveredAsState()
 
     val active = stuckActive || pressed
 
+    val background = when {
+        stuckActive ->
+            IrisPrimary.copy(alpha = 0.12f)
+
+        pressed ->
+            Color.White.copy(alpha = 0.095f)
+
+        hovered ->
+            Color.White.copy(alpha = 0.045f)
+
+        else ->
+            Color.Transparent
+    }
+
     val glyphColor = when {
-        stuckActive -> IrisPrimary
-        active || hovered -> IrisText
-        else -> IrisTextMuted
+        stuckActive ->
+            IrisPrimary
+
+        active || hovered ->
+            IrisText
+
+        else ->
+            IrisTextMuted
     }
 
     val arrowResId = key.arrowDrawableRes()
 
     Box(
         modifier = modifier
-            .size(width = 48.dp, height = 38.dp)
+            .size(
+                width = 38.dp,
+                height = 34.dp,
+            )
             .hoverable(interactionSource)
             .combinedClickable(
                 interactionSource = interactionSource,
@@ -60,50 +86,33 @@ fun ExtraKeyButton(
                 onClick = onTap,
                 onLongClick = onLongPress,
             )
-            .clip(RoundedCornerShape(20.dp)),
+            .clip(RoundedCornerShape(17.dp)),
         contentAlignment = Alignment.Center,
     ) {
-        // State material stays extremely subtle so the glass remains the visual focus.
-        androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
-            val background = when {
-                stuckActive -> IrisPrimary.copy(alpha = 0.17f)
-                pressed -> Color.White.copy(alpha = 0.13f)
-                hovered -> Color.White.copy(alpha = 0.075f)
-                else -> Color.Transparent
-            }
-
+        Canvas(
+            modifier = Modifier.matchParentSize(),
+        ) {
             drawRoundRect(
                 color = background,
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-                    20.dp.toPx(),
-                    20.dp.toPx(),
+                    17.dp.toPx(),
+                    17.dp.toPx(),
                 ),
             )
-
-            if (pressed || stuckActive) {
-                drawRoundRect(
-                    color = Color.White.copy(alpha = 0.045f),
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(0.75.dp.toPx()),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-                        20.dp.toPx(),
-                        20.dp.toPx(),
-                    ),
-                )
-            }
         }
 
         if (arrowResId != null) {
             androidx.compose.foundation.Image(
                 painter = painterResource(arrowResId),
                 contentDescription = key.displayLabel(),
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(17.dp),
                 colorFilter = ColorFilter.tint(glyphColor),
             )
         } else {
             Text(
                 text = key.displayGlyph(),
                 color = glyphColor,
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
                 style = MaterialTheme.typography.labelMedium,
             )
@@ -111,41 +120,59 @@ fun ExtraKeyButton(
     }
 }
 
-private fun ExtraKey.arrowDrawableRes(): Int? = when (this) {
-    is ExtraKey.Navigation -> when (this) {
-        ExtraKey.Navigation.ARROW_UP -> R.drawable.lucide_arrow_big_up
-        ExtraKey.Navigation.ARROW_DOWN -> R.drawable.lucide_arrow_big_down
-        ExtraKey.Navigation.ARROW_LEFT -> R.drawable.lucide_arrow_big_left
-        ExtraKey.Navigation.ARROW_RIGHT -> R.drawable.lucide_arrow_big_right
+private fun ExtraKey.arrowDrawableRes(): Int? =
+    when (this) {
+        is ExtraKey.Navigation -> when (this) {
+            ExtraKey.Navigation.ARROW_UP ->
+                R.drawable.lucide_arrow_big_up
+
+            ExtraKey.Navigation.ARROW_DOWN ->
+                R.drawable.lucide_arrow_big_down
+
+            ExtraKey.Navigation.ARROW_LEFT ->
+                R.drawable.lucide_arrow_big_left
+
+            ExtraKey.Navigation.ARROW_RIGHT ->
+                R.drawable.lucide_arrow_big_right
+
+            else -> null
+        }
+
         else -> null
     }
-    else -> null
-}
 
-private fun ExtraKey.displayGlyph(): String = when (this) {
-    is ExtraKey.Special -> name
-    is ExtraKey.Text -> glyph
-    is ExtraKey.Navigation -> when (this) {
-        ExtraKey.Navigation.ESC -> "ESC"
-        ExtraKey.Navigation.TAB -> "TAB"
-        ExtraKey.Navigation.ARROW_LEFT -> ""
-        ExtraKey.Navigation.ARROW_RIGHT -> ""
-        ExtraKey.Navigation.ARROW_UP -> ""
-        ExtraKey.Navigation.ARROW_DOWN -> ""
-        ExtraKey.Navigation.HOME -> "HOME"
-        ExtraKey.Navigation.END -> "END"
-        ExtraKey.Navigation.PAGE_UP -> "PgUp"
-        ExtraKey.Navigation.PAGE_DOWN -> "PgDn"
+private fun ExtraKey.displayGlyph(): String =
+    when (this) {
+        is ExtraKey.Special -> name
+
+        is ExtraKey.Text -> glyph
+
+        is ExtraKey.Navigation -> when (this) {
+            ExtraKey.Navigation.ESC -> "ESC"
+            ExtraKey.Navigation.TAB -> "TAB"
+
+            ExtraKey.Navigation.ARROW_LEFT,
+            ExtraKey.Navigation.ARROW_RIGHT,
+            ExtraKey.Navigation.ARROW_UP,
+            ExtraKey.Navigation.ARROW_DOWN ->
+                ""
+
+            ExtraKey.Navigation.HOME -> "HOME"
+            ExtraKey.Navigation.END -> "END"
+            ExtraKey.Navigation.PAGE_UP -> "PgUp"
+            ExtraKey.Navigation.PAGE_DOWN -> "PgDn"
+        }
     }
-}
 
-private fun ExtraKey.displayLabel(): String = when (this) {
-    is ExtraKey.Navigation -> when (this) {
-        ExtraKey.Navigation.ARROW_UP -> "Up arrow"
-        ExtraKey.Navigation.ARROW_DOWN -> "Down arrow"
-        ExtraKey.Navigation.ARROW_LEFT -> "Left arrow"
-        ExtraKey.Navigation.ARROW_RIGHT -> "Right arrow"
+private fun ExtraKey.displayLabel(): String =
+    when (this) {
+        is ExtraKey.Navigation -> when (this) {
+            ExtraKey.Navigation.ARROW_UP -> "Up arrow"
+            ExtraKey.Navigation.ARROW_DOWN -> "Down arrow"
+            ExtraKey.Navigation.ARROW_LEFT -> "Left arrow"
+            ExtraKey.Navigation.ARROW_RIGHT -> "Right arrow"
+            else -> displayGlyph()
+        }
+
         else -> displayGlyph()
     }
-    else -> displayGlyph()
-}

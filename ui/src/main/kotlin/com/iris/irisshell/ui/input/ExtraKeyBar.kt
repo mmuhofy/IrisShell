@@ -1,5 +1,6 @@
 package com.iris.irisshell.ui.input
 
+import android.view.View
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -13,11 +14,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,15 +29,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.view.View
 import androidx.compose.ui.viewinterop.AndroidView
 import com.iris.irisshell.domain.input.ExtraKey
 import com.iris.irisshell.domain.input.InputIntent
 
-private val PILL_SHAPE = RoundedCornerShape(26.dp)
+private val PILL_SHAPE = RoundedCornerShape(24.dp)
 
 @Composable
 fun ExtraKeyBar(
@@ -51,19 +49,20 @@ fun ExtraKeyBar(
     var moreOpen by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AnimatedVisibility(
             visible = moreOpen,
             enter = fadeIn(tween(150)) + scaleIn(
-                initialScale = 0.98f,
-                animationSpec = tween(180, easing = FastOutSlowInEasing),
+                initialScale = 0.97f,
+                animationSpec = tween(
+                    180,
+                    easing = FastOutSlowInEasing,
+                ),
             ),
             exit = fadeOut(tween(110)) + scaleOut(
-                targetScale = 0.98f,
+                targetScale = 0.97f,
                 animationSpec = tween(120),
             ),
         ) {
@@ -81,38 +80,57 @@ fun ExtraKeyBar(
             activePopup?.let { modifierKey ->
                 ModifierPopup(
                     modifier = modifierKey,
-                    onComboSelected = { intents -> intents.forEach(onIntent) },
-                    onDismiss = { activePopup = null },
+                    onComboSelected = { intents ->
+                        intents.forEach(onIntent)
+                    },
+                    onDismiss = {
+                        activePopup = null
+                    },
                 )
             }
         }
 
-        if (moreOpen) Spacer(Modifier.height(8.dp))
+        if (moreOpen) {
+            Spacer(Modifier.height(8.dp))
+        }
 
         Box(
             modifier = Modifier
-                .widthIn(max = 720.dp)
-                .fillMaxWidth()
-                .shadow(12.dp, PILL_SHAPE, clip = false)
+                .widthIn(
+                    min = 286.dp,
+                    max = 520.dp,
+                )
+                .wrapContentWidth()
+                .shadow(
+                    elevation = 10.dp,
+                    shape = PILL_SHAPE,
+                    clip = false,
+                )
                 .clip(PILL_SHAPE),
         ) {
-            // Real backdrop: terminal pixels are sampled into this view, then blurred
-            // before the translucent glass material is composited over them.
             if (terminalView != null) {
                 AndroidView(
                     modifier = Modifier.matchParentSize(),
-                    factory = { LiquidGlassBackdropView(terminalView) },
-                    update = { it.markDirty() },
+                    factory = {
+                        LiquidGlassBackdropView(
+                            sourceView = terminalView,
+                        )
+                    },
+                    update = {
+                        it.markDirty()
+                    },
                 )
             }
 
             LiquidGlassSurface()
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                modifier = Modifier.padding(
+                    horizontal = 5.dp,
+                    vertical = 5.dp,
+                ),
                 horizontalArrangement = Arrangement.spacedBy(1.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 val row = listOf(
                     ExtraKey.Navigation.ESC,
@@ -135,14 +153,15 @@ fun ExtraKeyBar(
                     ExtraKeyButton(
                         key = key,
                         stuckActive = stuck,
-                        onTap = { onIntent(key.toSingleIntent()) },
+                        onTap = {
+                            onIntent(key.toSingleIntent())
+                        },
                         onLongPress = {
                             if (key is ExtraKey.Special) {
                                 activePopup = key
                                 moreOpen = false
                             }
                         },
-                        modifier = Modifier.weight(1f),
                     )
                 }
 
@@ -152,7 +171,6 @@ fun ExtraKeyBar(
                         moreOpen = !moreOpen
                         activePopup = null
                     },
-                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -179,10 +197,10 @@ private fun MoreKeysPanel(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp)),
     ) {
         LiquidGlassSurface()
+
         Row(
             modifier = Modifier.padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -201,7 +219,6 @@ private fun MoreKeysPanel(
                 ) {
                     Text(
                         text = label,
-                        color = Color(0xFFC9CCD2),
                         fontSize = 10.sp,
                     )
                 }
@@ -214,25 +231,31 @@ private fun MoreKeysPanel(
 private fun MoreKeyButton(
     expanded: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .size(width = 48.dp, height = 38.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+        modifier = Modifier
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(
+                horizontal = 10.dp,
+                vertical = 8.dp,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = "•••",
-            color = Color(0xFFC9CCD2),
             fontSize = 17.sp,
         )
     }
 }
 
 private fun ExtraKey.toSingleIntent(): InputIntent = when (this) {
-    is ExtraKey.Special -> InputIntent.ArmModifier(this)
-    is ExtraKey.Text -> InputIntent.TypeChar(glyph.first())
-    is ExtraKey.Navigation -> InputIntent.Navigate(this)
+    is ExtraKey.Special ->
+        InputIntent.ArmModifier(this)
+
+    is ExtraKey.Text ->
+        InputIntent.TypeChar(glyph.first())
+
+    is ExtraKey.Navigation ->
+        InputIntent.Navigate(this)
 }
