@@ -64,7 +64,7 @@ class ProotRunner(
             }
         }
 
-        val env = buildEnvironment() + environmentHooks
+        val env = buildEnvironment() + environmentHooks.map { "${it.key}=${it.value}" }
 
         return ProotCommand(
             executable = linkerPath,
