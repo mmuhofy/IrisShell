@@ -47,11 +47,10 @@ class TerminalManager(
      * _idToIndex / _indexToId falling out of sync.
      */
     /**
-     * Directory for shell hooks + completion file — uses app's external files
-     * dir so it's writable without MANAGE_EXTERNAL_STORAGE and accessible
-     * from inside PRoot via /storage bind mount.
+     * Directory for shell hooks + completion file.
+     * /sdcard/IrisShell — accessible from both app and PRoot via /sdcard bind.
      */
-    val irisStorageDir: File = File(appContext.getExternalFilesDir(null), "IrisShell")
+    val irisStorageDir: File = File("/sdcard/IrisShell")
 
     companion object {
         const val COMPLETION_FILE_NAME = "iris_cmd_complete"
@@ -317,12 +316,13 @@ class TerminalManager(
     fun writeShellHooksFile(): Map<String, String> {
         val d = "${'$'}"
         
-        // Use irisStorageDir (app's external files dir) — writable without
-        // MANAGE_EXTERNAL_STORAGE and accessible from PRoot via /storage bind.
-        irisStorageDir.mkdirs()
+        // MANAGE_EXTERNAL_STORAGE permission granted → use /sdcard directly.
+        // Accessible from PRoot via /sdcard bind mount.
+        val irisSdkDir = File("/sdcard/IrisShell")
+        irisSdkDir.mkdirs()
 
-        val hooksFile = File(irisStorageDir, "iris_hooks.zsh")
-        val completionFile = File(irisStorageDir, "iris_cmd_complete")
+        val hooksFile = File(irisSdkDir, "iris_hooks.zsh")
+        val completionFile = File(irisSdkDir, "iris_cmd_complete")
 
         // Pre-create completion file to prevent race condition
         if (!completionFile.exists()) completionFile.createNewFile()
