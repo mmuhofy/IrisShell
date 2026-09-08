@@ -1,7 +1,6 @@
 package com.iris.irisshell.ui.input
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -15,67 +14,60 @@ fun LiquidGlassSurface(
     modifier: Modifier = Modifier,
 ) {
     Canvas(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
     ) {
-        val radius = 24.dp.toPx()
+        val radius = 26.dp.toPx()
 
-        /*
-         * Very subtle material tint.
-         *
-         * This is intentionally NOT an opaque glass panel.
-         * Most of the visual information should come from
-         * the backdrop underneath.
-         */
+        // HTML:
+        // background: rgba(30,32,36,.38)
         drawRoundRect(
-            brush = Brush.verticalGradient(
+            color = Color(0xFF1E2024).copy(alpha = 0.38f),
+            cornerRadius = CornerRadius(
+                radius,
+                radius,
+            ),
+        )
+
+        // glass:before
+        drawRoundRect(
+            brush = Brush.horizontalGradient(
                 colors = listOf(
+                    Color.White.copy(alpha = 0.07f),
+                    Color.Transparent,
+                    Color.Transparent,
                     Color.White.copy(alpha = 0.035f),
-                    Color.White.copy(alpha = 0.012f),
-                    Color.Black.copy(alpha = 0.035f),
                 ),
             ),
-            cornerRadius = CornerRadius(radius, radius),
-        )
-
-        /*
-         * Extremely soft top specular reflection.
-         */
-        drawRoundRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = 0.065f),
-                    Color.Transparent,
-                ),
-                startY = 0f,
-                endY = size.height * 0.42f,
+            cornerRadius = CornerRadius(
+                radius - 1.dp.toPx(),
+                radius - 1.dp.toPx(),
             ),
-            cornerRadius = CornerRadius(radius, radius),
         )
 
-        /*
-         * Subtle inner edge.
-         */
+        // inset top highlight
         drawRoundRect(
-            color = Color.White.copy(alpha = 0.075f),
+            color = Color.White.copy(alpha = 0.16f),
             style = Stroke(
-                width = 0.75.dp.toPx(),
+                width = 1.dp.toPx(),
             ),
-            cornerRadius = CornerRadius(radius, radius),
+            cornerRadius = CornerRadius(
+                radius,
+                radius,
+            ),
         )
 
-        /*
-         * Slight lower edge darkening.
-         */
+        // subtle bottom density
         drawRoundRect(
             brush = Brush.verticalGradient(
                 colors = listOf(
                     Color.Transparent,
-                    Color.Black.copy(alpha = 0.045f),
+                    Color.Black.copy(alpha = 0.06f),
                 ),
-                startY = size.height * 0.55f,
-                endY = size.height,
             ),
-            cornerRadius = CornerRadius(radius, radius),
+            cornerRadius = CornerRadius(
+                radius,
+                radius,
+            ),
         )
     }
 }

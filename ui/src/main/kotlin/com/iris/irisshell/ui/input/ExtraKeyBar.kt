@@ -16,8 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +34,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.iris.irisshell.domain.input.ExtraKey
 import com.iris.irisshell.domain.input.InputIntent
 
-private val PILL_SHAPE = RoundedCornerShape(24.dp)
+private val PILL_SHAPE = RoundedCornerShape(26.dp)
 
 @Composable
 fun ExtraKeyBar(
@@ -55,14 +54,14 @@ fun ExtraKeyBar(
         AnimatedVisibility(
             visible = moreOpen,
             enter = fadeIn(tween(150)) + scaleIn(
-                initialScale = 0.97f,
+                initialScale = 0.98f,
                 animationSpec = tween(
                     180,
                     easing = FastOutSlowInEasing,
                 ),
             ),
             exit = fadeOut(tween(110)) + scaleOut(
-                targetScale = 0.97f,
+                targetScale = 0.98f,
                 animationSpec = tween(120),
             ),
         ) {
@@ -96,13 +95,10 @@ fun ExtraKeyBar(
 
         Box(
             modifier = Modifier
-                .widthIn(
-                    min = 286.dp,
-                    max = 520.dp,
-                )
-                .wrapContentWidth()
+                .width(390.dp)
+                .height(50.dp)
                 .shadow(
-                    elevation = 10.dp,
+                    elevation = 12.dp,
                     shape = PILL_SHAPE,
                     clip = false,
                 )
@@ -122,28 +118,28 @@ fun ExtraKeyBar(
                 )
             }
 
-            LiquidGlassSurface()
+            LiquidGlassSurface(
+                modifier = Modifier.matchParentSize(),
+            )
 
             Row(
-                modifier = Modifier.padding(
-                    horizontal = 5.dp,
-                    vertical = 5.dp,
-                ),
-                horizontalArrangement = Arrangement.spacedBy(1.dp),
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(
+                        horizontal = 6.dp,
+                        vertical = 5.dp,
+                    ),
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val row = listOf(
+                val keys = listOf(
                     ExtraKey.Navigation.ESC,
                     ExtraKey.Special.CTRL,
                     ExtraKey.Special.ALT,
                     ExtraKey.Navigation.TAB,
-                    ExtraKey.Navigation.ARROW_UP,
-                    ExtraKey.Navigation.ARROW_DOWN,
-                    ExtraKey.Navigation.ARROW_LEFT,
-                    ExtraKey.Navigation.ARROW_RIGHT,
                 )
 
-                row.forEach { key ->
+                keys.forEach { key ->
                     val stuck = when (key) {
                         ExtraKey.Special.CTRL -> ctrlStuck
                         ExtraKey.Special.ALT -> altStuck
@@ -162,6 +158,30 @@ fun ExtraKeyBar(
                                 moreOpen = false
                             }
                         },
+                        modifier = Modifier.width(48.dp),
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .width(5.dp)
+                        .height(22.dp)
+                )
+
+                listOf(
+                    ExtraKey.Navigation.ARROW_UP,
+                    ExtraKey.Navigation.ARROW_DOWN,
+                    ExtraKey.Navigation.ARROW_LEFT,
+                    ExtraKey.Navigation.ARROW_RIGHT,
+                ).forEach { key ->
+                    ExtraKeyButton(
+                        key = key,
+                        stuckActive = false,
+                        onTap = {
+                            onIntent(key.toSingleIntent())
+                        },
+                        onLongPress = {},
+                        modifier = Modifier.width(37.dp),
                     )
                 }
 
@@ -199,7 +219,9 @@ private fun MoreKeysPanel(
         modifier = Modifier
             .clip(RoundedCornerShape(18.dp)),
     ) {
-        LiquidGlassSurface()
+        LiquidGlassSurface(
+            modifier = Modifier.matchParentSize(),
+        )
 
         Row(
             modifier = Modifier.padding(8.dp),
@@ -234,12 +256,10 @@ private fun MoreKeyButton(
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick)
-            .padding(
-                horizontal = 10.dp,
-                vertical = 8.dp,
-            ),
+            .width(38.dp)
+            .height(38.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(

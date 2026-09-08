@@ -48,13 +48,13 @@ fun ExtraKeyButton(
 
     val background = when {
         stuckActive ->
-            IrisPrimary.copy(alpha = 0.12f)
+            IrisPrimary.copy(alpha = 0.10f)
 
         pressed ->
-            Color.White.copy(alpha = 0.095f)
+            Color.White.copy(alpha = 0.13f)
 
         hovered ->
-            Color.White.copy(alpha = 0.045f)
+            Color.White.copy(alpha = 0.075f)
 
         else ->
             Color.Transparent
@@ -65,19 +65,17 @@ fun ExtraKeyButton(
             IrisPrimary
 
         active || hovered ->
-            IrisText
+            Color.White
 
         else ->
             IrisTextMuted
     }
 
-    val arrowResId = key.arrowDrawableRes()
-
     Box(
         modifier = modifier
             .size(
-                width = 38.dp,
-                height = 34.dp,
+                width = 48.dp,
+                height = 38.dp,
             )
             .hoverable(interactionSource)
             .combinedClickable(
@@ -86,7 +84,7 @@ fun ExtraKeyButton(
                 onClick = onTap,
                 onLongClick = onLongPress,
             )
-            .clip(RoundedCornerShape(17.dp)),
+            .clip(RoundedCornerShape(20.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(
@@ -95,34 +93,13 @@ fun ExtraKeyButton(
             drawRoundRect(
                 color = background,
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-                    17.dp.toPx(),
-                    17.dp.toPx(),
+                    20.dp.toPx(),
+                    20.dp.toPx(),
                 ),
             )
         }
 
-        if (arrowResId != null) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(arrowResId),
-                contentDescription = key.displayLabel(),
-                modifier = Modifier.size(17.dp),
-                colorFilter = ColorFilter.tint(glyphColor),
-            )
-        } else {
-            Text(
-                text = key.displayGlyph(),
-                color = glyphColor,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-    }
-}
-
-private fun ExtraKey.arrowDrawableRes(): Int? =
-    when (this) {
-        is ExtraKey.Navigation -> when (this) {
+        val arrow = when (key) {
             ExtraKey.Navigation.ARROW_UP ->
                 R.drawable.lucide_arrow_big_up
 
@@ -138,25 +115,37 @@ private fun ExtraKey.arrowDrawableRes(): Int? =
             else -> null
         }
 
-        else -> null
+        if (arrow != null) {
+            androidx.compose.foundation.Image(
+                painter = painterResource(arrow),
+                contentDescription = key.displayLabel(),
+                modifier = Modifier.size(17.dp),
+                colorFilter = ColorFilter.tint(glyphColor),
+            )
+        } else {
+            Text(
+                text = key.displayGlyph(),
+                color = glyphColor,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
     }
+}
 
 private fun ExtraKey.displayGlyph(): String =
     when (this) {
         is ExtraKey.Special -> name
-
         is ExtraKey.Text -> glyph
 
         is ExtraKey.Navigation -> when (this) {
             ExtraKey.Navigation.ESC -> "ESC"
             ExtraKey.Navigation.TAB -> "TAB"
-
             ExtraKey.Navigation.ARROW_LEFT,
             ExtraKey.Navigation.ARROW_RIGHT,
             ExtraKey.Navigation.ARROW_UP,
-            ExtraKey.Navigation.ARROW_DOWN ->
-                ""
-
+            ExtraKey.Navigation.ARROW_DOWN -> ""
             ExtraKey.Navigation.HOME -> "HOME"
             ExtraKey.Navigation.END -> "END"
             ExtraKey.Navigation.PAGE_UP -> "PgUp"
