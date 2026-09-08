@@ -1,17 +1,19 @@
 package com.iris.irisshell.ui.session
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,14 +26,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -40,7 +39,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,41 +53,46 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.iris.irisshell.design.system.IrisBorderSubtle
-import com.iris.irisshell.design.system.IrisError
-import com.iris.irisshell.design.system.IrisPrimary
-import com.iris.irisshell.design.system.IrisSurfaceVariant
-import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextMuted
-import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.ui.R
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.iris.irisshell.ui.theme.IrisBorderSubtle
+import com.iris.irisshell.ui.theme.IrisError
+import com.iris.irisshell.ui.theme.IrisOnPrimary
+import com.iris.irisshell.ui.theme.IrisPrimary
+import com.iris.irisshell.ui.theme.IrisSuccess
+import com.iris.irisshell.ui.theme.IrisSurfaceVariant
+import com.iris.irisshell.ui.theme.IrisText
+import com.iris.irisshell.ui.theme.IrisTextMuted
+import com.iris.irisshell.ui.theme.IrisTextSecondary
 
 /**
- * Slide-in sol sidebar — Obsidian Mobile referanslı, modern minimalist tasarım.
+ * Slide-in sol sidebar — iOS / Apple Settings tarzı layout (Stitch taslağı),
+ * ama renkler tamamen projenin kendi paleti: com.iris.irisshell.ui.theme.IrisTheme.kt.
  *
- * Değişiklik notları (önceki versiyona göre):
- *  - Gerçek slide-in/out animasyonu (spring, bounce yok) — AnimatedVisibility ile.
- *  - Session item'ları düz pill stiline çevrildi (Obsidian gibi), state text kaldırıldı.
- *  - Inline rename: dropdown'dan "Rename" seçilince item text field'a dönüşür.
- *    (Önceki kodda "Rename" aslında mevcut ismi tekrar kaydediyordu — gerçek bir
- *    input alanı yoktu. Bu düzeltildi.)
- *  - Alt kısım: ikon toolbar (Yeni session + Arama) + kullanıcı profili satırı.
- *  - "Close session" — hiçbir şey yapmayan ölü UI elemanıydı, kaldırıldı.
- *  - Dropdown menu artık hardcoded offset kullanmıyor, anchor'a göre otomatik konumlanıyor.
- *  - Divider → HorizontalDivider (Material3, deprecated API düzeltmesi).
- *  - forEach + verticalScroll → LazyColumn (ölçeklenebilirlik).
+ * ÖNEMLİ NOT (Muhofy'nin bilmesi gereken bir tutarsızlık):
+ * MEMORYBANK.md §5 Primary = #E8C547 (warm gold) diyor, ama gerçek kodda
+ * (IrisTheme.kt) Primary = #3B82F6 (mavi) tanımlı. Bu dosya gerçek kodu
+ * (canonical, derlenen kaynak) esas alıyor — Memory Bank muhtemelen güncel
+ * değil. Bunu ayrıca Memory Bank güncelleme adımında teyit etmen gerekir.
+ *
+ * Kullanılan gerçek token'lar: IrisSurfaceVariant, IrisPrimary, IrisOnPrimary,
+ * IrisText, IrisTextSecondary, IrisTextMuted, IrisBorderSubtle, IrisError,
+ * IrisSuccess. Hiçbir renk tahmin/icat edilmedi — hepsi IrisTheme.kt'den.
  *
  * Public API değişmedi: SessionSidebar(isOpen, onDismiss, onOpenSettings).
- * userDisplayName opsiyonel — mevcut çağrı yerlerini bozmaz.
+ * userDisplayName / userInitials opsiyonel, mevcut çağrı yerlerini bozmaz.
+ *
+ * Rename düzeltmesi: önceki versiyonda onFocusChanged, text field ekrana
+ * gelir gelmez isFocused=false ile bir kez tetiklenip anında commit
+ * ediyordu (kullanıcı hiçbir şey yazamadan rename modu kapanıyordu). Şimdi
+ * sadece GERÇEKTEN focus alındıktan sonra kaybedilirse otomatik commit
+ * ediliyor; ayrıca görünür bir onay (✓) butonu eklendi.
  */
 @Composable
 fun SessionSidebar(
@@ -97,12 +100,13 @@ fun SessionSidebar(
     onDismiss: () -> Unit,
     onOpenSettings: () -> Unit,
     userDisplayName: String = "User",
+    userInitials: String = userDisplayName.take(2).uppercase(),
 ) {
     val viewModel: SessionSwitcherViewModel = hiltViewModel()
     val config = LocalConfiguration.current
     val sidebarW = remember(config) {
         val sw = config.screenWidthDp
-        if (sw > 0) (sw * 0.75f).coerceAtMost(280f).dp else 280.dp
+        if (sw > 0) (sw * 0.85f).coerceAtMost(390f).dp else 340.dp
     }
 
     AnimatedVisibility(
@@ -113,10 +117,10 @@ fun SessionSidebar(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f))
+                .background(Color.Black.copy(alpha = 0.45f))
                 .clickable(
                     indication = null,
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    interactionSource = remember { MutableInteractionSource() },
                     onClick = onDismiss,
                 )
                 .zIndex(1f),
@@ -143,22 +147,21 @@ fun SessionSidebar(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(sidebarW)
-                        .clip(RoundedCornerShape(0.dp, 16.dp, 16.dp, 0.dp))
+                        .clip(RoundedCornerShape(0.dp, 32.dp, 32.dp, 0.dp))
                         .background(IrisSurfaceVariant)
-                        .statusBarsPadding()
-                        .navigationBarsPadding()
-                        // Panel içine tıklama scrim'e sızıp sidebar'ı kapatmasın.
                         .clickable(
                             indication = null,
-                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            interactionSource = remember { MutableInteractionSource() },
                             onClick = {},
-                        ),
+                        )
+                        .statusBarsPadding()
+                        .navigationBarsPadding(),
                 ) {
                     SidebarContent(
                         viewModel = viewModel,
-                        onClose = onDismiss,
                         onOpenSettings = onOpenSettings,
                         userDisplayName = userDisplayName,
+                        userInitials = userInitials,
                     )
                 }
             }
@@ -169,25 +172,22 @@ fun SessionSidebar(
 @Composable
 private fun SidebarContent(
     viewModel: SessionSwitcherViewModel,
-    onClose: () -> Unit,
     onOpenSettings: () -> Unit,
     userDisplayName: String,
+    userInitials: String,
 ) {
     val sessions by viewModel.allSessions.collectAsStateWithLifecycle()
     val activeId by viewModel.activeId.collectAsStateWithLifecycle()
 
-    var isSearchActive by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var renamingSessionId by remember { mutableStateOf<String?>(null) }
     var renameValue by remember { mutableStateOf("") }
 
-    val filteredSessions = remember(sessions, searchQuery) {
-        if (searchQuery.isBlank()) {
-            sessions
-        } else {
-            sessions.filter { it.name.contains(searchQuery, ignoreCase = true) }
-        }
+    val filtered = remember(sessions, searchQuery) {
+        if (searchQuery.isBlank()) sessions else sessions.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
+    val activeSession = filtered.firstOrNull { it.id == activeId }
+    val recentSessions = filtered.filter { it.id != activeId }
 
     fun commitRename() {
         val id = renamingSessionId
@@ -198,35 +198,176 @@ private fun SidebarContent(
         renamingSessionId = null
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-    ) {
-        // Obsidian tarzı: sabit header yok. İstenirse arama burada inline açılır.
-        if (isSearchActive) {
-            SearchField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                onClose = {
-                    isSearchActive = false
-                    searchQuery = ""
-                },
-            )
-            Spacer(Modifier.height(8.dp))
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Iris Shell",
+                    color = IrisText,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 17.sp,
+                )
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(IrisSuccess),
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(IrisPrimary)
+                    .clickable { viewModel.createNew("shell") }
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lucide_plus),
+                    contentDescription = "New session",
+                    tint = IrisOnPrimary,
+                    modifier = Modifier.size(14.dp),
+                )
+                Text(
+                    text = "New",
+                    color = IrisOnPrimary,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                )
+            }
         }
 
-        // Session listesi — flat pill stili, LazyColumn (performans için).
+        // Search bar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 14.dp)
+                .height(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(IrisSurfaceVariant.copy(alpha = 0.6f))
+                .padding(horizontal = 10.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // UNTESTED — verify R.drawable.lucide_search exists in the project.
+                Icon(
+                    painter = painterResource(R.drawable.lucide_search),
+                    contentDescription = null,
+                    tint = IrisTextSecondary,
+                    modifier = Modifier.size(14.dp),
+                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (searchQuery.isEmpty()) {
+                        Text(
+                            text = "Search sessions...",
+                            color = IrisTextMuted,
+                            fontSize = 13.sp,
+                        )
+                    }
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        singleLine = true,
+                        textStyle = TextStyle(color = IrisText, fontSize = 13.sp),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+
+        // Body
         LazyColumn(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            if (filteredSessions.isEmpty()) {
-                item {
+            if (activeSession != null) {
+                item(key = "active_header") { SectionHeader(label = "ACTIVE", trailing = "live") }
+                item(key = "active_${activeSession.id}") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(IrisSurfaceVariant),
+                    ) {
+                        SessionRow(
+                            snapshot = activeSession,
+                            isActive = true,
+                            dotColor = IrisSuccess,
+                            trailingText = "now",
+                            trailingColor = IrisPrimary,
+                            rowBackground = IrisPrimary.copy(alpha = 0.12f),
+                            isRenaming = renamingSessionId == activeSession.id,
+                            renameValue = renameValue,
+                            onRenameValueChange = { renameValue = it },
+                            onRenameCommit = { commitRename() },
+                            onClick = { if (renamingSessionId == null) viewModel.activate(activeSession.id) },
+                            onStartRename = {
+                                renamingSessionId = activeSession.id
+                                renameValue = activeSession.name
+                            },
+                            onDelete = { viewModel.delete(activeSession.id) },
+                        )
+                    }
+                }
+            }
+
+            if (recentSessions.isNotEmpty()) {
+                item(key = "recent_header") { SectionHeader(label = "RECENT", trailing = null) }
+                item(key = "recent_list") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(IrisSurfaceVariant.copy(alpha = 0.5f)),
+                    ) {
+                        recentSessions.forEachIndexed { index, snapshot ->
+                            if (index > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(IrisBorderSubtle),
+                                )
+                            }
+                            SessionRow(
+                                snapshot = snapshot,
+                                isActive = false,
+                                dotColor = IrisTextMuted,
+                                trailingText = null,
+                                trailingColor = IrisTextMuted,
+                                rowBackground = Color.Transparent,
+                                isRenaming = renamingSessionId == snapshot.id,
+                                renameValue = renameValue,
+                                onRenameValueChange = { renameValue = it },
+                                onRenameCommit = { commitRename() },
+                                onClick = { if (renamingSessionId == null) viewModel.activate(snapshot.id) },
+                                onStartRename = {
+                                    renamingSessionId = snapshot.id
+                                    renameValue = snapshot.name
+                                },
+                                onDelete = { viewModel.delete(snapshot.id) },
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (filtered.isEmpty()) {
+                item(key = "empty") {
                     Text(
                         text = if (searchQuery.isBlank()) "No active sessions" else "No results",
                         color = IrisTextMuted,
-                        fontFamily = OutfitFontFamily,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -234,88 +375,43 @@ private fun SidebarContent(
                             .padding(top = 24.dp),
                     )
                 }
-            } else {
-                items(filteredSessions, key = { it.id }) { snapshot ->
-                    SessionItem(
-                        snapshot = snapshot,
-                        isActive = snapshot.id == activeId,
-                        isRenaming = renamingSessionId == snapshot.id,
-                        renameValue = renameValue,
-                        onRenameValueChange = { renameValue = it },
-                        onRenameCommit = { commitRename() },
-                        onRenameCancel = { renamingSessionId = null },
-                        onClick = {
-                            if (renamingSessionId == null) viewModel.activate(snapshot.id)
-                        },
-                        onStartRename = {
-                            renamingSessionId = snapshot.id
-                            renameValue = snapshot.name
-                        },
-                        onDelete = { viewModel.delete(snapshot.id) },
-                    )
-                }
             }
+
+            item(key = "bottom_spacer") { Spacer(Modifier.height(4.dp)) }
         }
 
-        Spacer(Modifier.height(8.dp))
-        HorizontalDivider(color = IrisBorderSubtle, thickness = 1.dp)
-        Spacer(Modifier.height(4.dp))
-
-        // Alt ikon toolbar — Yeni session + Arama.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = { viewModel.createNew("shell") }) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_plus),
-                    contentDescription = "New session",
-                    tint = IrisText,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-            // UNTESTED — verify R.drawable.lucide_search exists in the project.
-            IconButton(onClick = { isSearchActive = !isSearchActive }) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_search),
-                    contentDescription = "Search sessions",
-                    tint = if (isSearchActive) IrisPrimary else IrisText,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-        HorizontalDivider(color = IrisBorderSubtle, thickness = 1.dp)
-        Spacer(Modifier.height(4.dp))
-
-        // Kullanıcı profili satırı — Obsidian tarzı.
+        // Bottom profile row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .clickable(onClick = onOpenSettings)
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(horizontal = 20.dp)
+                .padding(top = 8.dp, bottom = 8.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onOpenSettings() }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(IrisSurfaceVariant),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = userInitials, color = IrisText, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                }
                 Text(
                     text = userDisplayName,
                     color = IrisText,
-                    fontFamily = OutfitFontFamily,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
-                )
-                Text(
-                    text = "${sessions.size} session(s)",
-                    color = IrisTextMuted,
-                    fontFamily = OutfitFontFamily,
-                    fontSize = 11.sp,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-            IconButton(onClick = onOpenSettings) {
+            IconButton(onClick = onOpenSettings, modifier = Modifier.size(24.dp)) {
                 Icon(
                     painter = painterResource(R.drawable.lucide_settings),
                     contentDescription = "Settings",
@@ -328,228 +424,140 @@ private fun SidebarContent(
 }
 
 @Composable
-private fun SearchField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    onClose: () -> Unit,
-) {
-    val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        // Alan ekrana geldiğinde klavye odaklansın.
-        focusRequester.requestFocus()
-    }
-
+private fun SectionHeader(label: String, trailing: String?) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(IrisSurfaceVariant)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier
-                .weight(1f)
-                .focusRequester(focusRequester),
-            singleLine = true,
-            textStyle = TextStyle(
-                color = IrisText,
-                fontFamily = OutfitFontFamily,
-                fontSize = 13.sp,
-            ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { /* no-op, live filter already applied */ }),
-            decorationBox = { inner ->
-                if (value.isEmpty()) {
-                    Text(
-                        text = "Search sessions",
-                        color = IrisTextMuted,
-                        fontFamily = OutfitFontFamily,
-                        fontSize = 13.sp,
-                    )
-                }
-                inner()
-            },
+        Text(
+            text = label,
+            color = IrisTextMuted,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 0.6.sp,
         )
-        IconButton(onClick = onClose, modifier = Modifier.size(28.dp)) {
-            Icon(
-                painter = painterResource(R.drawable.lucide_x),
-                contentDescription = "Close search",
-                tint = IrisTextSecondary,
-                modifier = Modifier.size(14.dp),
+        if (trailing != null) {
+            Text(
+                text = trailing,
+                color = IrisPrimary,
+                fontSize = 11.sp,
             )
         }
     }
 }
 
 @Composable
-private fun SessionItem(
+private fun SessionRow(
     snapshot: SessionSnapshot,
     isActive: Boolean,
+    dotColor: Color,
+    trailingText: String?,
+    trailingColor: Color,
+    rowBackground: Color,
     isRenaming: Boolean,
     renameValue: String,
     onRenameValueChange: (String) -> Unit,
     onRenameCommit: () -> Unit,
-    onRenameCancel: () -> Unit,
     onClick: () -> Unit,
     onStartRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    var showMenu by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
-    val nameColor = if (isActive) IrisPrimary else IrisText
+    // Gerçekten focus alındıktan sonra kaybedilirse commit et — ilk
+    // kompozisyondaki "henüz focus yok" (isFocused=false) sinyaliyle
+    // yanlışlıkla anında commit edilmesin diye bu bayrak tutuluyor.
+    var hasFocusedOnce by remember(snapshot.id, isRenaming) { mutableStateOf(false) }
 
     LaunchedEffect(isRenaming) {
-        if (isRenaming) {
-            // Text field kompozisyona girdikten hemen sonra odak istenir.
-            focusRequester.requestFocus()
-        }
+        if (isRenaming) focusRequester.requestFocus()
     }
 
-    Box {
-        Row(
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .background(rowBackground)
+            .then(
+                if (!isRenaming) Modifier.clickable(onClick = onClick) else Modifier,
+            )
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(percent = 50))
-                .background(if (isActive) IrisSurfaceVariant.copy(alpha = 1f) else Color.Transparent)
-                .then(
-                    if (!isRenaming) {
-                        Modifier.clickable(onClick = onClick)
-                    } else {
-                        Modifier
-                    },
-                )
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (isRenaming) {
-                BasicTextField(
-                    value = renameValue,
-                    onValueChange = onRenameValueChange,
-                    modifier = Modifier
-                        .weight(1f)
-                        .focusRequester(focusRequester)
-                        .onFocusChanged { state ->
-                            if (!state.isFocused) onRenameCommit()
-                        },
-                    singleLine = true,
-                    textStyle = TextStyle(
-                        color = nameColor,
-                        fontFamily = OutfitFontFamily,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
-                    ),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(
-                        onDone = { onRenameCommit() },
-                    ),
-                )
-            } else {
-                Text(
-                    text = snapshot.name,
-                    color = nameColor,
-                    fontFamily = OutfitFontFamily,
-                    fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
-                    fontSize = 15.sp,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier.size(28.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.lucide_ellipsis_vertical),
-                        contentDescription = "More",
-                        tint = IrisTextSecondary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            }
-        }
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(dotColor),
+        )
 
-        // Offset artık hardcoded değil — anchor'a (bu Box) göre Compose otomatik konumlandırır.
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { showMenu = false },
-            containerColor = IrisSurfaceVariant,
-            tonalElevation = 0.dp,
-            shape = RoundedCornerShape(12.dp),
-        ) {
-            DropdownMenuItem(
-                onClick = { onClick(); showMenu = false },
-                text = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.lucide_play),
-                            contentDescription = null,
-                            tint = IrisTextSecondary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Text(
-                            text = "Activate",
-                            color = IrisText,
-                            fontFamily = OutfitFontFamily,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                },
+        if (isRenaming) {
+            BasicTextField(
+                value = renameValue,
+                onValueChange = onRenameValueChange,
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { state ->
+                        if (state.isFocused) {
+                            hasFocusedOnce = true
+                        } else if (hasFocusedOnce) {
+                            onRenameCommit()
+                        }
+                    },
+                singleLine = true,
+                textStyle = TextStyle(
+                    color = IrisText,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.5.sp,
+                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { onRenameCommit() }),
             )
-            DropdownMenuItem(
-                onClick = {
-                    showMenu = false
-                    onStartRename()
-                },
-                text = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.lucide_pencil),
-                            contentDescription = null,
-                            tint = IrisTextSecondary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Text(
-                            text = "Rename",
-                            color = IrisText,
-                            fontFamily = OutfitFontFamily,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                },
+            IconButton(onClick = onRenameCommit, modifier = Modifier.size(24.dp)) {
+                Icon(
+                    painter = painterResource(R.drawable.lucide_check),
+                    contentDescription = "Confirm rename",
+                    tint = IrisPrimary,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        } else {
+            Text(
+                text = snapshot.name,
+                color = if (isActive) IrisText else IrisText.copy(alpha = 0.9f),
+                fontWeight = if (isActive) FontWeight.Medium else FontWeight.Normal,
+                fontSize = 13.5.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
             )
-            DropdownMenuItem(
-                onClick = { onDelete(); showMenu = false },
-                text = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.lucide_trash_2),
-                            contentDescription = null,
-                            tint = IrisError,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Text(
-                            text = "Delete",
-                            color = IrisError,
-                            fontFamily = OutfitFontFamily,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                },
-            )
+            if (trailingText != null) {
+                Text(text = trailingText, color = trailingColor, fontSize = 11.sp)
+            }
+            IconButton(
+                onClick = onStartRename,
+                modifier = Modifier.size(24.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lucide_pencil),
+                    contentDescription = "Rename",
+                    tint = IrisTextSecondary,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(24.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lucide_trash_2),
+                    contentDescription = "Delete",
+                    tint = IrisTextSecondary,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
         }
     }
 }
