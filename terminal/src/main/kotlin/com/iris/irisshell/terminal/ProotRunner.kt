@@ -31,6 +31,7 @@ class ProotRunner(
         shell: String = "/bin/zsh",
         ptyMode: Boolean = true,
         startCommand: String = "",
+        environmentHooks: Map<String, String> = emptyMap(),
     ): ProotCommand {
         File(tmpPath).mkdirs()
 
@@ -63,7 +64,7 @@ class ProotRunner(
             }
         }
 
-        val env = buildEnvironment()
+        val env = buildEnvironment() + environmentHooks
 
         return ProotCommand(
             executable = linkerPath,
