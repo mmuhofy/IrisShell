@@ -306,26 +306,27 @@ class TerminalManager(
     }
 
     private fun writeShellHooksFile(): Map<String, String> {
+        val d = "${'$'}"
         val completionFile = "/data/data/com.iris.irisshell/files/iris_cmd_complete"
         val hooksFile = File(appContext.filesDir, "iris_hooks.zsh")
         val hooksContent = """
             # ── Command completion tracking (ENV injection) ───────────────────────
             # preexec/precmd hooks write "command|elapsed_sec|exit_code" to a
-            # file the foreground service monitors. Injected via $ENV variable
+            # file the foreground service monitors. Injected via ${d}ENV variable
             # so user's .zshrc is never modified.
             __iris_cmd=""
             __iris_start=0
 
             preexec() {
-              __iris_cmd="$1"
-              __iris_start=$(date +%s)
+              __iris_cmd="${d}1"
+              __iris_start=${d}(date +%s)
             }
 
             precmd() {
-              local __iris_code=$?
-              if [[ -n "$__iris_cmd" && "$__iris_start" -gt 0 ]]; then
-                local __iris_elapsed=$(( $(date +%s) - $__iris_start ))
-                echo "$__iris_cmd|${__iris_elapsed}|${__iris_code}" >> ${completionFile} 2>/dev/null
+              local __iris_code=${d}?
+              if [[ -n "${d}__iris_cmd" && ${d}__iris_start -gt 0 ]]; then
+                local __iris_elapsed=$(( ${d}(date +%s) - ${d}__iris_start ))
+                echo "${d}__iris_cmd|${d}__iris_elapsed|${d}__iris_code" >> ${completionFile} 2>/dev/null
                 __iris_cmd=""
                 __iris_start=0
               fi
