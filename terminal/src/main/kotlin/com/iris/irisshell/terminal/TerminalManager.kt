@@ -307,13 +307,22 @@ class TerminalManager(
 
     private fun writeShellHooksFile(): Map<String, String> {
         val d = "${'$'}"
-        val completionFile = "/data/data/com.iris.irisshell/files/iris_cmd_complete"
         val hooksFile = File(appContext.filesDir, "iris_hooks.zsh")
+
+        // Pre-create completion file to prevent race condition where
+        // precmd fires before file exists (causes "no such file" error)
+        val completionFile = File(appContext.filesDir, "iris_cmd_complete")
+        appContext.filesDir.mkdirs()
+        if (!completionFile.exists()) completionFile.createNewFile()
+
+        val completionPath = completionFile.absolutePath
+
         val hooksContent = """
             # ── Command completion tracking (ENV injection) ───────────────────────
             # preexec/precmd hooks write "command|elapsed_sec|exit_code" to a
             # file the foreground service monitors. Injected via ${d}ENV variable
-            # so user's .zshrc is never modified.
+            # so user's .zshrc is never modified. Path is app-controlled.
+            local __iris_cf="${completionPath}"
             __iris_cmd=""
             __iris_start=0
 
@@ -326,7 +335,7 @@ class TerminalManager(
               local __iris_code=${d}?
               if [[ -n "${d}__iris_cmd" && ${d}__iris_start -gt 0 ]]; then
                 local __iris_elapsed=$(( ${d}(date +%s) - ${d}__iris_start ))
-                echo "${d}__iris_cmd|${d}__iris_elapsed|${d}__iris_code" >> ${completionFile} 2>/dev/null
+                { echo "${d}__iris_cmd|${d}__iris_elapsed|${d}__iris_code" >> "${d}__iris_cf" } 2>/dev/null
                 __iris_cmd=""
                 __iris_start=0
               fi
@@ -334,17 +343,15 @@ class TerminalManager(
         """.trimIndent()
 
         hooksFile.writeText(hooksContent)
-        val hooksPath = hooksFile.absolutePath
 
-        return mapOf("ENV" to hooksPath)
+        return mapOf("ENV" to hooksFile.absolutePath)
     }
 
     private fun ensureShellRc() {
         val d = "${'$'}"
         val zshrc = File(ubuntuBootstrap.rootfsDir, "home/.zshrc")
-        if (!zshrc.exists()) {
-            zshrc.writeText(
-                """
+
+        val cleanTemplate = """
                 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
                 export HOME=/home
                 export TERM=xterm-256color
@@ -371,11 +378,16 @@ class TerminalManager(
                     echo "  ╚══════════════════════════════════════════╝"
                     echo ""
                 fi
+        """.trimIndent() + "\n"
 
-                # Command completion hooks are injected via ENV variable
-                # (see writeShellHooksFile) — no need to duplicate here.
-                """.trimIndent() + "\n"
-            )
+        if (!zshrc.exists()) {
+            zshrc.writeText(cleanTemplate)
+        } else {
+            // Migrate: remove legacy hooks from old .zshrc
+            val content = zshrc.readText()
+            if (content.contains("__iris_cmd") || content.contains("preexec()")) {
+                zshrc.writeText(cleanTemplate)
+            }
         }
     }
 
