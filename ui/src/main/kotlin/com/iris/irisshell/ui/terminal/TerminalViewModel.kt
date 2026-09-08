@@ -47,6 +47,9 @@ class TerminalViewModel @Inject constructor(
     val useBlockEngine: StateFlow<Boolean> = settingsRepository.useBlockEngine
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val prootStartCommand: StateFlow<String> = settingsRepository.prootStartCommand
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     val fontSizeSp: StateFlow<Int> = persist.observe()
         .map { it.toInt().coerceIn(MIN_FONT_SP, MAX_FONT_SP) }
         .stateIn(
@@ -108,6 +111,12 @@ class TerminalViewModel @Inject constructor(
     fun toggleSlider(visible: Boolean) {
         hideJob?.cancel()
         _sliderVisible.value = visible
+    }
+
+    fun setProotStartCommand(command: String) {
+        viewModelScope.launch {
+            settingsRepository.setProotStartCommand(command)
+        }
     }
 
     override fun onCleared() {

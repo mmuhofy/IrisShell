@@ -26,7 +26,12 @@ class ProotRunner(
         val environment: List<String>
     )
 
-    fun build(guestWorkDir: String? = null, shell: String = "/bin/zsh", ptyMode: Boolean = true): ProotCommand {
+    fun build(
+        guestWorkDir: String? = null,
+        shell: String = "/bin/zsh",
+        ptyMode: Boolean = true,
+        startCommand: String = "",
+    ): ProotCommand {
         File(tmpPath).mkdirs()
 
         val wd = when {
@@ -50,8 +55,12 @@ class ProotRunner(
             add("--link2symlink")
             add("--sysvipc")
             add("-L")
-            add(shell)
-            add("--login")
+            if (startCommand.isNotBlank()) {
+                startCommand.split(" ").filter { it.isNotBlank() }.forEach { add(it) }
+            } else {
+                add(shell)
+                add("--login")
+            }
         }
 
         val env = buildEnvironment()

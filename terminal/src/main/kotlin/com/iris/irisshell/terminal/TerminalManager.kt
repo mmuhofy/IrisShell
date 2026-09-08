@@ -2,10 +2,16 @@ package com.iris.irisshell.terminal
 
 import android.app.Application
 import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import com.iris.irisshell.domain.agent.ToolResult
+import com.iris.irisshell.domain.settings.SettingsRepository
 import com.termux.terminal.TerminalSession
 import com.termux.view.TerminalView
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +38,7 @@ class TerminalManager(
     private val ubuntuBootstrap: UbuntuBootstrap,
     application: Application,
     private val blockEngineWire: BlockEngineWire? = null,
+    private val settingsRepository: SettingsRepository? = null,
 ) {
     /**
      * Single source of truth for session storage. Each [IrisSession] bundles
@@ -83,9 +90,15 @@ class TerminalManager(
         ProotRunner(ubuntuBootstrap, application.applicationInfo.nativeLibraryDir)
     }
 
+    private val managerScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    private var prootStartCommand: String = ""
+
     var projectPath: String? = null
 
     var shellPath: String = "/bin/zsh"
+
+    private var prootStartCommand: String = ""
 
     init {
         sessionClient.onSessionFinished = { session -> onSessionFinished(session) }
@@ -94,6 +107,14 @@ class TerminalManager(
             blockEngineWire?.onSessionTextChanged(session)
         }
         sessionClient.onPidChanged = { session, pid -> onSessionPidChanged(session, pid) }
+
+        settingsRepository.prootStartCommand
+            .onEach { cmd -> prootStartCommand = cmd }
+            .launchIn(managerScope)
+    }
+
+    fun updateProotStartCommand(command: String) {
+        prootStartCommand = command
     }
 
     fun registerTerminalView(view: TerminalView, context: Context) {
@@ -261,7 +282,7 @@ class TerminalManager(
                 "/sdcard/com.iris.irisshell/${File(projectPath!!).name}"
             } else null
 
-            val cmd = prootRunner.build(guestWd, shell = shellPath)
+            val cmd = prootRunner.build(guestWd, shell = shellPath, startCommand = prootStartCommand)
             return TerminalSession(
                 cmd.executable,
                 cmd.cwd,

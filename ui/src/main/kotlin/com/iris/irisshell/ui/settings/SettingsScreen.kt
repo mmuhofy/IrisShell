@@ -47,6 +47,7 @@ fun SettingsScreen(
     val terminalBgColor    by viewModel.terminalBgColor.collectAsStateWithLifecycle()
     val accentColor        by viewModel.accentColor.collectAsStateWithLifecycle()
     val terminalTextColor  by viewModel.terminalTextColor.collectAsStateWithLifecycle()
+    val prootStartCommand  by viewModel.prootStartCommand.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = IrisBackground,
@@ -140,7 +141,14 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(24.dp))
 
-            SettingsSectionLabel("Hakkında")
+            SettingsSectionLabel("Gelişmiş")
+            SettingsCategoryCard {
+                ProotStartCommandRow(
+                    value      = prootStartCommand,
+                    onValueChange = { viewModel.setProotStartCommand(it) },
+                )
+            }
+            Spacer(Modifier.height(24.dp))
             SettingsCategoryCard {
                 InfoRow(label = "Versiyon", value = "1.0.0")
                 SettingsDivider()

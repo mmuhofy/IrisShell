@@ -1,7 +1,7 @@
 # Iris Shell — Memory Bank
-_Last updated: 2026-09-07_
+_Last updated: 2026-09-08_
 
-Last commit: `13af789` — fix(terminal): don't run set-default-shell.sh for Bash users
+Last commit: `17c25b9` — feat(terminal): link detection + in-app WebViewSheet browser
 
 ---
 

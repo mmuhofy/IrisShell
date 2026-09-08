@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.iris.irisshell.domain.block.BlockEngineState
 import com.iris.irisshell.domain.block.BlockRepository
+import com.iris.irisshell.domain.settings.SettingsRepository
 import com.iris.irisshell.terminal.BlockEngineWire
 import com.iris.irisshell.terminal.BootstrapStatePort
 import com.iris.irisshell.terminal.ProotRunner
@@ -45,10 +46,12 @@ object TerminalModule {
         application: Application,
         ubuntuBootstrap: UbuntuBootstrap,
         blockEngineWire: BlockEngineWire,
+        settingsRepository: SettingsRepository,
     ): TerminalManager = TerminalManager(
         ubuntuBootstrap = ubuntuBootstrap,
         application = application,
         blockEngineWire = blockEngineWire,
+        settingsRepository = settingsRepository,
     )
 
     @Provides

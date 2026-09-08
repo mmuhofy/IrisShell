@@ -19,13 +19,19 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisOutline
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
@@ -477,4 +484,81 @@ fun colorToHex(color: Color): String {
     val g = (color.green * 255).toInt()
     val b = (color.blue  * 255).toInt()
     return "#%02X%02X%02X".format(r, g, b)
+}
+
+// ── PRoot Start Command (Experimental) ─────────────────────────────────────────────
+
+@Composable
+fun ProotStartCommandRow(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(IrisError.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lucide_terminal),
+                    contentDescription = null,
+                    tint = IrisError,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Text("PRoot Start Komutu", color = IrisText, fontSize = 15.sp)
+        }
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(
+            text = "Deneysel — sadece PRoot komutunu bilmeyecek kadar değiştirmeyin.",
+            color = IrisError,
+            fontSize = 11.sp,
+            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+
+        var text by remember(value) { mutableStateOf(value) }
+        OutlinedTextField(
+            value = text,
+            onValueChange = {
+                text = it
+                onValueChange(it)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("örn: /bin/bash --login --norc", color = IrisTextMuted, fontSize = 12.sp) },
+            textStyle = LocalTextStyle.current.copy(
+                fontFamily = FontFamily.Monospace,
+                fontSize = 13.sp,
+                color = IrisText,
+            ),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = IrisError,
+                unfocusedBorderColor = IrisOutline.copy(alpha = 0.5f),
+                cursorColor = IrisError,
+            ),
+        )
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            text = "Boş bırakıldığında varsayılan: \$shell --login (örn: /bin/zsh --login)",
+            color = IrisTextSecondary,
+            fontSize = 10.sp,
+        )
+    }
 }

@@ -39,6 +39,9 @@ class SettingsViewModel @Inject constructor(
     val terminalTextColor: StateFlow<String> = settings.terminalTextColor
         .stateIn(viewModelScope, SharingStarted.Eagerly, "#E8E8E8")
 
+    val prootStartCommand: StateFlow<String> = settings.prootStartCommand
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     // ── Setters ───────────────────────────────────────────────────────────────
 
     fun setUseBlockEngine(enabled: Boolean) {
@@ -63,5 +66,9 @@ class SettingsViewModel @Inject constructor(
 
     fun setTerminalTextColor(hex: String) {
         viewModelScope.launch { settings.setTerminalTextColor(hex) }
+    }
+
+    fun setProotStartCommand(command: String) {
+        viewModelScope.launch { settings.setProotStartCommand(command) }
     }
 }

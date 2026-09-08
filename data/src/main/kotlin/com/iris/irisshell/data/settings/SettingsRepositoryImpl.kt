@@ -82,6 +82,15 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_TERMINAL_TEXT_COLOR] = hex }
     }
 
+    // ── PRoot Start Command ─────────────────────────────────────────────────────
+
+    override val prootStartCommand: Flow<String> =
+        dataStore.data.map { prefs -> prefs[KEY_PROOT_START_COMMAND] ?: DEFAULT_PROOT_START_COMMAND }
+
+    override suspend fun setProotStartCommand(command: String) {
+        dataStore.edit { prefs -> prefs[KEY_PROOT_START_COMMAND] = command }
+    }
+
     // ── Keys & Defaults ───────────────────────────────────────────────────────
 
     private companion object {
@@ -91,6 +100,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val KEY_TERMINAL_BG_COLOR       = stringPreferencesKey("terminal_bg_color")
         val KEY_ACCENT_COLOR            = stringPreferencesKey("accent_color")
         val KEY_TERMINAL_TEXT_COLOR     = stringPreferencesKey("terminal_text_color")
+        val KEY_PROOT_START_COMMAND     = stringPreferencesKey("proot_start_command")
 
         const val DEFAULT_USE_BLOCK_ENGINE       = false
         const val DEFAULT_EXTRA_KEYS_BAR_VISIBLE = false
@@ -98,5 +108,6 @@ class SettingsRepositoryImpl @Inject constructor(
         const val DEFAULT_TERMINAL_BG_COLOR      = "#000000"
         const val DEFAULT_ACCENT_COLOR           = "#3B82F6"
         const val DEFAULT_TERMINAL_TEXT_COLOR    = "#E8E8E8"
+        const val DEFAULT_PROOT_START_COMMAND    = ""
     }
 }

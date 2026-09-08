@@ -55,6 +55,13 @@
 - [ ] Handle PTY session resize on orientation change
 - [ ] Terminal font loading from custom .ttf files
 
+### Terminal Link Detection + In-App Browser (2026-09-08)
+- [x] UrlDetector — shared URL detection utility (domain/UrlDetector.kt)
+- [x] Block engine: colored + underlined + clickable URLs in BlockBody.kt
+- [x] Classic terminal: tap detection callback in TerminalViewClientImpl.kt (replaces external Intent)
+- [x] WebViewSheet — minimal bottom sheet browser (WebView + top bar + close)
+- [x] TerminalScreen.kt: browserUrl state + BackHandler + wiring to both rendering paths
+
 ## Phase 2 — UI & Session System
 
 - [ ] Block-based output engine (BlockEngine.kt)
