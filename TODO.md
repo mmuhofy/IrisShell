@@ -76,6 +76,7 @@
 - [x] Classic mode focus fix (requestFocus only on initial layout, not update block)
 - [x] WebViewSheet: only top handle drags sheet (pointerInput consumes drag on WebView area)
 - [x] SessionSidebar: transparent bottom (removed navigationBarsPadding), sidebar extends behind status bar (statusBarsPadding on content, not container)
+- [x] Release build: targetSdk 28 → 36, R8 keep rules across all modules, minify + shrink enabled
 - [ ] Scroll to current match in terminal view
 
 ## Phase 2 — UI & Session System

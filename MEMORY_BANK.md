@@ -268,5 +268,15 @@ Closed (Room only, removed from irisSessions)
     detection + visual underlines now work in classic mode, matching block mode
   - Smooth dragging via `graphicsLayer` for search bar
   - Overlay synced with TerminalView redraws via `ViewTreeObserver.OnDrawListener`
-  - Focus fix: TerminalView only calls `requestFocus()` once in `OnGlobalLayoutListener`
-    (not in AndroidView update block), preventing search bar focus theft
+   - Focus fix: TerminalView only calls `requestFocus()` once in `OnGlobalLayoutListener`
+     (not in AndroidView update block), preventing search bar focus theft
+  - URL tap fix: `viewClient.terminalView = this` now set in TerminalViewHost factory
+    (was never set — `TerminalViewClientImpl.onSingleTapUp` returned early on null check)
+
+## 9. Release Build (2026-09-09)
+
+- Release build config in `app/build.gradle.kts`: `targetSdk` 28 → 36, enabled `isMinifyEnabled`, `isShrinkResources`, proguard files
+- R8 stripping fix: Hilt-injected + Kotlin file classes (`XXXKt`) stripped by each module's own R8 pass before reaching app module — added `-keep { class com.iris.irisshell.**; }` + `-dontwarn` to every module's `proguard-rules.pro` (not just consumer-rules.pro)
+- Release workflow: `.github/workflows/release.yml` triggers on `v*` tag push, builds `app-arm64-v8a-release.apk`
+- ✅ CI release build passes (v0.1.0), APK artifact uploaded (5.7MB)
+- GitHub Release creation fails with 403 (token lacks `generate_release_notes` permission) — non-blocking, APK available as CI artifact
