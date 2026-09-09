@@ -1,7 +1,6 @@
 package com.iris.irisshell.domain.settings
 
 import kotlinx.coroutines.flow.Flow
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * Secure PIN-lock storage backed by EncryptedSharedPreferences.

@@ -35,11 +35,9 @@ object SecurityModule {
     ): SharedPreferences = EncryptedSharedPreferences.create(
         context,
         "iris_pin_prefs",
-        MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
-            .setKeyScheme(MasterKey.KeyScheme.AES256)
-            .build(),
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_SIV,
+        MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS).build(),
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256,
     )
 
     @Qualifier
