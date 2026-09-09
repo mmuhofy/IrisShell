@@ -38,6 +38,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.terminal.SearchHighlightOverlay
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
@@ -221,6 +222,10 @@ private fun ReadyScreen(
      */
     val terminalViewRef = remember {
         mutableStateOf<TerminalView?>(null)
+    }
+
+    val searchOverlayRef = remember {
+        mutableStateOf<SearchHighlightOverlay?>(null)
     }
 
     fun showKeyboard() {
@@ -463,14 +468,16 @@ private fun ReadyScreen(
                      * terminalViewRef is shared with InputBarHost so the
                      * Liquid Glass surface can sample this exact TerminalView.
                      */
-                     TerminalViewHost(
-                        terminalManager = terminalManager,
-                        fontSizeSp = fontSizeSp,
-                        terminalViewModel = terminalViewModel,
-                        terminalViewRef = terminalViewRef,
-                        extraKeyState = extraKeyState,
-                        onUrlClick = { browserUrl = it },
-                        modifier = Modifier
+                      TerminalViewHost(
+                         terminalManager = terminalManager,
+                         fontSizeSp = fontSizeSp,
+                         terminalViewModel = terminalViewModel,
+                         terminalViewRef = terminalViewRef,
+                         extraKeyState = extraKeyState,
+                         onUrlClick = { browserUrl = it },
+                         searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
+                         searchOverlayRef = searchOverlayRef,
+                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
                                 scaleX = appearScale
@@ -759,6 +766,8 @@ private fun TerminalViewHost(
     terminalViewModel: TerminalViewModel,
     terminalViewRef: MutableState<TerminalView?>,
     onUrlClick: (String) -> Unit,
+    searchQuery: String?,
+    searchOverlayRef: MutableState<SearchHighlightOverlay?>,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
@@ -802,78 +811,60 @@ private fun TerminalViewHost(
         modifier = modifier.fillMaxSize(),
 
         factory = { ctx ->
-            TerminalView(
-                ctx,
-                null,
-            ).apply {
-                setTextSize(fontSizeSp)
+            val frameLayout = android.widget.FrameLayout(ctx).apply {
+                layoutParams = android.widget.FrameLayout.LayoutParams(
+                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                )
+            }
 
+            val tv = TerminalView(ctx, null).apply {
+                setTextSize(fontSizeSp)
                 isFocusable = true
                 isFocusableInTouchMode = true
-
                 setTerminalViewClient(viewClient)
-
                 terminalManager.currentSession?.let { session ->
                     attachSession(session)
                 }
-
-                terminalManager.registerTerminalView(
-                    this,
-                    ctx,
-                )
-
-                /*
-                 * Do not expose the view until it has a valid size.
-                 *
-                 * This is important for the Liquid Glass sampler because
-                 * Bitmap.createBitmap() must never receive zero dimensions.
-                 */
+                terminalManager.registerTerminalView(this, ctx)
                 val listener =
                     object : ViewTreeObserver.OnGlobalLayoutListener {
-
                         override fun onGlobalLayout() {
-                            if (
-                                width > 0 &&
-                                height > 0 &&
-                                isAttachedToWindow
-                            ) {
-                                viewTreeObserver
-                                    .removeOnGlobalLayoutListener(this)
-
+                            if (width > 0 && height > 0 && isAttachedToWindow) {
+                                viewTreeObserver.removeOnGlobalLayoutListener(this)
                                 terminalViewRef.value = this@apply
                             }
                         }
                     }
-
                 viewTreeObserver.addOnGlobalLayoutListener(listener)
             }
+
+            val overlay = SearchHighlightOverlay(ctx).apply {
+                terminalView = tv
+                updateQuery(searchQuery)
+            }
+
+            frameLayout.addView(tv)
+            frameLayout.addView(overlay)
+            searchOverlayRef.value = overlay
+
+            frameLayout
         },
 
-        update = { view ->
-            view.setTextSize(fontSizeSp)
+        update = { _ ->
+            val tv = terminalViewRef.value
+            val overlay = searchOverlayRef.value
 
+            tv?.setTextSize(fontSizeSp)
             terminalManager.currentSession?.let { session ->
-                view.attachSession(session)
+                tv?.attachSession(session)
+            }
+            tv?.let { terminalManager.registerTerminalView(it, it.context) }
+            if (tv != null && tv.isAttachedToWindow && tv.width > 0 && tv.height > 0) {
+                tv.requestFocus()
             }
 
-            terminalManager.registerTerminalView(
-                view,
-                view.context,
-            )
-
-            /*
-             * Keep the shared reference current after recomposition.
-             * Again, never publish an invalid-sized view.
-             */
-            if (
-                view.isAttachedToWindow &&
-                view.width > 0 &&
-                view.height > 0
-            ) {
-                terminalViewRef.value = view
-
-                view.requestFocus()
-            }
+            overlay?.updateQuery(searchQuery)
         },
     )
 }

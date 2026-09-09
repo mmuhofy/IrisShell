@@ -33,9 +33,9 @@ class TerminalViewClientImpl(
         val screen = emulator.getScreen() ?: return
         val word = screen.getWordAtLocation(col, row)
         if (word.isNullOrBlank()) return
-        if (UrlDetector.matches(word)) {
-            val url = UrlDetector.normalizeUrlFromWord(word)
-            onUrlClick?.invoke(url)
+        val urls = UrlDetector.findUrls(word)
+        if (urls.isNotEmpty()) {
+            onUrlClick?.invoke(urls[0].url)
         }
     }
 
