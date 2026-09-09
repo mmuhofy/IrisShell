@@ -3,17 +3,18 @@ package com.iris.irisshell.ui.pin
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBarPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -30,7 +31,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.border
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -50,8 +50,6 @@ import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.design.system.IrisPrimary
-import com.iris.irisshell.design.system.IrisOutline
 
 /**
  * Modern minimalist 4-digit PIN UI.
@@ -193,8 +191,7 @@ private fun PinDotBoxes(
                         shape = RoundedCornerShape(8.dp),
                     )
                     .border(
-                        width = 1.5.dp,
-                        color = if (filled) IrisPrimary else IrisOutline,
+                        border = BorderStroke(1.5.dp, if (filled) IrisPrimary else IrisOutline),
                         shape = RoundedCornerShape(8.dp),
                     ),
             )
