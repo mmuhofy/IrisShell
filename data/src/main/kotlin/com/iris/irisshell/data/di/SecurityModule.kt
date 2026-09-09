@@ -36,8 +36,6 @@ object SecurityModule {
         context,
         "iris_pin_prefs",
         MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS).build(),
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256,
     )
 
     @Qualifier
