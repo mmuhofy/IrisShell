@@ -3,6 +3,7 @@ _Last updated: 2026-09-08_
 
 Last commit: `17c25b9` — feat(terminal): link detection + in-app WebViewSheet browser
 
+
 ---
 
 ## 1. Project Identity
@@ -241,3 +242,14 @@ Closed (Room only, removed from irisSessions)
 - `Path.arcTo()`: `forceNewSubgroup` → `forceMoveTo`
 - `Checkbox`/`CheckboxDefaults`: import from `material3`, not `foundation`
 - `Surface(...) { }` trailing lambda: close with `}` not `)`
+
+---
+
+## 8. Terminal Output Search (2026-09-09)
+
+- New `DraggableSearchBar` composable in `ui/search/` module — draggable overlay with search input field, match count display (`N/M`), up/down arrow navigation buttons, and X close button
+- Accessible from the 3-dot top bar dropdown menu ("Find in output")
+- Works in both block mode (searches through Block.prompt + Block.command + Block.outputLines) and classic mode (searches TerminalEmulator.getScreen().getTranscriptText())
+- Draggable via `detectDragGestures` — starts at top-center with 64dp top padding, user can drag anywhere
+- Back button closes search; matches update live as user types
+- Uses `Modifier.border()` (not `BorderStroke`) per architecture rule for `ui/` module

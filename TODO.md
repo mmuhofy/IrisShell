@@ -62,6 +62,13 @@
 - [x] WebViewSheet — minimal bottom sheet browser (WebView + top bar + close)
 - [x] TerminalScreen.kt: browserUrl state + BackHandler + wiring to both rendering paths
 
+### Terminal Output Search (2026-09-09)
+- [x] DraggableSearchBar composable (ui/search/) — draggable overlay, search input, match count, up/down arrows, X close
+- [x] "Find in output" menu item in TerminalTopBar dropdown
+- [x] Search works in both block mode (Block.prompt + command + outputLines) and classic mode (getTranscriptText)
+- [ ] Highlight matching lines in terminal output
+- [ ] Scroll to current match in terminal view
+
 ## Phase 2 — UI & Session System
 
 - [ ] Block-based output engine (BlockEngine.kt)

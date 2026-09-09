@@ -80,6 +80,7 @@ fun TerminalTopBar(
     keyboardFocused: Boolean,
     onToggleKeyboard: () -> Unit,
     onOpenSidebar: () -> Unit,
+    onFindInOutput: () -> Unit,
     onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -166,6 +167,7 @@ fun TerminalTopBar(
                 expanded = moreExpanded,
                 onDismiss = { moreExpanded = false },
                 isFullscreen = isFullscreen,
+                onFindInOutput = { onFindInOutput(); moreExpanded = false },
                 onRefresh = { onRefresh(); moreExpanded = false },
                 onToggleFullscreen = { onToggleFullscreen(); moreExpanded = false },
                 onOpenSettings = { onOpenSettings(); moreExpanded = false },
@@ -180,6 +182,7 @@ private fun MoreActionsDropdown(
     expanded: Boolean,
     onDismiss: () -> Unit,
     isFullscreen: Boolean,
+    onFindInOutput: () -> Unit,
     onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -239,6 +242,29 @@ private fun MoreActionsDropdown(
                     )
                     Text(
                         text = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
+                        color = IrisText,
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            },
+        )
+        DropdownMenuItem(
+            onClick = { onFindInOutput() },
+            text = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.lucide_search),
+                        contentDescription = null,
+                        tint = IrisTextSecondary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = "Find in output",
                         color = IrisText,
                         fontFamily = OutfitFontFamily,
                         fontSize = 13.sp,

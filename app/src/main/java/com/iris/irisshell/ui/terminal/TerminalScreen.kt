@@ -46,6 +46,7 @@ import com.iris.irisshell.ui.block.BlockTerminalView
 import com.iris.irisshell.ui.browser.WebViewSheet
 import com.iris.irisshell.ui.input.InputBarHost
 import com.iris.irisshell.ui.input.InputBarViewModel
+import com.iris.irisshell.ui.search.DraggableSearchBar
 import com.iris.irisshell.ui.session.SessionSidebar
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.TerminalTopBar
@@ -125,8 +126,12 @@ private fun ReadyScreen(
     var sidebarOpen by remember { mutableStateOf(false) }
     var browserUrl by remember { mutableStateOf<String?>(null) }
 
-    val scope = rememberCoroutineScope()
+    var searchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var currentMatch by remember { mutableStateOf(1) }
+    var terminalLines by remember { mutableStateOf<List<String>>(emptyList()) }
 
+    val scope = rememberCoroutineScope()
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
     val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
@@ -148,6 +153,36 @@ private fun ReadyScreen(
             onExit()
         }
     }
+
+    LaunchedEffect(searchActive) {
+        if (searchActive) {
+            terminalLines = if (useBlockEngine) {
+                val blocks = blockEngineViewModel.blocks.value
+                buildList {
+                    for (block in blocks) {
+                        if (block.prompt.isNotBlank()) add(block.prompt)
+                        if (block.command.isNotBlank()) add(block.command)
+                        addAll(block.outputLines)
+                    }
+                }
+            } else {
+                val text = terminalManager.currentSession?.emulator?.getScreen()
+                    ?.getTranscriptText() ?: ""
+                text.lines()
+            }
+        }
+    }
+
+    val matchIndices = remember(searchQuery, terminalLines) {
+        if (searchQuery.isBlank()) {
+            emptyList()
+        } else {
+            terminalLines.mapIndexedNotNull { index, line ->
+                if (line.contains(searchQuery, ignoreCase = true)) index else null
+            }
+        }
+    }
+    val matchCount = matchIndices.size
 
     var keyboardFocused by remember { mutableStateOf(true) }
 
@@ -460,6 +495,10 @@ private fun ReadyScreen(
                         sidebarOpen = true
                     }
                 },
+                onFindInOutput = {
+                    hideKeyboard()
+                    searchActive = true
+                },
                 onRefresh = {
                     terminalManager.currentSession?.finishIfRunning()
                     terminalManager.addTab()
@@ -509,6 +548,38 @@ private fun ReadyScreen(
             WebViewSheet(
                 url = browserUrl!!,
                 onDismiss = { browserUrl = null },
+            )
+        }
+
+        // Search overlay — draggable, top-center.
+        if (searchActive) {
+            BackHandler {
+                searchActive = false
+                searchQuery = ""
+                currentMatch = 1
+            }
+
+            DraggableSearchBar(
+                searchText = searchQuery,
+                onSearchTextChange = { searchQuery = it },
+                matchCount = matchCount,
+                currentMatch = currentMatch,
+                onNext = {
+                    if (matchCount > 1) {
+                        currentMatch = if (currentMatch < matchCount) currentMatch + 1 else 1
+                    }
+                },
+                onPrev = {
+                    if (matchCount > 1) {
+                        currentMatch = if (currentMatch > 1) currentMatch - 1 else matchCount
+                    }
+                },
+                onClose = {
+                    searchActive = false
+                    searchQuery = ""
+                    currentMatch = 1
+                },
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 64.dp),
             )
         }
     }
