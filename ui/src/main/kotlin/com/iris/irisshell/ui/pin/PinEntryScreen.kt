@@ -30,8 +30,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.border
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.border
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -227,7 +227,8 @@ private fun HiddenPinField(
             autoCorrect = false,
         ),
         colors = TextFieldDefaults.colors(
-            containerColor = Color.Transparent,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
         ),
         singleLine = true,
         maxLines = 1,
