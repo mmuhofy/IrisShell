@@ -27,7 +27,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -70,9 +69,7 @@ fun PinEntryScreen(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
-    var pin by rememberSaveable(
-        saver = Saver(save = { it }, restore = { it as String }),
-    ) { mutableStateOf("") }
+    var pin by rememberSaveable { mutableStateOf("") }
 
     val onPinReadyState = rememberUpdatedState(onPinReady)
 
@@ -248,13 +245,9 @@ fun PinSetupScreen(
     onSkip: (() -> Unit)? = null,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    var step by rememberSaveable { mutableStateOf(SetupStep.Enter) }
-    var pin1 by rememberSaveable(
-        saver = Saver(save = { it }, restore = { it as String }),
-    ) { mutableStateOf("") }
-    var pin2 by rememberSaveable(
-        saver = Saver(save = { it }, restore = { it as String }),
-    ) { mutableStateOf("") }
+    var step by remember { mutableStateOf(SetupStep.Enter) }
+    var pin1 by rememberSaveable { mutableStateOf("") }
+    var pin2 by rememberSaveable { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
 
     val onPinSetState = rememberUpdatedState(onPinSet)

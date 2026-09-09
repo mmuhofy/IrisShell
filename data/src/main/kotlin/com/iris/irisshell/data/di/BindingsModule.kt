@@ -7,6 +7,7 @@ import com.iris.irisshell.data.session.ObserveActiveSessionUseCaseImpl
 import com.iris.irisshell.data.session.SessionRepositoryImpl
 import com.iris.irisshell.data.block.BlockRepositoryImpl
 import com.iris.irisshell.data.block.TrafficStatsCollector
+import com.iris.irisshell.data.settings.PinLockRepositoryImpl
 import com.iris.irisshell.data.settings.FirstLaunchRepositoryImpl
 import com.iris.irisshell.data.settings.SettingsRepositoryImpl
 import com.iris.irisshell.data.settings.TerminalFontSizeRepositoryImpl
