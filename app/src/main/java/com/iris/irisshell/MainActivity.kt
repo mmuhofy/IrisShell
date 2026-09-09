@@ -129,7 +129,7 @@ class MainActivity : ComponentActivity() {
         extraKeyState: ExtraKeyState,
     ) {
         val navController = rememberNavController()
-        val isPinLockEnabled by pinLock.isEnabled.collectAsStateWithLifecycle()
+        val isPinLockEnabled by pinLock.isEnabled.collectAsStateWithLifecycle(initialValue = false)
         val coroutineScope = rememberCoroutineScope()
 
         NavHost(
