@@ -116,7 +116,7 @@ fun WebViewSheet(
                     .fillMaxWidth()
                     .weight(1f)
                     .pointerInput(Unit) {
-                        detectDragGestures { change, _, _, _ ->
+                        detectDragGestures { change, _ ->
                             change.consume()
                         }
                     },
