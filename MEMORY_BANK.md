@@ -253,4 +253,10 @@ Closed (Room only, removed from irisSessions)
 - Draggable via `detectDragGestures` — starts at top-center with 64dp top padding, user can drag anywhere
 - Back button closes search; matches update live as user types
 - Uses `Modifier.border()` (not `BorderStroke`) per architecture rule for `ui/` module
-- CI build passes (`0b38515`): resolved Material3 `TextField` — no `cursorBrush` param (use `cursorColor` in `colors` instead), simplified `IconButton` without `IconButtonDefaults`
+- ✅ CI build passes (`2209f58` + `06a02fb`): resolved all compilation issues
+  (dragAmount vs change.delta, buildAnnotatedString withStyle vs setStyle)
+- Smooth dragging via `Modifier.graphicsLayer { translationX/Y }` avoids recomposition per drag pixel
+- Per-block vs per-global search scope toggle (All/Card)
+- Search match highlighting with URL underline + primary background overlay
+  (combined style where search matches overlap URLs)
+- `currentMatchBlockId` tracked to highlight the block containing the current match

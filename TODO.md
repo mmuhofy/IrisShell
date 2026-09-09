@@ -66,8 +66,11 @@
 - [x] DraggableSearchBar composable (ui/search/) — draggable overlay, search input, match count, up/down arrows, X close
 - [x] "Find in output" menu item in TerminalTopBar dropdown
 - [x] Search works in both block mode (Block.prompt + command + outputLines) and classic mode (getTranscriptText)
-- [ ] Highlight matching lines in terminal output
+- [x] Smooth dragging via graphicsLayer (avoids recomposition per drag pixel)
+- [x] Search match highlighting with URL+search combined styles in BlockBody.kt
+- [x] Per-block vs per-global search scope toggle (All/Card)
 - [ ] Scroll to current match in terminal view
+- [ ] Classic terminal search highlighting (via TerminalView overlay — future enhancement)
 
 ## Phase 2 — UI & Session System
 
