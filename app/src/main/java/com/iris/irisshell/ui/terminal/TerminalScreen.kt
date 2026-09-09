@@ -3,6 +3,7 @@ package com.iris.irisshell.ui.terminal
 import android.content.Context
 import android.util.Log
 import android.view.ViewTreeObserver
+import android.view.ViewTreeObserver.OnPostDrawListener
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
