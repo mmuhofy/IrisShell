@@ -7,4 +7,6 @@
 # (IrisColorsKt). R8 full mode strips these as "unused" when they are only
 # referenced through Compose @Composable code.
 -keep class com.iris.irisshell.design.system.IrisColorsKt { *; }
+-keep class com.iris.irisshell.design.system.OutfitFontFamilyKt { *; }
+-keep class com.iris.irisshell.design.system.** { *; }
 -dontwarn com.iris.irisshell.design.system.**
