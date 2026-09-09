@@ -50,14 +50,14 @@ fun SettingsScreen(
     onBack: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
-    val useBlockEngine     by viewModel.useBlockEngine.collectAsStateWithLifecycle()
-    val extraKeysBarVisible by viewModel.extraKeysBarVisible.collectAsStateWithLifecycle()
-    val fontSizeSp         by viewModel.fontSizeSp.collectAsStateWithLifecycle()
-    val terminalBgColor    by viewModel.terminalBgColor.collectAsStateWithLifecycle()
-    val accentColor        by viewModel.accentColor.collectAsStateWithLifecycle()
-    val terminalTextColor  by viewModel.terminalTextColor.collectAsStateWithLifecycle()
-    val prootStartCommand  by viewModel.prootStartCommand.collectAsStateWithLifecycle()
-    val isPinLockEnabled by viewModel.isPinLockEnabled.collectAsStateWithLifecycle()
+    val useBlockEngine     by viewModel.useBlockEngine.collectAsStateWithLifecycle(initialValue = false)
+    val extraKeysBarVisible by viewModel.extraKeysBarVisible.collectAsStateWithLifecycle(initialValue = false)
+    val fontSizeSp         by viewModel.fontSizeSp.collectAsStateWithLifecycle(initialValue = 14)
+    val terminalBgColor    by viewModel.terminalBgColor.collectAsStateWithLifecycle(initialValue = "#000000")
+    val accentColor        by viewModel.accentColor.collectAsStateWithLifecycle(initialValue = "#3B82F6")
+    val terminalTextColor  by viewModel.terminalTextColor.collectAsStateWithLifecycle(initialValue = "#E8E8E8")
+    val prootStartCommand  by viewModel.prootStartCommand.collectAsStateWithLifecycle(initialValue = "")
+    val isPinLockEnabled by viewModel.isPinLockEnabled.collectAsStateWithLifecycle(initialValue = false)
 
     var showPinEntry by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
