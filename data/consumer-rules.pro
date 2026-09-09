@@ -3,3 +3,9 @@
 #
 # Keep rules will be added per-phase as libraries are integrated into this module.
 # Phase-relevant libraries here: Room, DataStore, OkHttp, SSHJ, Security Crypto.
+
+# Hilt-injected classes in :data — R8 full mode strips them when they are
+# only referenced through Hilt-generated code.
+-keep class com.iris.irisshell.data.** { *; }
+-keep class * extends com.iris.irisshell.domain.** { *; }
+-dontwarn com.iris.irisshell.data.**
