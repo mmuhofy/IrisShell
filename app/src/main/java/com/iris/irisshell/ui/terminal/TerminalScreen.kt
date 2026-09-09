@@ -3,7 +3,6 @@ package com.iris.irisshell.ui.terminal
 import android.content.Context
 import android.util.Log
 import android.view.ViewTreeObserver
-import android.view.ViewTreeObserver.OnPostDrawListener
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -848,9 +847,9 @@ private fun TerminalViewHost(
                 isFocusableInTouchMode = false
             }
 
-            tv.viewTreeObserver.addOnPostDrawListener(
-                object : ViewTreeObserver.OnPostDrawListener {
-                    override fun onPostDraw() {
+            tv.viewTreeObserver.addOnDrawListener(
+                object : ViewTreeObserver.OnDrawListener {
+                    override fun onDraw() {
                         overlay.invalidate()
                     }
                 }
