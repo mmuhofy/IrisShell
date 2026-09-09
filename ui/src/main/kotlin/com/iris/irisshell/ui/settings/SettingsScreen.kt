@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.icons.Icons
 import androidx.compose.material3.icons.filled.ArrowBackimport androidx.compose.material3.Scaffold
@@ -75,17 +75,14 @@ fun SettingsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick  = onBack,
-                        modifier = Modifier.size(width = 48.dp, height = 48.dp),
-                    ) {
-                        Icon(
-                            imageVector    = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint           = IrisTextSecondary,
-                            modifier       = Modifier.size(width = 20.dp, height = 20.dp),
-                        )
-                    }
+                    Icon(
+                        imageVector    = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint           = IrisTextSecondary,
+                        modifier       = Modifier
+                            .size(width = 24.dp, height = 24.dp)
+                            .clickable(onClick = onBack),
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = IrisSurface,
