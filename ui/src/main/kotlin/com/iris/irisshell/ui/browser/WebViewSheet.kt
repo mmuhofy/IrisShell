@@ -7,9 +7,11 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -31,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -108,48 +111,57 @@ fun WebViewSheet(
                 }
             }
 
-            AndroidView(
-                factory = { ctx ->
-                    WebView(ctx).apply {
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        settings.builtInZoomControls = true
-                        settings.displayZoomControls = false
-                        settings.loadWithOverviewMode = true
-                        settings.mixedContentMode =
-                            WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-                        settings.userAgentString = "IrisShell/1.0"
-
-                        webViewClient = object : WebViewClient() {
-                            override fun shouldOverrideUrlLoading(
-                                view: WebView,
-                                request: WebResourceRequest,
-                            ): Boolean {
-                                val newUrl = request.url.toString()
-                                currentUrl = newUrl
-                                view.loadUrl(newUrl)
-                                return true
-                            }
-
-                            override fun onPageFinished(
-                                view: WebView,
-                                loadedUrl: String,
-                            ) {
-                                currentUrl = loadedUrl
-                            }
-                        }
-
-                        webChromeClient = WebChromeClient()
-                        setBackgroundColor(
-                            android.graphics.Color.parseColor("#000000"),
-                        )
-                        loadUrl(url)
-                    }
-                },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-            )
+                    .weight(1f)
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, _, _, _ ->
+                            change.consume()
+                        }
+                    },
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            settings.builtInZoomControls = true
+                            settings.displayZoomControls = false
+                            settings.loadWithOverviewMode = true
+                            settings.mixedContentMode =
+                                WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                            settings.userAgentString = "IrisShell/1.0"
+
+                            webViewClient = object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(
+                                    view: WebView,
+                                    request: WebResourceRequest,
+                                ): Boolean {
+                                    val newUrl = request.url.toString()
+                                    currentUrl = newUrl
+                                    view.loadUrl(newUrl)
+                                    return true
+                                }
+
+                                override fun onPageFinished(
+                                    view: WebView,
+                                    loadedUrl: String,
+                                ) {
+                                    currentUrl = loadedUrl
+                                }
+                            }
+
+                            webChromeClient = WebChromeClient()
+                            setBackgroundColor(
+                                android.graphics.Color.parseColor("#000000"),
+                            )
+                            loadUrl(url)
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }

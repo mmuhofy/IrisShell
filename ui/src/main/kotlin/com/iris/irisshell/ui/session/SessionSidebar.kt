@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -156,12 +155,11 @@ fun SessionSidebar(
                         .fillMaxHeight()
                         .width(sidebarW)
                         .clip(RoundedCornerShape(0.dp, 32.dp, 32.dp, 0.dp))
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() },
-                            onClick = {},
-                        )
-                        .navigationBarsPadding(),
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                        onClick = {},
+                    ),
                 ) {
                     SidebarContent(
                         viewModel = viewModel,
@@ -204,18 +202,12 @@ private fun SidebarContent(
         renamingSessionId = null
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding(),
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(IrisSurfaceVariant),
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(IrisSurfaceVariant)
+            .statusBarsPadding(),
+    ) {
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()

@@ -833,6 +833,7 @@ private fun TerminalViewHost(
                             if (width > 0 && height > 0 && isAttachedToWindow) {
                                 viewTreeObserver.removeOnGlobalLayoutListener(this)
                                 terminalViewRef.value = this@apply
+                                this@apply.requestFocus()
                             }
                         }
                     }
@@ -842,7 +843,17 @@ private fun TerminalViewHost(
             val overlay = SearchHighlightOverlay(ctx).apply {
                 terminalView = tv
                 updateQuery(searchQuery)
+                isFocusable = false
+                isFocusableInTouchMode = false
             }
+
+            tv.viewTreeObserver.addOnPostDrawListener(
+                object : ViewTreeObserver.OnPostDrawListener {
+                    override fun onPostDraw() {
+                        overlay.invalidate()
+                    }
+                }
+            )
 
             frameLayout.addView(tv)
             frameLayout.addView(overlay)
@@ -860,9 +871,6 @@ private fun TerminalViewHost(
                 tv?.attachSession(session)
             }
             tv?.let { terminalManager.registerTerminalView(it, it.context) }
-            if (tv != null && tv.isAttachedToWindow && tv.width > 0 && tv.height > 0) {
-                tv.requestFocus()
-            }
 
             overlay?.updateQuery(searchQuery)
         },
