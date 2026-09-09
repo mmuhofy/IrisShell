@@ -9,3 +9,8 @@
 -keep class com.iris.irisshell.data.** { *; }
 -keep class * extends com.iris.irisshell.domain.** { *; }
 -dontwarn com.iris.irisshell.data.**
+
+# Security Crypto -> Tink pulls com.google.errorprone.annotations (CanIgnoreReturnValue)
+# referenced transitively from com.google.crypto.tink.KeysetManager.
+# These annotations are not shipped as runtime classes; suppress R8 missing-class errors.
+-dontwarn com.google.errorprone.annotations.**
