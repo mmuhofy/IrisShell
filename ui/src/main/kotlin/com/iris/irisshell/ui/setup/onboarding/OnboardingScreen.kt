@@ -19,6 +19,7 @@ import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.domain.terminal.PackageProfile
 import com.iris.irisshell.domain.terminal.SetupPreferences
 import com.iris.irisshell.domain.terminal.ShellChoice
+import com.iris.irisshell.domain.settings.PinLockRepository
 import com.iris.irisshell.ui.setup.OnboardingViewModel
 import com.iris.irisshell.ui.setup.onboarding.components.SetupButton
 import com.iris.irisshell.ui.setup.onboarding.scenes.DeviceCheckScene
@@ -26,6 +27,7 @@ import com.iris.irisshell.ui.setup.onboarding.scenes.PreferencesScene
 import com.iris.irisshell.ui.setup.onboarding.scenes.PreferencesState
 import com.iris.irisshell.ui.setup.onboarding.scenes.ShellSetupScene
 import com.iris.irisshell.ui.setup.onboarding.scenes.WelcomeScene
+import com.iris.irisshell.ui.pin.PinSetupScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -72,7 +74,9 @@ fun OnboardingScreen(
     val advance: () -> Unit = {
         val next = scene.next()
         if (next == OnboardingSceneKind.ShellSetup && shellChoice != ShellChoice.Zsh) {
-            finish()
+            scene = OnboardingSceneKind.Security
+        } else if (next == OnboardingSceneKind.Security) {
+            scene = next
         } else if (next != null) {
             scene = next
         } else {
@@ -82,6 +86,21 @@ fun OnboardingScreen(
 
     val skip: () -> Unit = {
         coroutineScope.launch {
+            viewModel.finishOnboarding(
+                SetupPreferences(
+                    userName = userName,
+                    shellChoice = shellChoice,
+                    packageProfile = packageProfile,
+                    customPackages = customPackages,
+                )
+            )
+            onCompleted()
+        }
+    }
+
+    val startPinSetup: (pin: String) -> Unit = { pin ->
+        coroutineScope.launch {
+            viewModel.setPin(pin)
             viewModel.finishOnboarding(
                 SetupPreferences(
                     userName = userName,
@@ -137,6 +156,11 @@ fun OnboardingScreen(
                     PreferencesScene(state = prefsState, onContinue = advance)
                 OnboardingSceneKind.ShellSetup ->
                     ShellSetupScene(onContinue = advance)
+                OnboardingSceneKind.Security ->
+                    PinSetupScreen(
+                        onPinSet = startPinSetup,
+                        onSkip = skip,
+                    )
             }
         }
     }

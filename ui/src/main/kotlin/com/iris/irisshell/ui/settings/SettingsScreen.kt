@@ -20,6 +20,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,12 +39,14 @@ import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.pin.PinEntryScreen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onBack    : () -> Unit,
-    viewModel : SettingsViewModel = hiltViewModel(),
+    onBack: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val useBlockEngine     by viewModel.useBlockEngine.collectAsStateWithLifecycle()
     val extraKeysBarVisible by viewModel.extraKeysBarVisible.collectAsStateWithLifecycle()
@@ -48,6 +55,10 @@ fun SettingsScreen(
     val accentColor        by viewModel.accentColor.collectAsStateWithLifecycle()
     val terminalTextColor  by viewModel.terminalTextColor.collectAsStateWithLifecycle()
     val prootStartCommand  by viewModel.prootStartCommand.collectAsStateWithLifecycle()
+    val isPinLockEnabled by viewModel.isPinLockEnabled.collectAsStateWithLifecycle()
+
+    var showPinEntry by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = IrisBackground,
@@ -141,6 +152,24 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(24.dp))
 
+            SettingsSectionLabel("Güvenlik")
+            SettingsCategoryCard {
+                SettingsToggleRow(
+                    iconRes         = R.drawable.lucide_lock,
+                    label           = "Uygulama Kilidi",
+                    description     = "4 haneli PIN (güvenleştirilmiş saklama)",
+                    checked         = isPinLockEnabled,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            showPinEntry = true
+                        } else {
+                            scope.launch { viewModel.clearPin() }
+                        }
+                    },
+                )
+            }
+            Spacer(Modifier.height(24.dp))
+
             SettingsSectionLabel("Gelişmiş")
             SettingsCategoryCard {
                 ProotStartCommandRow(
@@ -157,5 +186,20 @@ fun SettingsScreen(
                 InfoRow(label = "Lisans", value = "MIT")
             }
         }
+    }
+
+    if (showPinEntry) {
+        PinEntryScreen(
+            title = "Set PIN",
+            subtitle = "Enter a new 4-digit PIN",
+            onPinReady = { pin ->
+                scope.launch {
+                    viewModel.setPin(pin)
+                    viewModel.setPinLockEnabled(true)
+                }
+                showPinEntry = false
+            },
+            onCancel = { showPinEntry = false },
+        )
     }
 }

@@ -3,6 +3,7 @@ package com.iris.irisshell.ui.setup
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.iris.irisshell.domain.settings.PinLockRepository
 import com.iris.irisshell.domain.terminal.ObserveFirstLaunchUseCase
 import com.iris.irisshell.domain.terminal.SetupPreferences
 import com.iris.irisshell.domain.terminal.TriggerBootstrapUseCase
@@ -31,6 +32,7 @@ import javax.inject.Inject
 class OnboardingViewModel @Inject constructor(
     private val firstLaunch: ObserveFirstLaunchUseCase,
     private val triggerBootstrap: TriggerBootstrapUseCase,
+    private val pinLock: PinLockRepository,
 ) : ViewModel() {
 
     val isCompleted: StateFlow<Boolean> = firstLaunch.isCompleted()
@@ -45,6 +47,12 @@ class OnboardingViewModel @Inject constructor(
                 Log.e(TAG, "finishOnboarding: failed", t)
                 throw t
             }
+        }
+    }
+
+    fun setPin(pin: String) {
+        viewModelScope.launch {
+            pinLock.setPin(pin)
         }
     }
 

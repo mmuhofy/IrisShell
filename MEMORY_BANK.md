@@ -279,5 +279,16 @@ Closed (Room only, removed from irisSessions)
 - R8 stripping fix: Hilt-injected + Kotlin file classes (`XXXKt`) stripped by each module's own R8 pass before reaching app module — added `-keep { class com.iris.irisshell.**; }` + `-dontwarn` to every module's `proguard-rules.pro` (not just consumer-rules.pro)
 - Release workflow: `.github/workflows/release.yml` triggers on `v*` tag push, builds `app-arm64-v8a-release.apk`
 - ✅ CI release build passes (v0.1.0), APK artifact uploaded (5.7MB)
+
+## 10. App Lock — PIN (2026-09-09)
+
+- 4-digit PIN lock with modern minimalist Compose UI
+- Architecture: `domain/settings/PinLockRepository` interface → `data/settings/PinLockRepositoryImpl` (EncryptedSharedPreferences + SHA-256)
+- DI: `data/di/SecurityModule.kt` provides `@PinPref`-qualified EncryptedSharedPreferences (MasterKey AES-256)
+- Hilt binding: `BindingsModule.bindPinLockRepository`
+- UI: `ui/pin/PinEntryScreen.kt` — dot-style filled boxes, hidden numeric input, focus auto-request, onPinReady callback
+- PIN setup flow in onboarding: new `OnboardingSceneKind.Security` scene (Welcome → DeviceCheck → Preferences → ShellSetup → Security)
+- PIN toggle in SettingsScreen: enable shows inline PinEntryScreen overlay, disable clears PIN
+- MainActivity PIN gate: when `pinLock.isEnabled == true`, shows PinEntryScreen at `terminal` route; correct PIN navigates to `terminalHome`
 - GitHub Release creation fails with 403 (token lacks `generate_release_notes` permission) — non-blocking, APK available as CI artifact
 - Runtime fix: `FOREGROUND_SERVICE_DATA_SYNC` permission added to `AndroidManifest.xml` — required since `targetSdk=36` for `dataSync` foreground service type

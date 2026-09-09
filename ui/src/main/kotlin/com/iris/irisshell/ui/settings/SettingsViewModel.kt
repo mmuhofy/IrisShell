@@ -2,6 +2,7 @@ package com.iris.irisshell.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.iris.irisshell.domain.settings.PinLockRepository
 import com.iris.irisshell.domain.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,7 +14,28 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settings: SettingsRepository,
+    private val pinLock: PinLockRepository,
 ) : ViewModel() {
+
+    // ── PIN Lock ────────────────────────────────────────────────────────────────
+
+    val isPinLockEnabled: StateFlow<Boolean> = pinLock.isEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun setPinLockEnabled(enabled: Boolean) {
+        viewModelScope.launch { pinLock.setEnabled(enabled) }
+    }
+
+    suspend fun setPin(pin: String) {
+        pinLock.setPin(pin)
+    }
+
+    suspend fun verifyPin(pin: String): Boolean = pinLock.verify(pin)
+
+    suspend fun clearPin() {
+        pinLock.clearPin()
+    }
+
 
     // ── Terminal mode & input ─────────────────────────────────────────────────
 

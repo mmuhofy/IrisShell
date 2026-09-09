@@ -20,6 +20,7 @@ import com.iris.irisshell.domain.input.InputPreferencesRepository
 import com.iris.irisshell.domain.input.SubmitRawByteUseCase
 import com.iris.irisshell.domain.session.ObserveActiveSessionUseCase
 import com.iris.irisshell.domain.session.SessionRepository
+import com.iris.irisshell.domain.settings.PinLockRepository
 import com.iris.irisshell.domain.settings.SettingsRepository
 import com.iris.irisshell.domain.terminal.ObserveBootstrapUseCase
 import com.iris.irisshell.domain.terminal.ObserveFirstLaunchUseCase
@@ -84,6 +85,12 @@ abstract class BindingsModule {
     abstract fun bindSettingsRepository(
         impl: SettingsRepositoryImpl,
     ): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPinLockRepository(
+        impl: PinLockRepositoryImpl,
+    ): PinLockRepository
 
     @Binds
     @Singleton

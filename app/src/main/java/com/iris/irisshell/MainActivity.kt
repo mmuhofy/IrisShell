@@ -16,12 +16,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
+import com.iris.irisshell.domain.settings.PinLockRepository
 import com.iris.irisshell.domain.terminal.ObserveFirstLaunchUseCase
 import com.iris.irisshell.domain.terminal.TriggerBootstrapUseCase
 import com.iris.irisshell.terminal.ExtraKeyState
@@ -31,6 +35,7 @@ import com.iris.irisshell.ui.setup.BootstrapStepperScreen
 import com.iris.irisshell.ui.setup.SetupRecoveryScreen
 import com.iris.irisshell.ui.setup.onboarding.OnboardingScreen
 import com.iris.irisshell.ui.terminal.TerminalScreen
+import com.iris.irisshell.ui.pin.PinEntryScreen
 import com.iris.irisshell.ui.theme.IrisTheme
 import com.iris.irisshell.ui.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -61,6 +66,7 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var firstLaunchUseCase: ObserveFirstLaunchUseCase
     @Inject lateinit var triggerBootstrap: TriggerBootstrapUseCase
     @Inject lateinit var extraKeyState: ExtraKeyState
+    @Inject lateinit var pinLock: PinLockRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,11 +129,42 @@ class MainActivity : ComponentActivity() {
         extraKeyState: ExtraKeyState,
     ) {
         val navController = rememberNavController()
+        val isPinLockEnabled by pinLock.isEnabled.collectAsStateWithLifecycle()
+        val coroutineScope = rememberCoroutineScope()
+
         NavHost(
             navController = navController,
             startDestination = "terminal",
         ) {
             composable("terminal") {
+                val context = LocalContext.current as ComponentActivity
+                if (isPinLockEnabled) {
+                    PinEntryScreen(
+                        title = "Enter PIN",
+                        subtitle = "App lock enabled",
+                        onPinReady = { pin ->
+                            coroutineScope.launch {
+                                if (pinLock.verify(pin)) {
+                                    navController.navigate("terminalHome") {
+                                        popUpTo("terminal") { inclusive = true }
+                                    }
+                                }
+                                // wrong pin: stay on entry screen, do nothing
+                            }
+                        },
+                    )
+                } else {
+                    TerminalScreen(
+                        terminalManager = terminalManager,
+                        ubuntuSetupState = UbuntuSetupState.Ready,
+                        onRetry = onRetry,
+                        onOpenSettings = { navController.navigate("settings") },
+                        extraKeyState = extraKeyState,
+                        onExit = { context.finish() },
+                    )
+                }
+            }
+            composable("terminalHome") {
                 val context = LocalContext.current as ComponentActivity
                 TerminalScreen(
                     terminalManager = terminalManager,
