@@ -19,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -33,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -198,7 +196,6 @@ private fun SearchTextField(
                 color = IrisText,
                 fontSize = 13.sp,
             ),
-            cursorBrush = SolidColor(IrisPrimary),
             placeholder = null,
             singleLine = true,
             maxLines = 1,
@@ -235,13 +232,9 @@ private fun NavigationArrow(
     }
 
     IconButton(
-        onClick = if (enabled) onClick else {},
+        onClick = onClick,
         enabled = enabled,
         modifier = Modifier.size(24.dp),
-        colors = IconButtonDefaults.iconButtonDefaults(
-            containerColor = Color.Transparent,
-            contentColor = tint,
-        ),
     ) {
         Icon(
             painter = painterResource(iconRes),
