@@ -3,7 +3,6 @@ package com.iris.irisshell.ui.pin
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,7 +50,8 @@ import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.domain.settings.PinLockRepository.PIN_LENGTH
+import com.iris.irisshell.design.system.IrisPrimary
+import com.iris.irisshell.design.system.IrisOutline
 
 /**
  * Modern minimalist 4-digit PIN UI.
@@ -59,7 +59,7 @@ import com.iris.irisshell.domain.settings.PinLockRepository.PIN_LENGTH
  * - Dot-style filled boxes with outline
  * - Hidden numeric input field (transparent text + password transform)
  * - Focus auto-requested
- * - onPinReady fires once when PIN_LENGTH digits entered
+ * - onPinReady fires once when 4 digits entered
  */
 @Composable
 fun PinEntryScreen(
@@ -78,7 +78,7 @@ fun PinEntryScreen(
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     LaunchedEffect(pin) {
-        if (pin.length == PIN_LENGTH) {
+        if (pin.length == 4) {
             keyboardController?.hide()
             onPinReadyState.value(pin)
         }
@@ -119,7 +119,7 @@ fun PinEntryScreen(
 
             PinDotBoxes(
                 pin = pin,
-                length = PIN_LENGTH,
+                length = 4,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -128,7 +128,7 @@ fun PinEntryScreen(
             HiddenPinField(
                 pin = pin,
                 onPinChange = { newPin ->
-                    if (newPin.length <= PIN_LENGTH && newPin.all { it.isDigit() }) {
+                    if (newPin.length <= 4 && newPin.all { it.isDigit() }) {
                         pin = newPin
                     } else if (newPin.isEmpty()) {
                         pin = ""
@@ -228,9 +228,6 @@ private fun HiddenPinField(
         ),
         colors = TextFieldDefaults.colors(
             containerColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            cursorColor = Color.Transparent,
         ),
         singleLine = true,
         maxLines = 1,
