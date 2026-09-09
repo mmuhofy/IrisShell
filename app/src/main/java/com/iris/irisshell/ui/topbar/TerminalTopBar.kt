@@ -187,6 +187,7 @@ private fun MoreActionsDropdown(
     onFindInOutput: () -> Unit,
     onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
+    onNewSession: () -> Unit,
     onOpenSettings: () -> Unit,
     onClose: () -> Unit,
 ) {
