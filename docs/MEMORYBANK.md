@@ -726,6 +726,19 @@ data class SshHost(
 - Clipboard auto-clear after configurable timeout
 - No telemetry, no analytics, no data sent to Iris servers
 
+### App Lock — 4-digit PIN
+
+- **Phase**: v0.2 — Settings (post-onboarding toggle)
+- **Module**: `domain/settings/PinLockRepository.kt`, `data/settings/PinLockRepositoryImpl.kt`, `data/di/SecurityModule.kt`
+- **Storage**: SHA-256 hash in EncryptedSharedPreferences (hash only, never plaintext PIN)
+- **Key scheme**: `MasterKey.KeyScheme.AES256_GCM` — required in AndroidX Security Crypto 1.1.0-alpha06 (runtime crash if omitted)
+- **Prefs encryption**: `PrefKeyEncryptionScheme.AES256_SIV` (keys), `PrefValueEncryptionScheme.AES256_GCM` (values)
+- **EncryptedSharedPreferences.create** signature: `create(context, fileName, masterKey, prefKeyScheme, prefValueScheme)` — 4-arg, no default scheme
+- **PIN length**: 4 digits (hard-coded `4` in UI after KSP companion-object import issues)
+- **Gate**: `MainActivity.collectAsStateWithLifecycle(initialValue=false)` at "terminal" route → if enabled, route to PIN screen, verify before "terminalHome"
+- **Onboarding**: optional "Security" scene — `PinSetupScreen` (enter + confirm); skippable
+- **Known build issues resolved**: KSP companion `PIN_LENGTH` import unsupported → inline literal; Compose 1.8 `border` = `foundation.border` + `BorderStroke`; `TextFieldDefaults.colors(focusedContainerColor=...)` (not `containerColor`)
+
 ---
 
 ## 14. Notifications
