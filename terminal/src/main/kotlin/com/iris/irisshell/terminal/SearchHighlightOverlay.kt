@@ -48,7 +48,7 @@ class SearchHighlightOverlay(
 
         val fontWidth = renderer.mFontWidth
         val fontLineSpacing = renderer.mFontLineSpacing
-        val fontAscent = renderer.mFontAscent
+        val fontAscent = renderer.mFontLineSpacingAndAscent - renderer.mFontLineSpacing
 
         val lowerQuery = query.lowercase()
 
