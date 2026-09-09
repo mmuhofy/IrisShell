@@ -212,63 +212,71 @@ private fun buildAnnotatedStringWithHighlights(
     searchQuery: String?,
     highlightMatch: Boolean,
 ): AnnotatedString {
-    val builder = AnnotatedString.Builder(text)
+    val searchBg = if (highlightMatch)
+        IrisPrimary.copy(alpha = 0.4f)
+    else
+        IrisPrimary.copy(alpha = 0.25f)
 
-    // Apply URL highlight styles first
+    val urlFlags = BooleanArray(text.length)
+    val searchFlags = BooleanArray(text.length)
+
     for (match in urlMatches) {
-        builder.setStyle(
-            start = match.start,
-            end = match.end,
-            style = SpanStyle(
-                color = IrisPrimary,
-                textDecoration = TextDecoration.Underline,
-            ),
-        )
+        for (i in match.start until minOf(match.end, text.length)) {
+            urlFlags[i] = true
+        }
     }
 
-    // Apply search highlight styles second (overlays URL where they overlap)
     if (!searchQuery.isNullOrEmpty()) {
         val query = searchQuery.lowercase()
         val lower = text.lowercase()
-        val searchBg = if (highlightMatch)
-            IrisPrimary.copy(alpha = 0.4f)
-        else
-            IrisPrimary.copy(alpha = 0.25f)
-
         var start = 0
         while (true) {
             val idx = lower.indexOf(query, start)
             if (idx == -1) break
             val end = idx + query.length
-
-            val overlapUrl = urlMatches.any { idx < it.end && end > it.start }
-
-            if (overlapUrl) {
-                builder.setStyle(
-                    start = idx,
-                    end = end,
-                    style = SpanStyle(
-                        background = searchBg,
-                        color = IrisPrimary,
-                        textDecoration = TextDecoration.Underline,
-                    ),
-                )
-            } else {
-                builder.setStyle(
-                    start = idx,
-                    end = end,
-                    style = SpanStyle(
-                        background = searchBg,
-                        color = IrisTextSecondary,
-                    ),
-                )
+            for (i in idx until minOf(end, text.length)) {
+                searchFlags[i] = true
             }
-
             start = end
         }
     }
 
-    return builder.toAnnotatedString()
+    return buildAnnotatedString {
+        var cursor = 0
+        while (cursor < text.length) {
+            val inUrl = urlFlags[cursor]
+            val inSearch = searchFlags[cursor]
+            var end = cursor + 1
+            while (end < text.length &&
+                urlFlags[end] == inUrl &&
+                searchFlags[end] == inSearch
+            ) {
+                end++
+            }
+
+            val spanStyle = when {
+                inUrl && inSearch -> SpanStyle(
+                    background = searchBg,
+                    color = IrisPrimary,
+                    textDecoration = TextDecoration.Underline,
+                )
+                inUrl -> SpanStyle(
+                    color = IrisPrimary,
+                    textDecoration = TextDecoration.Underline,
+                )
+                inSearch -> SpanStyle(
+                    background = searchBg,
+                    color = IrisTextSecondary,
+                )
+                else -> SpanStyle(color = IrisTextSecondary)
+            }
+
+            withStyle(spanStyle) {
+                append(text.substring(cursor, end))
+            }
+            cursor = end
+        }
+    }
 }
 
 private fun isLikelyPrompt(text: String): Boolean {

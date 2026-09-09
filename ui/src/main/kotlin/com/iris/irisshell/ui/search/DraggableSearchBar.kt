@@ -81,11 +81,11 @@ fun DraggableSearchBar(
             }
             .pointerInput(Unit) {
                 detectDragGestures(
-                    onDrag = { change, _ ->
-                        offsetX += change.delta.x
-                        offsetY += change.delta.y
-                        change.consume()
-                    },
+                onDrag = { change, dragAmount ->
+                    offsetX += dragAmount.x
+                    offsetY += dragAmount.y
+                    change.consume()
+                },
                 )
             },
     ) {
