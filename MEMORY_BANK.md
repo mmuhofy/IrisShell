@@ -280,3 +280,4 @@ Closed (Room only, removed from irisSessions)
 - Release workflow: `.github/workflows/release.yml` triggers on `v*` tag push, builds `app-arm64-v8a-release.apk`
 - ✅ CI release build passes (v0.1.0), APK artifact uploaded (5.7MB)
 - GitHub Release creation fails with 403 (token lacks `generate_release_notes` permission) — non-blocking, APK available as CI artifact
+- Runtime fix: `FOREGROUND_SERVICE_DATA_SYNC` permission added to `AndroidManifest.xml` — required since `targetSdk=36` for `dataSync` foreground service type
