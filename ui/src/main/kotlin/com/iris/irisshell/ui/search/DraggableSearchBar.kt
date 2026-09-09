@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +21,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,12 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -48,9 +49,12 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.ui.R
-import kotlin.math.roundToInt
 
 private val SEARCH_BAR_SHAPE = RoundedCornerShape(20.dp)
+
+enum class SearchScope {
+    GLOBAL, BLOCK
+}
 
 @Composable
 fun DraggableSearchBar(
@@ -61,40 +65,27 @@ fun DraggableSearchBar(
     onNext: () -> Unit,
     onPrev: () -> Unit,
     onClose: () -> Unit,
+    searchScope: SearchScope,
+    onToggleScope: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
 
-    var dragStartX by remember { mutableStateOf(0f) }
-    var dragStartY by remember { mutableStateOf(0f) }
-    var isDragging by remember { mutableStateOf(false) }
-
     Box(
         modifier = modifier
             .zIndex(100f)
-            .offset {
-                IntOffset(
-                    offsetX.roundToInt(),
-                    offsetY.roundToInt(),
-                )
+            .graphicsLayer {
+                translationX = offsetX
+                translationY = offsetY
             }
             .pointerInput(Unit) {
                 detectDragGestures(
-                    onDragStart = { start ->
-                        dragStartX = offsetX
-                        dragStartY = offsetY
-                        isDragging = true
-                    },
-                    onDrag = { change, dragAmount ->
-                        if (isDragging) {
-                            offsetX = dragStartX + change.position.x
-                            offsetY = dragStartY + change.position.y
-                        }
+                    onDrag = { change, _ ->
+                        offsetX += change.delta.x
+                        offsetY += change.delta.y
                         change.consume()
                     },
-                    onDragEnd = { isDragging = false },
-                    onDragCancel = { isDragging = false },
                 )
             },
     ) {
@@ -137,6 +128,24 @@ fun DraggableSearchBar(
                         color = IrisTextSecondary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
+                    )
+                }
+
+                TextButton(
+                    onClick = onToggleScope,
+                    modifier = Modifier
+                        .size(48.dp, 24.dp)
+                        .padding(vertical = 4.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                        containerColor = if (searchScope == SearchScope.BLOCK)
+                            IrisPrimary.copy(alpha = 0.2f) else Color.Transparent,
+                    ),
+                ) {
+                    Text(
+                        text = if (searchScope == SearchScope.BLOCK) "Block" else "All",
+                        color = if (searchScope == SearchScope.BLOCK) IrisPrimary else IrisTextMuted,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
 

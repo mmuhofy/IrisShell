@@ -43,6 +43,8 @@ fun BlockCard(
     onDelete: () -> Unit,
     onToggleCollapse: () -> Unit,
     onUrlClick: (String) -> Unit = {},
+    searchQuery: String? = null,
+    isCurrentMatchBlock: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var contextOpen by remember { mutableStateOf(false) }
@@ -72,7 +74,13 @@ fun BlockCard(
                     onCopy = onCopy,
                     onToggleCollapse = onToggleCollapse,
                 )
-                BlockBody(block = block, onLongClick = { contextOpen = true }, onUrlClick = onUrlClick)
+                BlockBody(
+                    block = block,
+                    onLongClick = { contextOpen = true },
+                    onUrlClick = onUrlClick,
+                    searchQuery = searchQuery,
+                    isCurrentMatchBlock = isCurrentMatchBlock,
+                )
             }
         }
 

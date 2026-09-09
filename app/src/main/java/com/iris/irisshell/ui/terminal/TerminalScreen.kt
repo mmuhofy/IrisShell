@@ -47,6 +47,7 @@ import com.iris.irisshell.ui.browser.WebViewSheet
 import com.iris.irisshell.ui.input.InputBarHost
 import com.iris.irisshell.ui.input.InputBarViewModel
 import com.iris.irisshell.ui.search.DraggableSearchBar
+import com.iris.irisshell.ui.search.SearchScope
 import com.iris.irisshell.ui.session.SessionSidebar
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.TerminalTopBar
@@ -129,7 +130,8 @@ private fun ReadyScreen(
     var searchActive by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var currentMatch by remember { mutableStateOf(1) }
-    var terminalLines by remember { mutableStateOf<List<String>>(emptyList()) }
+    var searchScope by remember { mutableStateOf(SearchScope.GLOBAL) }
+    var terminalLines by remember { mutableStateOf<List<Pair<String, String?>>>(emptyList()) }
 
     val scope = rememberCoroutineScope()
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
@@ -154,21 +156,39 @@ private fun ReadyScreen(
         }
     }
 
-    LaunchedEffect(searchActive) {
+    LaunchedEffect(searchActive, searchScope) {
         if (searchActive) {
             terminalLines = if (useBlockEngine) {
-                val blocks = blockEngineViewModel.blocks.value
-                buildList {
-                    for (block in blocks) {
-                        if (block.prompt.isNotBlank()) add(block.prompt)
-                        if (block.command.isNotBlank()) add(block.command)
-                        addAll(block.outputLines)
+                val allBlocks = blockEngineViewModel.blocks.value
+                if (searchScope == SearchScope.BLOCK) {
+                    val currentBlock = blockEngineViewModel.runningBlock.value
+                        ?: allBlocks.lastOrNull()
+                    if (currentBlock != null) {
+                        buildList {
+                            if (currentBlock.prompt.isNotBlank()) add(currentBlock.prompt to currentBlock.id)
+                            if (currentBlock.command.isNotBlank()) add(currentBlock.command to currentBlock.id)
+                            currentBlock.outputLines.forEach { line ->
+                                add(line to currentBlock.id)
+                            }
+                        }
+                    } else {
+                        emptyList()
+                    }
+                } else {
+                    buildList {
+                        for (block in allBlocks) {
+                            if (block.prompt.isNotBlank()) add(block.prompt to block.id)
+                            if (block.command.isNotBlank()) add(block.command to block.id)
+                            block.outputLines.forEach { line ->
+                                add(line to block.id)
+                            }
+                        }
                     }
                 }
             } else {
                 val text = terminalManager.currentSession?.emulator?.getScreen()
                     ?.getTranscriptText() ?: ""
-                text.lines()
+                text.lines().map { it to null }
             }
         }
     }
@@ -177,12 +197,18 @@ private fun ReadyScreen(
         if (searchQuery.isBlank()) {
             emptyList()
         } else {
-            terminalLines.mapIndexedNotNull { index, line ->
-                if (line.contains(searchQuery, ignoreCase = true)) index else null
+            terminalLines.mapIndexedNotNull { index, (lineText, _) ->
+                if (lineText.contains(searchQuery, ignoreCase = true)) index else null
             }
         }
     }
     val matchCount = matchIndices.size
+
+    val currentMatchBlockId = if (matchIndices.isNotEmpty() && currentMatch <= matchIndices.size) {
+        terminalLines[matchIndices[currentMatch - 1]].second
+    } else {
+        null
+    }
 
     var keyboardFocused by remember { mutableStateOf(true) }
 
@@ -419,7 +445,9 @@ private fun ReadyScreen(
                         onDeleteBlock =
                             blockEngineViewModel::onDeleteBlock,
                         promptLabel = lastDir,
-                        onUrlClick = { browserUrl = it },
+                         onUrlClick = { browserUrl = it },
+                         searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
+                         currentMatchBlockId = currentMatchBlockId,
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
@@ -577,6 +605,12 @@ private fun ReadyScreen(
                 onClose = {
                     searchActive = false
                     searchQuery = ""
+                    currentMatch = 1
+                    searchScope = SearchScope.GLOBAL
+                },
+                searchScope = searchScope,
+                onToggleScope = {
+                    searchScope = if (searchScope == SearchScope.GLOBAL) SearchScope.BLOCK else SearchScope.GLOBAL
                     currentMatch = 1
                 },
                 modifier = Modifier.align(Alignment.TopCenter).padding(top = 64.dp),

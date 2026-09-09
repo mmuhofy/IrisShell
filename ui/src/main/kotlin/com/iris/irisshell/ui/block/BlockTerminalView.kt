@@ -43,6 +43,8 @@ fun BlockTerminalView(
     onDeleteBlock: (String) -> Unit = {},
     promptLabel: String = "iris",
     onUrlClick: (String) -> Unit = {},
+    searchQuery: String? = null,
+    currentMatchBlockId: String? = null,
     modifier: Modifier = Modifier,
     extraBar: @Composable () -> Unit = {},
 ) {
@@ -89,7 +91,9 @@ fun BlockTerminalView(
                         onExport = { onExportOutput(block) },
                         onDelete = { onDeleteBlock(block.id) },
                         onToggleCollapse = { onToggleCollapsed(block.id) },
-                         onUrlClick = onUrlClick,
+                        onUrlClick = onUrlClick,
+                        searchQuery = searchQuery,
+                        isCurrentMatchBlock = currentMatchBlockId == block.id,
                         modifier = Modifier.padding(vertical = 2.dp),
                     )
                 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -45,6 +46,8 @@ fun BlockBody(
     onLongClick: (() -> Unit)? = null,
     onUrlClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    searchQuery: String? = null,
+    isCurrentMatchBlock: Boolean = false,
 ) {
     val prompt = block.prompt
     val command = block.command
@@ -103,10 +106,35 @@ fun BlockBody(
                 SelectionContainer(modifier = Modifier.fillMaxWidth().padding(top = 2.dp)) {
                     Column {
                         block.outputLines.forEach { line ->
-                            OutputLineWithLinks(
-                                line = line,
-                                onUrlClick = onUrlClick,
-                            )
+                            val isSearchMatch = searchQuery?.isNotEmpty() == true &&
+                                line.contains(searchQuery, ignoreCase = true)
+
+                            if (isSearchMatch) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            if (isCurrentMatchBlock)
+                                                IrisPrimary.copy(alpha = 0.2f)
+                                            else
+                                                IrisPrimary.copy(alpha = 0.1f),
+                                        ),
+                                ) {
+                                    OutputLineWithLinks(
+                                        line = line,
+                                        onUrlClick = onUrlClick,
+                                        searchQuery = searchQuery,
+                                        highlightMatch = isCurrentMatchBlock,
+                                    )
+                                }
+                            } else {
+                                OutputLineWithLinks(
+                                    line = line,
+                                    onUrlClick = onUrlClick,
+                                    searchQuery = null,
+                                    highlightMatch = false,
+                                )
+                            }
                         }
                     }
                 }
@@ -121,8 +149,11 @@ fun BlockBody(
 private fun OutputLineWithLinks(
     line: String,
     onUrlClick: (String) -> Unit,
+    searchQuery: String? = null,
+    highlightMatch: Boolean = false,
 ) {
     val textStyle = LocalTextStyle.current.copy(
+        color = IrisTextSecondary,
         fontFamily = FontFamily.Monospace,
         fontSize = 13.sp,
         lineHeight = 19.sp,
@@ -130,10 +161,11 @@ private fun OutputLineWithLinks(
     )
 
     val urlMatches = UrlDetector.findUrls(line)
+    val text = line.ifEmpty { " " }
 
-    if (urlMatches.isEmpty()) {
+    if (urlMatches.isEmpty() && searchQuery.isNullOrEmpty()) {
         Text(
-            text = line.ifEmpty { " " },
+            text = text,
             color = IrisTextSecondary,
             style = textStyle,
             modifier = Modifier.fillMaxWidth(),
@@ -141,31 +173,12 @@ private fun OutputLineWithLinks(
         return
     }
 
-    val text = line.ifEmpty { " " }
-    val annotated = buildAnnotatedString {
-        var cursor = 0
-        for (match in urlMatches) {
-            if (match.start > cursor) {
-                withStyle(SpanStyle(color = IrisTextSecondary)) {
-                    append(text.substring(cursor, match.start))
-                }
-            }
-            withStyle(
-                SpanStyle(
-                    color = IrisPrimary,
-                    textDecoration = TextDecoration.Underline,
-                ),
-            ) {
-                append(text.substring(match.start, match.end))
-            }
-            cursor = match.end
-        }
-        if (cursor < text.length) {
-            withStyle(SpanStyle(color = IrisTextSecondary)) {
-                append(text.substring(cursor))
-            }
-        }
-    }
+    val annotated = buildAnnotatedStringWithHighlights(
+        text = text,
+        urlMatches = urlMatches,
+        searchQuery = searchQuery,
+        highlightMatch = highlightMatch,
+    )
 
     var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
@@ -191,6 +204,71 @@ private fun OutputLineWithLinks(
                 }
             },
     )
+}
+
+private fun buildAnnotatedStringWithHighlights(
+    text: String,
+    urlMatches: List<UrlDetector.UrlMatch>,
+    searchQuery: String?,
+    highlightMatch: Boolean,
+): AnnotatedString {
+    val builder = AnnotatedString.Builder(text)
+
+    // Apply URL highlight styles first
+    for (match in urlMatches) {
+        builder.setStyle(
+            start = match.start,
+            end = match.end,
+            style = SpanStyle(
+                color = IrisPrimary,
+                textDecoration = TextDecoration.Underline,
+            ),
+        )
+    }
+
+    // Apply search highlight styles second (overlays URL where they overlap)
+    if (!searchQuery.isNullOrEmpty()) {
+        val query = searchQuery.lowercase()
+        val lower = text.lowercase()
+        val searchBg = if (highlightMatch)
+            IrisPrimary.copy(alpha = 0.4f)
+        else
+            IrisPrimary.copy(alpha = 0.25f)
+
+        var start = 0
+        while (true) {
+            val idx = lower.indexOf(query, start)
+            if (idx == -1) break
+            val end = idx + query.length
+
+            val overlapUrl = urlMatches.any { idx < it.end && end > it.start }
+
+            if (overlapUrl) {
+                builder.setStyle(
+                    start = idx,
+                    end = end,
+                    style = SpanStyle(
+                        background = searchBg,
+                        color = IrisPrimary,
+                        textDecoration = TextDecoration.Underline,
+                    ),
+                )
+            } else {
+                builder.setStyle(
+                    start = idx,
+                    end = end,
+                    style = SpanStyle(
+                        background = searchBg,
+                        color = IrisTextSecondary,
+                    ),
+                )
+            }
+
+            start = end
+        }
+    }
+
+    return builder.toAnnotatedString()
 }
 
 private fun isLikelyPrompt(text: String): Boolean {
