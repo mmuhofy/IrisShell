@@ -541,6 +541,9 @@ private fun ReadyScreen(
                 onToggleFullscreen = {
                     fullscreen = true
                 },
+                onNewSession = {
+                    terminalManager.addTab()
+                },
                 onClose = {
                     terminalManager.currentSession?.finishIfRunning()
                 },
@@ -823,6 +826,7 @@ private fun TerminalViewHost(
                 isFocusable = true
                 isFocusableInTouchMode = true
                 setTerminalViewClient(viewClient)
+                viewClient.terminalView = this
                 terminalManager.currentSession?.let { session ->
                     attachSession(session)
                 }

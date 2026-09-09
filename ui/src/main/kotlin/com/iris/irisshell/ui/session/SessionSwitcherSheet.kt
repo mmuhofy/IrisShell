@@ -149,8 +149,8 @@ fun SessionSwitcherSheet(
                                 enter   = slideInVertically(
                                     initialOffsetY = { it / 3 },
                                     animationSpec  = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness    = Spring.StiffnessMediumLow,
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness    = Spring.StiffnessMedium,
                                     ),
                                 ) + fadeIn(
                                     animationSpec = tween(
@@ -275,7 +275,7 @@ private fun PressScaleBox(
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.92f else 1f,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
+            dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness    = 300f,
         ),
         label = "press-scale",

@@ -83,6 +83,7 @@ fun TerminalTopBar(
     onFindInOutput: () -> Unit,
     onRefresh: () -> Unit,
     onToggleFullscreen: () -> Unit,
+    onNewSession: () -> Unit,
     onOpenSettings: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
@@ -170,6 +171,7 @@ fun TerminalTopBar(
                 onFindInOutput = { onFindInOutput(); moreExpanded = false },
                 onRefresh = { onRefresh(); moreExpanded = false },
                 onToggleFullscreen = { onToggleFullscreen(); moreExpanded = false },
+                onNewSession = { onNewSession(); moreExpanded = false },
                 onOpenSettings = { onOpenSettings(); moreExpanded = false },
                 onClose = { onClose(); moreExpanded = false },
             )
@@ -217,6 +219,29 @@ private fun MoreActionsDropdown(
                     )
                     Text(
                         text = "Refresh terminal",
+                        color = IrisText,
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            },
+        )
+        DropdownMenuItem(
+            onClick = { onNewSession() },
+            text = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.lucide_plus),
+                        contentDescription = null,
+                        tint = IrisTextSecondary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = "New session",
                         color = IrisText,
                         fontFamily = OutfitFontFamily,
                         fontSize = 13.sp,
@@ -347,8 +372,8 @@ private fun GlassPillButton(
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.88f else 1f,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMediumLow,
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium,
         ),
         label = "pillButtonScale",
     )
