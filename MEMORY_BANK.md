@@ -253,3 +253,4 @@ Closed (Room only, removed from irisSessions)
 - Draggable via `detectDragGestures` — starts at top-center with 64dp top padding, user can drag anywhere
 - Back button closes search; matches update live as user types
 - Uses `Modifier.border()` (not `BorderStroke`) per architecture rule for `ui/` module
+- CI build passes (`0b38515`): resolved Material3 `TextField` — no `cursorBrush` param (use `cursorColor` in `colors` instead), simplified `IconButton` without `IconButtonDefaults`
