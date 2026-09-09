@@ -89,7 +89,7 @@ fun SettingsScreen(
                 ),
             )
         },
-    ) { innerPadding ->
+    ) { innerPadding: PaddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
