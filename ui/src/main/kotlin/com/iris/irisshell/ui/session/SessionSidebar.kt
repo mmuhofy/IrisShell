@@ -446,7 +446,6 @@ private fun SidebarContent(
         }
     }
 }
-}
 
 @Composable
 private fun HoverIconButton(
