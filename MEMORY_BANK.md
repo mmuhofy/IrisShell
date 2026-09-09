@@ -260,3 +260,8 @@ Closed (Room only, removed from irisSessions)
 - Search match highlighting with URL underline + primary background overlay
   (combined style where search matches overlap URLs)
 - `currentMatchBlockId` tracked to highlight the block containing the current match
+- **Classic terminal (2026-09-09):**
+  - URL click fix: `UrlDetector.matches()` (full-string `Regex.matches`) → `UrlDetector.findUrls()` (substring `findAll`) — URLs with trailing punctuation now correctly detected on tap
+  - Search highlight overlay: `SearchHighlightOverlay` View (terminal module) draws semi-transparent rectangles on top of `TerminalView` using `Renderer.mFontWidth`/`mFontLineSpacing`/`mFontLineSpacingAndAscent` + `TerminalView.mTopRow` for pixel-perfect cell alignment
+  - Overlay wired via `FrameLayout` container in `TerminalViewHost` (classic path only)
+  - Smooth dragging via `graphicsLayer` for search bar

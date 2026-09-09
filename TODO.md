@@ -70,7 +70,8 @@
 - [x] Search match highlighting with URL+search combined styles in BlockBody.kt
 - [x] Per-block vs per-global search scope toggle (All/Card)
 - [ ] Scroll to current match in terminal view
-- [ ] Classic terminal search highlighting (via TerminalView overlay — future enhancement)
+- [x] Classic terminal search highlighting (via SearchHighlightOverlay View)
+- [x] Classic terminal URL click handling (findUrls fix + WebViewSheet)
 
 ## Phase 2 — UI & Session System
 
