@@ -77,13 +77,13 @@ fun SettingsScreen(
                 navigationIcon = {
                     IconButton(
                         onClick  = onBack,
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(width = 48.dp, height = 48.dp),
                     ) {
                         Icon(
                             imageVector    = Icons.Default.ArrowBack,
                             contentDescription = "Back",
                             tint           = IrisTextSecondary,
-                            modifier       = Modifier.size(20.dp),
+                            modifier       = Modifier.size(width = 20.dp, height = 20.dp),
                         )
                     }
                 },
