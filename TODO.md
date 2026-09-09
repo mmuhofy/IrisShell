@@ -72,6 +72,11 @@
 - [ ] Scroll to current match in terminal view
 - [x] Classic terminal search highlighting (via SearchHighlightOverlay View)
 - [x] Classic terminal URL click handling (findUrls fix + WebViewSheet)
+- [x] Classic terminal URL visual highlighting (underline via overlay)
+- [x] Classic mode focus fix (requestFocus only on initial layout, not update block)
+- [x] WebViewSheet: only top handle drags sheet (pointerInput consumes drag on WebView area)
+- [x] SessionSidebar: transparent bottom (removed navigationBarsPadding), sidebar extends behind status bar (statusBarsPadding on content, not container)
+- [ ] Scroll to current match in terminal view
 
 ## Phase 2 — UI & Session System
 

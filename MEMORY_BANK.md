@@ -264,4 +264,9 @@ Closed (Room only, removed from irisSessions)
   - URL click fix: `UrlDetector.matches()` (full-string `Regex.matches`) → `UrlDetector.findUrls()` (substring `findAll`) — URLs with trailing punctuation now correctly detected on tap
   - Search highlight overlay: `SearchHighlightOverlay` View (terminal module) draws semi-transparent rectangles on top of `TerminalView` using `Renderer.mFontWidth`/`mFontLineSpacing`/`mFontLineSpacingAndAscent` + `TerminalView.mTopRow` for pixel-perfect cell alignment
   - Overlay wired via `FrameLayout` container in `TerminalViewHost` (classic path only)
+  - `SearchHighlightOverlay` also draws URL underlines (blue stroke) — URL click
+    detection + visual underlines now work in classic mode, matching block mode
   - Smooth dragging via `graphicsLayer` for search bar
+  - Overlay synced with TerminalView redraws via `ViewTreeObserver.OnDrawListener`
+  - Focus fix: TerminalView only calls `requestFocus()` once in `OnGlobalLayoutListener`
+    (not in AndroidView update block), preventing search bar focus theft
