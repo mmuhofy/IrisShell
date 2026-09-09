@@ -16,7 +16,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.icons.Icons
-import androidx.compose.material3.icons.filled.ArrowBackimport androidx.compose.material3.Scaffold
+import androidx.compose.material3.icons.filled.ArrowBack
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -89,12 +90,12 @@ fun SettingsScreen(
                 ),
             )
         },
-    ) { innerPadding: PaddingValues ->
+    ) { innerPadding: PaddingValues? ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(innerPadding)
+                .padding(innerPadding ?: PaddingValues(horizontal = 16.dp))
                 .padding(horizontal = 16.dp),
         ) {
             SettingsSectionLabel("Terminal")
