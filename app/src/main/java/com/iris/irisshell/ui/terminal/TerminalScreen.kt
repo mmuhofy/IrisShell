@@ -355,13 +355,14 @@ private fun ReadyScreen(
         .fillMaxSize()
         .background(IrisBackground)
         .statusBarsPadding(),
-    ) {*
+    ) {
+                	/*
          * Terminal content fills all available space.
          *
          * The extra-key bar remains below the terminal in the normal layout,
          * while its Liquid Glass layer samples the classic TerminalView that
          * sits behind it.
-         */
+           */
         Column(
             modifier = Modifier
                 .fillMaxSize()
