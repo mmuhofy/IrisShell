@@ -53,6 +53,7 @@ import com.iris.irisshell.ui.session.SessionSidebar
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.TerminalTopBar
 import com.termux.view.TerminalView
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
