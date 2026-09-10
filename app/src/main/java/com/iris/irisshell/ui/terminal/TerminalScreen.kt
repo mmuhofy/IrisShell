@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -350,9 +351,11 @@ private fun ReadyScreen(
     val appearAlpha = 1f
 
     Box(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        /*
+        modifier = Modifier
+        .fillMaxSize()
+        .background(IrisBackground)
+        .statusBarsPadding(),
+    ) {*
          * Terminal content fills all available space.
          *
          * The extra-key bar remains below the terminal in the normal layout,
@@ -362,7 +365,6 @@ private fun ReadyScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(IrisBackground)
                 .imePadding(),
         ) {
             Box(
