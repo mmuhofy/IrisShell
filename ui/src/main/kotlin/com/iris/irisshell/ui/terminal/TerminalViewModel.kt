@@ -6,6 +6,8 @@ import com.iris.irisshell.domain.settings.SettingsRepository
 import com.iris.irisshell.domain.terminal.SetTerminalFontSizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
