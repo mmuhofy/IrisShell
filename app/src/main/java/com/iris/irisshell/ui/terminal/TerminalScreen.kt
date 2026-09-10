@@ -53,7 +53,6 @@ import com.iris.irisshell.ui.session.SessionSidebar
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.TerminalTopBar
 import com.termux.view.TerminalView
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
@@ -136,7 +135,6 @@ private fun ReadyScreen(
 
     val scope = rememberCoroutineScope()
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
-    val sliderVisible by terminalViewModel.sliderVisible.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
     val shouldExit by sessionSwitcherViewModel.shouldExit.collectAsState()
@@ -348,13 +346,6 @@ private fun ReadyScreen(
     val appearScale = 1f
     val appearAlpha = 1f
 
-    LaunchedEffect(sliderVisible) {
-        if (sliderVisible) {
-            delay(2500L)
-            terminalViewModel.hideSlider()
-        }
-    }
-
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -552,18 +543,6 @@ private fun ReadyScreen(
         }
 
         // Slider overlay.
-        if (!fullscreen && sliderVisible) {
-            VerticalZoomSlider(
-                value = fontSizeSp,
-                onValueChange = {
-                    terminalViewModel.setFontSize(it)
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 16.dp),
-            )
-        }
-
         // Sidebar overlay.
         if (sidebarOpen) {
             BackHandler {
@@ -785,7 +764,6 @@ private fun TerminalViewHost(
         TerminalViewClientImpl(
             onScaleChange = { factor ->
                 terminalViewModel.bumpFontSize(factor)
-                terminalViewModel.showSlider()
                 factor
             },
             extraKeyState = extraKeyState,

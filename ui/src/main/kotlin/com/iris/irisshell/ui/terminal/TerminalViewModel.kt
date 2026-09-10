@@ -6,7 +6,7 @@ import com.iris.irisshell.domain.settings.SettingsRepository
 import com.iris.irisshell.domain.terminal.SetTerminalFontSizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,23 +17,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Holds the terminal font size + slider visibility state for
- * [TerminalScreen].
+ * Holds the terminal font size for [TerminalScreen].
  *
  * Pinch gestures on the terminal area call [bumpFontSize] with a relative
  * fraction (factor > 1 grows the font, < 1 shrinks it). The new value is
- * clamped to [MIN_FONT_SP]..[MAX_FONT_SP] and pushed back into
- * [SetTerminalFontSizeUseCase] so the choice survives process death (DataStore).
- *
- * The slider is visible while the user is actively pinching — [showSlider]
- * flips it on, and after the user lifts their fingers [onPinchEnd] starts
- * a [SLIDER_HIDE_DELAY_MS] timer that flips it back off. Any new pinch
- * (or slider drag) cancels the pending hide so the slider stays visible
- * during continuous interaction.
- *
- * Without this timer the slider would stay on screen forever after the
- * first pinch, blocking subsequent gestures from reaching the terminal
- * area. That's the "second pinch doesn't work" bug.
+ * clamped to [MIN_FONT_SP]..[MAX_FONT_SP] and written to
+ * [SetTerminalFontSizeUseCase] (DataStore) for process-death survival, while
+ * [fontSizeSp] (a hot [MutableStateFlow]) emits instantly so the terminal
+ * view can [TerminalView.setTextSize] on every scale event — giving the
+ * smooth, jank-free pinch zoom that the previous persist-then-emit path
+ * could not deliver.
  */
 @HiltViewModel
 class TerminalViewModel @Inject constructor(
@@ -44,74 +37,36 @@ class TerminalViewModel @Inject constructor(
     private val persist = setTerminalFontSize
     private val settingsRepository = settingsRepository
 
-    /** Block Mode toggle — defaults to false (Classic Mode). */
     val useBlockEngine: StateFlow<Boolean> = settingsRepository.useBlockEngine
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val prootStartCommand: StateFlow<String> = settingsRepository.prootStartCommand
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
-    val fontSizeSp: StateFlow<Int> = persist.observe()
-        .map { it.toInt().coerceIn(MIN_FONT_SP, MAX_FONT_SP) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = DEFAULT_FONT_SP,
-        )
+    private val _fontSizeSp = MutableStateFlow(DEFAULT_FONT_SP)
+    val fontSizeSp: StateFlow<Int> = _fontSizeSp.asStateFlow()
 
-    private val _sliderVisible = MutableStateFlow(false)
-    val sliderVisible: StateFlow<Boolean> = _sliderVisible.asStateFlow()
-
-    private var hideJob: Job? = null
-
-    fun showSlider() {
-        hideJob?.cancel()
-        _sliderVisible.value = true
-    }
-
-    /**
-     * Called when the pinch gesture lifts. Schedules the slider to hide
-     * after a short grace period; any new [showSlider] / [setFontSize] call
-     * cancels this job.
-     */
-    fun onPinchEnd() {
-        hideJob?.cancel()
-        hideJob = viewModelScope.launch {
-            delay(SLIDER_HIDE_DELAY_MS)
-            _sliderVisible.value = false
+    init {
+        viewModelScope.launch {
+            persist.observe().collect { stored ->
+                _fontSizeSp.value = stored.toInt().coerceIn(MIN_FONT_SP, MAX_FONT_SP)
+            }
         }
     }
 
-    fun hideSlider() {
-        hideJob?.cancel()
-        _sliderVisible.value = false
-    }
+    private var pendingPersistJob: Job? = null
 
-    /**
-     * Slider thumb dragged by the user to [value] (in sp units).
-     * Persisted and immediately published via [fontSizeSp]. Also cancels
-     * the pending auto-hide so the slider stays visible while the user is
-     * actively dragging it.
-     */
     fun setFontSize(value: Int) {
-        hideJob?.cancel()
         val clamped = value.coerceIn(MIN_FONT_SP, MAX_FONT_SP)
-        viewModelScope.launch { persist.set(clamped.toFloat()) }
+        _fontSizeSp.value = clamped
+        pendingPersistJob?.cancel()
+        pendingPersistJob = viewModelScope.launch { persist.set(clamped.toFloat()) }
     }
 
-    /**
-     * Apply a relative pinch factor. Pinch-out (factor > 1) increases the
-     * font; pinch-in (factor < 1) decreases it.
-     */
     fun bumpFontSize(factor: Float) {
-        val current = fontSizeSp.value.toFloat()
+        val current = _fontSizeSp.value.toFloat()
         val target = (current * factor).coerceIn(MIN_FONT_SP.toFloat(), MAX_FONT_SP.toFloat())
         setFontSize(target.toInt())
-    }
-
-    fun toggleSlider(visible: Boolean) {
-        hideJob?.cancel()
-        _sliderVisible.value = visible
     }
 
     fun setProotStartCommand(command: String) {
@@ -121,7 +76,7 @@ class TerminalViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        hideJob?.cancel()
+        pendingPersistJob?.cancel()
         super.onCleared()
     }
 
@@ -129,6 +84,5 @@ class TerminalViewModel @Inject constructor(
         const val MIN_FONT_SP: Int = 10
         const val MAX_FONT_SP: Int = 32
         const val DEFAULT_FONT_SP: Int = 14
-        const val SLIDER_HIDE_DELAY_MS: Long = 2500L
     }
 }
