@@ -61,5 +61,13 @@ Kotlin 2.2.0, Compose BOM 2026.04.01, Hilt 2.57, Room 2.8.4, Kotlinx Serializati
 - ENV-injected shell hooks — verify `$ENV` is sourced by zsh under PRoot on first session
 - Verify completion file receives `command|elapsed_sec|exit_code` lines after running commands in shell
 
+## Terminal Color Scheme (experimental)
+- `TerminalColorScheme.updateWith(props: Properties)` — keys: `foreground`, `background`, `color0`..`color15` (ANSI indices), `cursor`. Parses hex (#RRGGBB) or `rgb:...`.
+- `color6` = ANSI cyan → maps to accent color in iris shell theme.
+- `TerminalColors.COLOR_SCHEME.updateWith(props)` updates `mDefaultColors` (IntArray); `mColors.reset()` copies into `mCurrentColors`.
+- `TerminalView.updateColors(props)` = `COLOR_SCHEME.updateWith(props)` + `mColors.reset()` + `invalidate()`.
+- `TerminalViewModel.colorProps: StateFlow<Properties>` combines `SettingsRepository.terminalBgColor`→`background`, `terminalTextColor`→`foreground`, `accentColor`→`color6`.
+- Live: `TerminalViewHost.LaunchedEffect(colorProps) { tv.updateColors(props) }`.
+
 ## Open Decisions
 - (none currently)
