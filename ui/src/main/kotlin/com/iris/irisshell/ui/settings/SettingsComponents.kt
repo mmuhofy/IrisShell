@@ -100,7 +100,7 @@ fun SettingsDivider() {
 
 @Composable
 fun SettingsToggleRow(
-    iconRes         : Int,
+    iconRes         : Int? = null,
     label           : String,
     description     : String,
     checked         : Boolean,
@@ -122,12 +122,14 @@ fun SettingsToggleRow(
                 .background(IrisPrimary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center,
         ) {
+        if (iconRes != null) {
             Icon(
                 painter            = painterResource(iconRes),
                 contentDescription = null,
                 tint               = IrisPrimary,
                 modifier           = Modifier.size(16.dp),
             )
+        }
         }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {

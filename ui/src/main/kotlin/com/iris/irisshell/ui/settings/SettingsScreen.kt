@@ -154,7 +154,6 @@ fun SettingsScreen(
             SettingsSectionLabel("Güvenlik")
             SettingsCategoryCard {
                 SettingsToggleRow(
-                    iconRes         = R.drawable.lucide_lock,
                     label           = "Uygulama Kilidi",
                     description     = "4 haneli PIN (güvenleştirilmiş saklama)",
                     checked         = isPinLockEnabled,
