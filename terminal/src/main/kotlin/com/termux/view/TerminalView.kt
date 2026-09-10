@@ -40,6 +40,7 @@ import com.termux.terminal.KeyHandler
 import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.view.textselection.TextSelectionCursorController
+import java.util.Properties
 
 /** View displaying and interacting with a [TerminalSession]. */
 class TerminalView(context: Context, attributes: AttributeSet?) : View(context, attributes) {
@@ -441,10 +442,20 @@ class TerminalView(context: Context, attributes: AttributeSet?) : View(context, 
      *
      * @param textSize the new font size, in density-independent pixels.
      */
-    fun setTextSize(textSize: Int) {
-        mRenderer = TerminalRenderer(textSize, mRenderer?.mTypeface ?: Typeface.MONOSPACE)
-        updateSize()
-    }
+     fun setTextSize(textSize: Int) {
+         mRenderer = TerminalRenderer(textSize, mRenderer?.mTypeface ?: Typeface.MONOSPACE)
+         updateSize()
+     }
+
+     /**
+      * Override the terminal color scheme (foreground / background / cursor /
+      * indexed colors) from a [Properties] map — e.g. set from a hex color
+      * picker in Settings. Redraws immediately.
+      */
+     fun updateColors(props: Properties) {
+         mEmulator?.mColors?.updateWith(props)
+         invalidate()
+     }
 
     fun setTypeface(newTypeface: Typeface) {
         mRenderer = TerminalRenderer(mRenderer!!.mTextSize, newTypeface)

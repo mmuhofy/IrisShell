@@ -5,11 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.iris.irisshell.domain.settings.SettingsRepository
 import com.iris.irisshell.domain.terminal.SetTerminalFontSizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -42,6 +44,19 @@ class TerminalViewModel @Inject constructor(
     val prootStartCommand: StateFlow<String> = settingsRepository.prootStartCommand
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
+    /** Experimental: live color-scheme props pushed into the terminal view. */
+    val colorProps: StateFlow<Properties> = combine(
+        settingsRepository.terminalBgColor,
+        settingsRepository.terminalTextColor,
+        settingsRepository.accentColor,
+    ) { bg, fg, accent ->
+        Properties().apply {
+            setProperty("background", bg)
+            setProperty("foreground", fg)
+            setProperty("color6", accent)
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, Properties())
+
     private val _fontSizeSp = MutableStateFlow(DEFAULT_FONT_SP)
     val fontSizeSp: StateFlow<Int> = _fontSizeSp.asStateFlow()
 
@@ -54,6 +69,18 @@ class TerminalViewModel @Inject constructor(
     }
 
     private var pendingPersistJob: Job? = null
+
+    fun setFontBgColor(hex: String) {
+        viewModelScope.launch { settingsRepository.setTerminalBgColor(hex) }
+    }
+
+    fun setFontTextColor(hex: String) {
+        viewModelScope.launch { settingsRepository.setTerminalTextColor(hex) }
+    }
+
+    fun setFontAccentColor(hex: String) {
+        viewModelScope.launch { settingsRepository.setAccentColor(hex) }
+    }
 
     fun setFontSize(value: Int) {
         val clamped = value.coerceIn(MIN_FONT_SP, MAX_FONT_SP)

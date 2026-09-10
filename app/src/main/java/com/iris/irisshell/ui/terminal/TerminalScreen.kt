@@ -54,6 +54,7 @@ import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 import com.iris.irisshell.ui.topbar.TerminalTopBar
 import com.termux.view.TerminalView
 import kotlinx.coroutines.delay
+import java.util.Properties
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
@@ -136,6 +137,7 @@ private fun ReadyScreen(
 
     val scope = rememberCoroutineScope()
     val fontSizeSp by terminalViewModel.fontSizeSp.collectAsState()
+    val colorProps by terminalViewModel.colorProps.collectAsState()
     val activeId by sessionSwitcherViewModel.activeId.collectAsState()
     val useBlockEngine by terminalViewModel.useBlockEngine.collectAsState()
     val shouldExit by sessionSwitcherViewModel.shouldExit.collectAsState()
@@ -461,9 +463,10 @@ private fun ReadyScreen(
                      * Liquid Glass surface can sample this exact TerminalView.
                      */
                       TerminalViewHost(
-                         terminalManager = terminalManager,
-                         fontSizeSp = fontSizeSp,
-                         terminalViewModel = terminalViewModel,
+                          terminalManager = terminalManager,
+                          fontSizeSp = fontSizeSp,
+                          colorProps = colorProps,
+                          terminalViewModel = terminalViewModel,
                          terminalViewRef = terminalViewRef,
                          extraKeyState = extraKeyState,
                          onUrlClick = { browserUrl = it },
@@ -746,6 +749,7 @@ private const val TERMINAL_PINCH_THRESHOLD = 0.04f
 private fun TerminalViewHost(
     terminalManager: TerminalManager,
     fontSizeSp: Int,
+    colorProps: Properties,
     terminalViewModel: TerminalViewModel,
     terminalViewRef: MutableState<TerminalView?>,
     onUrlClick: (String) -> Unit,
@@ -775,6 +779,10 @@ private fun TerminalViewHost(
 
     LaunchedEffect(fontSizeSp) {
         terminalViewRef.value?.setTextSize(fontSizeSp)
+    }
+
+    LaunchedEffect(colorProps) {
+        terminalViewRef.value?.updateColors(colorProps)
     }
 
     DisposableEffect(lifecycleOwner) {
