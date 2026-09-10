@@ -129,6 +129,7 @@ fun SettingsScreen(
                     options     = listOf(IrisBackground, IrisSurface, IrisSurfaceVariant),
                     selectedHex = terminalBgColor,
                     onSelect    = { viewModel.setTerminalBgColor(it) },
+                    onHexChange = { viewModel.setTerminalBgColor(it) },
                 )
                 SettingsDivider()
                 ColorPickerRow(
@@ -138,6 +139,7 @@ fun SettingsScreen(
                     options     = listOf(IrisPrimary),
                     selectedHex = accentColor,
                     onSelect    = { viewModel.setAccentColor(it) },
+                    onHexChange = { viewModel.setAccentColor(it) },
                 )
                 SettingsDivider()
                 ColorPickerRow(
@@ -147,6 +149,7 @@ fun SettingsScreen(
                     options     = listOf(IrisText, IrisTextSecondary),
                     selectedHex = terminalTextColor,
                     onSelect    = { viewModel.setTerminalTextColor(it) },
+                    onHexChange = { viewModel.setTerminalTextColor(it) },
                 )
             }
             Spacer(Modifier.height(24.dp))

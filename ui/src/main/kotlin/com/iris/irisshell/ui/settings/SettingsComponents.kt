@@ -398,6 +398,7 @@ fun ColorPickerRow(
     options     : List<Color>,
     selectedHex : String,
     onSelect    : (String) -> Unit,
+    onHexChange : (String) -> Unit = {},
     modifier    : Modifier = Modifier,
 ) {
     Column(
@@ -457,6 +458,30 @@ fun ColorPickerRow(
                 ) {}
             }
         }
+
+        Spacer(Modifier.height(10.dp))
+
+        val isValid = isValidHex(selectedHex)
+        OutlinedTextField(
+            value              = selectedHex,
+            onValueChange      = onHexChange,
+            isError            = !isValid,
+            singleLine         = true,
+            placeholder        = { Text("#RRGGBB", color = IrisTextSecondary, fontSize = 14.sp) },
+            supportingText     = {
+                if (!isValid) Text("Use #RRGGBB or RRGGBB", color = IrisError, fontSize = 12.sp)
+            },
+            modifier           = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            textStyle          = LocalTextStyle.current.copy(fontSize = 14.sp),
+            colors             = OutlinedTextFieldDefaults.colors(
+                focusedTextColor       = IrisText,
+                unfocusedTextColor     = IrisText,
+                cursorColor            = IrisPrimary,
+                errorBorderColor       = IrisError,
+            ),
+        )
     }
 }
 
@@ -487,6 +512,16 @@ fun colorToHex(color: Color): String {
     val g = (color.green * 255).toInt()
     val b = (color.blue  * 255).toInt()
     return "#%02X%02X%02X".format(r, g, b)
+}
+
+private val HEX_PATTERN = Regex("^#?[0-9A-Fa-f]{6}$")
+
+fun isValidHex(hex: String): Boolean = HEX_PATTERN.matches(hex)
+
+fun normalizeHex(input: String): String? {
+    val s = input.trim()
+        .takeIf { HEX_PATTERN.matches(it) } ?: return null
+    return if (s.startsWith("#")) s else "#$s"
 }
 
 // ── PRoot Start Command (Experimental) ─────────────────────────────────────────────
