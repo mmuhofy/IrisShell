@@ -37,6 +37,7 @@ import android.widget.Scroller
 import androidx.annotation.RequiresApi
 
 import com.termux.terminal.KeyHandler
+import com.termux.terminal.TerminalColors
 import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.view.textselection.TextSelectionCursorController
@@ -453,7 +454,11 @@ class TerminalView(context: Context, attributes: AttributeSet?) : View(context, 
       * picker in Settings. Redraws immediately.
       */
      fun updateColors(props: Properties) {
-         mEmulator?.mColors?.updateWith(props)
+         val colors = mEmulator?.mColors
+         if (colors != null) {
+             TerminalColors.COLOR_SCHEME.updateWith(props)
+             colors.reset()
+         }
          invalidate()
      }
 
