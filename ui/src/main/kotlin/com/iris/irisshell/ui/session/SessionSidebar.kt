@@ -202,12 +202,18 @@ private fun SidebarContent(
         renamingSessionId = null
     }
 
-    Column(
+    // Keep the sidebar surface behind the transparent status bar, while
+    // keeping its actual content below the system icons.
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(IrisSurfaceVariant)
-            .statusBarsPadding(),
+            .background(IrisSurfaceVariant),
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding(),
+        ) {
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
@@ -443,6 +449,7 @@ private fun SidebarContent(
                 iconSize = 18.dp,
                 buttonSize = 24.dp,
             )
+        }
         }
     }
 }
