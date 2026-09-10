@@ -475,6 +475,11 @@ private fun ReadyScreen(
                          searchOverlayRef = searchOverlayRef,
                          modifier = Modifier
                             .fillMaxSize()
+                            .padding(
+                                top = WindowInsets.statusBars
+                                    .asPaddingValues()
+                                    .calculateTopPadding()
+                            )
                             .graphicsLayer {
                                 scaleX = appearScale
                                 scaleY = appearScale
