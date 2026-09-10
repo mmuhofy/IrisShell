@@ -11,32 +11,32 @@ import androidx.compose.ui.graphics.Color
  * hex values without duplicating them. Per MEMORYBANK.md §5 — Visual
  * Identity:
  *
- *   - Background #000000 (OLED), Surface #0A0A0A, SurfaceVariant #121212
- *   - Outline #252525, BorderSubtle #1E1E1E
- *   - Primary (terminal blue) #3B82F6, OnPrimary #050505
- *   - Text #E8E8E8, TextSecondary #A0A0A0, TextMuted #787878, TextDisabled #585858
- *   - Success #22C55E, Error #EF4444, Warning #F59E0B, Build #3B82F6
+ *   - Background #14171B (dark), Surface #1C2025, SurfaceVariant #252A30
+ *   - Outline #343A43, BorderSubtle #343A43
+ *   - Primary (terminal blue) #719FFF, OnPrimary #14171B
+ *   - Text #F0F2F4, TextSecondary #A8AEB6, TextMuted #747B85, TextDisabled #585F69
+ *   - Success #22C55E, Error #EF4444, Warning #F59E0B, Build #719FFF
  *
- * Iris Shell is dark-only on v1.0 — OLED mode (#000000) is the default
- * background. Surface levels use 10-nit increments for clear visual hierarchy.
- * The blue accent (#3B82F6) replaces the previous gold, evoking terminal cursor cyan
+ * Iris Shell is dark-only on v1.0 — dark mode (#14171B) is the default
+ * background. Surface levels use subtle luminance steps for clear visual hierarchy.
+ * The blue accent (#719FFF) replaces the previous gold, evoking terminal cursor cyan
  * and VS Code's professional dark theme.
  */
-val IrisBackground: Color = Color(0xFF000000)
-val IrisSurface: Color = Color(0xFF0A0A0A)
-val IrisSurfaceVariant: Color = Color(0xFF121212)
-val IrisOutline: Color = Color(0xFF252525)
-val IrisBorderSubtle: Color = Color(0xFF1E1E1E)
+val IrisBackground: Color = Color(0xFF14171B)
+val IrisSurface: Color = Color(0xFF1C2025)
+val IrisSurfaceVariant: Color = Color(0xFF252A30)
+val IrisOutline: Color = Color(0xFF343A43)
+val IrisBorderSubtle: Color = Color(0xFF343A43)
 
-val IrisPrimary: Color = Color(0xFF3B82F6)
-val IrisOnPrimary: Color = Color(0xFF050505)
+val IrisPrimary: Color = Color(0xFF719FFF)
+val IrisOnPrimary: Color = Color(0xFF14171B)
 
-val IrisText: Color = Color(0xFFE8E8E8)
-val IrisTextSecondary: Color = Color(0xFFA0A0A0)
-val IrisTextMuted: Color = Color(0xFF787878)
-val IrisTextDisabled: Color = Color(0xFF585858)
+val IrisText: Color = Color(0xFFF0F2F4)
+val IrisTextSecondary: Color = Color(0xFFA8AEB6)
+val IrisTextMuted: Color = Color(0xFF747B85)
+val IrisTextDisabled: Color = Color(0xFF585F69)
 
 val IrisSuccess: Color = Color(0xFF22C55E)
 val IrisError: Color = Color(0xFFEF4444)
 val IrisWarning: Color = Color(0xFFF59E0B)
-val IrisBuild: Color = Color(0xFF3B82F6)
+val IrisBuild: Color = Color(0xFF719FFF)
