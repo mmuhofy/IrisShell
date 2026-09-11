@@ -1,42 +1,75 @@
 package com.iris.irisshell.ui
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import io.github.thelacspace.lucide.LucideIcons
+import compose.icons.LucideIcons
+import compose.icons.lucideicons.ALargeSmall
+import compose.icons.lucideicons.ArrowBigDown
+import compose.icons.lucideicons.ArrowBigLeft
+import compose.icons.lucideicons.ArrowBigRight
+import compose.icons.lucideicons.ArrowBigUp
+import compose.icons.lucideicons.ArrowDown
+import compose.icons.lucideicons.ArrowLeft
+import compose.icons.lucideicons.ArrowUp
+import compose.icons.lucideicons.Check
+import compose.icons.lucideicons.ChevronDown
+import compose.icons.lucideicons.ChevronUp
+import compose.icons.lucideicons.Copy
+import compose.icons.lucideicons.Download
+import compose.icons.lucideicons.EllipsisVertical
+import compose.icons.lucideicons.Keyboard
+import compose.icons.lucideicons.KeyboardOff
+import compose.icons.lucideicons.Lock
+import compose.icons.lucideicons.Maximize
+import compose.icons.lucideicons.Minimize
+import compose.icons.lucideicons.PanelLeft
+import compose.icons.lucideicons.Pencil
+import compose.icons.lucideicons.Play
+import compose.icons.lucideicons.Plus
+import compose.icons.lucideicons.RotateCw
+import compose.icons.lucideicons.Search
+import compose.icons.lucideicons.Settings
+import compose.icons.lucideicons.Square
+import compose.icons.lucideicons.SquarePlus
+import compose.icons.lucideicons.SquareTerminal
+import compose.icons.lucideicons.Terminal
+import compose.icons.lucideicons.Trash2
+import compose.icons.lucideicons.Undo
+import compose.icons.lucideicons.X
+import compose.icons.lucideicons.CircleX
 
 object IrisIcons {
-    val ALargeSmall: ImageVector @Composable get() = LucideIcons.All.ALargeSmall
-    val ArrowBigDown: ImageVector @Composable get() = LucideIcons.All.ArrowBigDown
-    val ArrowBigLeft: ImageVector @Composable get() = LucideIcons.All.ArrowBigLeft
-    val ArrowBigRight: ImageVector @Composable get() = LucideIcons.All.ArrowBigRight
-    val ArrowBigUp: ImageVector @Composable get() = LucideIcons.All.ArrowBigUp
-    val ArrowDown: ImageVector @Composable get() = LucideIcons.All.ArrowDown
-    val ArrowLeft: ImageVector @Composable get() = LucideIcons.All.ArrowLeft
-    val ArrowUp: ImageVector @Composable get() = LucideIcons.All.ArrowUp
-    val Check: ImageVector @Composable get() = LucideIcons.All.Check
-    val ChevronDown: ImageVector @Composable get() = LucideIcons.All.ChevronDown
-    val ChevronUp: ImageVector @Composable get() = LucideIcons.All.ChevronUp
-    val Copy: ImageVector @Composable get() = LucideIcons.All.Copy
-    val Download: ImageVector @Composable get() = LucideIcons.All.Download
-    val EllipsisVertical: ImageVector @Composable get() = LucideIcons.All.EllipsisVertical
-    val Keyboard: ImageVector @Composable get() = LucideIcons.All.Keyboard
-    val KeyboardOff: ImageVector @Composable get() = LucideIcons.All.KeyboardOff
-    val Lock: ImageVector @Composable get() = LucideIcons.All.Lock
-    val Maximize: ImageVector @Composable get() = LucideIcons.All.Maximize
-    val Minimize: ImageVector @Composable get() = LucideIcons.All.Minimize
-    val PanelLeft: ImageVector @Composable get() = LucideIcons.All.PanelLeft
-    val Pencil: ImageVector @Composable get() = LucideIcons.All.Pencil
-    val Play: ImageVector @Composable get() = LucideIcons.All.Play
-    val Plus: ImageVector @Composable get() = LucideIcons.All.Plus
-    val RotateCw: ImageVector @Composable get() = LucideIcons.All.RotateCw
-    val Search: ImageVector @Composable get() = LucideIcons.All.Search
-    val Settings: ImageVector @Composable get() = LucideIcons.All.Settings
-    val Square: ImageVector @Composable get() = LucideIcons.All.Square
-    val SquarePlus: ImageVector @Composable get() = LucideIcons.All.SquarePlus
-    val SquareTerminal: ImageVector @Composable get() = LucideIcons.All.SquareTerminal
-    val Terminal: ImageVector @Composable get() = LucideIcons.All.Terminal
-    val Trash2: ImageVector @Composable get() = LucideIcons.All.Trash2
-    val Undo: ImageVector @Composable get() = LucideIcons.All.Undo
-    val X: ImageVector @Composable get() = LucideIcons.All.X
-    val XCircle: ImageVector @Composable get() = LucideIcons.All.XCircle
+    val ALargeSmall: ImageVector get() = LucideIcons.ALargeSmall
+    val ArrowBigDown: ImageVector get() = LucideIcons.ArrowBigDown
+    val ArrowBigLeft: ImageVector get() = LucideIcons.ArrowBigLeft
+    val ArrowBigRight: ImageVector get() = LucideIcons.ArrowBigRight
+    val ArrowBigUp: ImageVector get() = LucideIcons.ArrowBigUp
+    val ArrowDown: ImageVector get() = LucideIcons.ArrowDown
+    val ArrowLeft: ImageVector get() = LucideIcons.ArrowLeft
+    val ArrowUp: ImageVector get() = LucideIcons.ArrowUp
+    val Check: ImageVector get() = LucideIcons.Check
+    val ChevronDown: ImageVector get() = LucideIcons.ChevronDown
+    val ChevronUp: ImageVector get() = LucideIcons.ChevronUp
+    val Copy: ImageVector get() = LucideIcons.Copy
+    val Download: ImageVector get() = LucideIcons.Download
+    val EllipsisVertical: ImageVector get() = LucideIcons.EllipsisVertical
+    val Keyboard: ImageVector get() = LucideIcons.Keyboard
+    val KeyboardOff: ImageVector get() = LucideIcons.KeyboardOff
+    val Lock: ImageVector get() = LucideIcons.Lock
+    val Maximize: ImageVector get() = LucideIcons.Maximize
+    val Minimize: ImageVector get() = LucideIcons.Minimize
+    val PanelLeft: ImageVector get() = LucideIcons.PanelLeft
+    val Pencil: ImageVector get() = LucideIcons.Pencil
+    val Play: ImageVector get() = LucideIcons.Play
+    val Plus: ImageVector get() = LucideIcons.Plus
+    val RotateCw: ImageVector get() = LucideIcons.RotateCw
+    val Search: ImageVector get() = LucideIcons.Search
+    val Settings: ImageVector get() = LucideIcons.Settings
+    val Square: ImageVector get() = LucideIcons.Square
+    val SquarePlus: ImageVector get() = LucideIcons.SquarePlus
+    val SquareTerminal: ImageVector get() = LucideIcons.SquareTerminal
+    val Terminal: ImageVector get() = LucideIcons.Terminal
+    val Trash2: ImageVector get() = LucideIcons.Trash2
+    val Undo: ImageVector get() = LucideIcons.Undo
+    val X: ImageVector get() = LucideIcons.X
+    val XCircle: ImageVector get() = LucideIcons.CircleX
 }

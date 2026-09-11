@@ -3,13 +3,13 @@ _Last updated: 2026-09-11_
 
 Last commit: `eb280f9` — fix(ui): add missing icons and replace painterResource with IrisIcons in TerminalTopBar
 
-### Icon System — Complete (2026-09-11)
-- ✅ `IrisIcons.kt` regenerated from ALL XML drawables — 34 `ImageVector` constants with exact path data
-- ✅ Added 30 new icons: `PanelLeft`, `Keyboard`, `KeyboardOff`, `RotateCw`, `Maximize`, `Minimize`, `XCircle`, `Undo`, `SquarePlus`, `Terminal`, `SquareTerminal`, `Trash2`, `Pencil`, `Play`, `ALargeSmall`, `ArrowBigLeft/Right/Up/Down`, `ArrowDown/Up`, `Check`, `ChevronDown/Up`, `Copy`, `Download`, `Lock`, `Search`, `Settings`, `X`, `Square`, `EllipsisVertical`
-- ✅ `TerminalTopBar.kt` rewritten: `GlassPillButton(icon: ImageVector)` instead of `iconRes: Int`
-- ✅ All `Icon(painter = painterResource(...))` → `Icon(imageVector = IrisIcons.*...)`
-- ✅ Removed `painterResource` + `R.drawable` references from entire `app/` module
-- ✅ `ImageVector.Builder.build()` → zero args; `addPath(pathData = parser.parsePathString(data).toNodes(), stroke = SolidColor(Color.Black), strokeLineWidth = 2f, ...)` for each path
+### Icon System — Final Architecture (2026-09-11)
+- ✅ **Library**: `io.github.ardasoyturk.compose.icons:lucide-android:2.0.7` from Maven Central (replaces local AAR + thelacspace library)
+- ✅ **API**: `compose.icons.LucideIcons` object with extension properties in `compose.icons.lucideicons` package (e.g. `LucideIcons.PanelLeft`)
+- ✅ `IrisIcons.kt` — thin wrapper: 34 `ImageVector` constants delegating to `LucideIcons.*` extension properties
+- ✅ Only name difference: thelacspace `XCircle` → ardasoyturk `CircleX` (aliased in `IrisIcons.kt`)
+- ✅ `ui/libs/` deleted (no more local AAR files)
+- ✅ All 50 call sites across `app/` + `ui/` use `IrisIcons.*` properties (no changes needed)
 - ✅ CI build passes — no more crash from missing drawable resources in app module
 
 

@@ -48,11 +48,11 @@ dependencies {
     // the user; the onboarding wizard is Phase 2). Re-add when needed.
     // implementation(libs.lottie.compose)
 
-    // Lucide icons — via lucide-compose library (io.github.thelacspace:lucide-compose-android:1.16.0)
-    // Using local AAR to bypass Gradle metadata version conflicts (library needs
-    // Kotlin 2.3.21 + Compose 1.10.3, project uses Kotlin 2.2.0 + AndroidX Compose BOM).
-    // The AAR references androidx.compose classes directly, so BOM provides the runtime.
-    implementation(files("libs/lucide-compose-android.aar"))
+    // Lucide icons — via ardasoyturk lucide-android library from Maven Central.
+    // Provides 1,669 Compose ImageVector icons as extension properties on
+    // compose.icons.LucideIcons. No Kotlin version conflicts (stdlib 2.0.0
+    // is backward-compatible with project's Kotlin 2.2.0).
+    implementation(libs.lucide.compose)
 
     // coroutines
     implementation(libs.kotlinx.coroutines.android)
