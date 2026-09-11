@@ -1,7 +1,7 @@
 # Iris Shell — Memory Bank
-_Last updated: 2026-09-08_
+_Last updated: 2026-09-11_
 
-Last commit: `17c25b9` — feat(terminal): link detection + in-app WebViewSheet browser
+Last commit: `865f5f1` — fix(block): add missing IrisIcons import in BlockCard
 
 
 ---
@@ -242,6 +242,10 @@ Closed (Room only, removed from irisSessions)
 - `Path.arcTo()`: `forceNewSubgroup` → `forceMoveTo`
 - `Checkbox`/`CheckboxDefaults`: import from `material3`, not `foundation`
 - `Surface(...) { }` trailing lambda: close with `}` not `)`
+- `ImageVector.Builder.build()` takes **zero arguments** — paths added via `addPath()` before `build()`
+- `ImageVector.Builder.addPath(pathData: List<PathNode>, stroke: Brush?, ...)` for adding parsed SVG paths
+- `PathParser().parsePathString(svgData).toNodes()` to convert SVG path strings to `PathNode` lists
+- `rememberVectorPainter(image = ...)` — parameter is `image`, not `imageVector` in Compose 1.4.0-alpha02
 
 ---
 
