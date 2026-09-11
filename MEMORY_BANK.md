@@ -1,7 +1,16 @@
 # Iris Shell — Memory Bank
 _Last updated: 2026-09-11_
 
-Last commit: `865f5f1` — fix(block): add missing IrisIcons import in BlockCard
+Last commit: `eb280f9` — fix(ui): add missing icons and replace painterResource with IrisIcons in TerminalTopBar
+
+### Icon System — Complete (2026-09-11)
+- ✅ `IrisIcons.kt` regenerated from ALL XML drawables — 34 `ImageVector` constants with exact path data
+- ✅ Added 30 new icons: `PanelLeft`, `Keyboard`, `KeyboardOff`, `RotateCw`, `Maximize`, `Minimize`, `XCircle`, `Undo`, `SquarePlus`, `Terminal`, `SquareTerminal`, `Trash2`, `Pencil`, `Play`, `ALargeSmall`, `ArrowBigLeft/Right/Up/Down`, `ArrowDown/Up`, `Check`, `ChevronDown/Up`, `Copy`, `Download`, `Lock`, `Search`, `Settings`, `X`, `Square`, `EllipsisVertical`
+- ✅ `TerminalTopBar.kt` rewritten: `GlassPillButton(icon: ImageVector)` instead of `iconRes: Int`
+- ✅ All `Icon(painter = painterResource(...))` → `Icon(imageVector = IrisIcons.*...)`
+- ✅ Removed `painterResource` + `R.drawable` references from entire `app/` module
+- ✅ `ImageVector.Builder.build()` → zero args; `addPath(pathData = parser.parsePathString(data).toNodes(), stroke = SolidColor(Color.Black), strokeLineWidth = 2f, ...)` for each path
+- ✅ CI build passes — no more crash from missing drawable resources in app module
 
 
 ---
