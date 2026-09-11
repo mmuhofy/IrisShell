@@ -1,5 +1,6 @@
 package com.iris.irisshell.ui.settings
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,12 +16,11 @@ import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -58,7 +58,7 @@ fun SettingsScreen(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        topAppBarState = androidx.compose.material3.rememberTopAppBarState(),
+        state = androidx.compose.material3.rememberTopAppBarState(),
     )
 
     Scaffold(
@@ -71,7 +71,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .nestedScroll(scrollBehavior.nestedScrollOverlayConnection)
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(innerPadding),
         ) {
             SettingsSectionLabel("Terminal")
@@ -202,7 +202,7 @@ fun ModernSettingsTopBar(
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    painter = painterResource(R.drawable.lucide_arrow_left),
                     contentDescription = "Back",
                     tint = IrisTextSecondary,
                 )
