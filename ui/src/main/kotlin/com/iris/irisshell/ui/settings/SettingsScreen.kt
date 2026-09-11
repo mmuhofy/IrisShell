@@ -201,7 +201,10 @@ fun ModernSettingsTopBar(
             scrolledContainerColor = IrisSurface,
         ),
         navigationIcon = {
-            IconButton(onClick = onBack) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(32.dp),
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.lucide_arrow_left),
                     contentDescription = "Back",
