@@ -48,8 +48,8 @@ dependencies {
     // the user; the onboarding wizard is Phase 2). Re-add when needed.
     // implementation(libs.lottie.compose)
 
-    // Lucide icons — vendored as VectorDrawables in app/src/main/res/drawable.
-    // Loaded via painterResource(R.drawable.lucide_*).
+    // Lucide icons — via lucide-compose library (io.github.thelacspace:lucide-compose-android)
+    implementation(libs.lucide.compose)
 
     // coroutines
     implementation(libs.kotlinx.coroutines.android)

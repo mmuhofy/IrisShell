@@ -63,6 +63,9 @@ coil = "3.0.4"
 # Animation
 lottie = "6.6.0"
 
+# Icons
+lucide-compose = "1.16.0"
+
 # LLM providers — Phase 6
 googleGenai = "0.6.1"
 
@@ -152,6 +155,9 @@ coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp"
 
 # Animation
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
+
+# Icons
+lucide-compose = { group = "io.github.thelacspace", name = "lucide-compose-android", version.ref = "lucide-compose" }
 
 # LLM (Phase 6)
 google-genai = { group = "com.google.genai", name = "google-genai", version.ref = "googleGenai" }
