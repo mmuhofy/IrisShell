@@ -57,7 +57,8 @@ interface SettingsRepository {
      * Custom PRoot start command (e.g. `/bin/bash --login --norc`).
      * Empty string = use default (shell + `--login`).
      *
-    /** WARNING: Experimental. Changing this can break terminal sessions. */
+     * WARNING: Experimental. Changing this can break terminal sessions.
+     */
     val prootStartCommand: Flow<String>
 
     /** Persists the custom PRoot start command. */
