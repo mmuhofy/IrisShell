@@ -115,7 +115,7 @@ fun SettingsScreen(
                         description = "Experimental — changing this can break sessions",
                     ) {
                         ProotCommandDisplay(
-                            command = prootStartCommand.ifEmpty { "${"$"}shell --login" },
+                            command = prootStartCommand.ifEmpty { "\$shell --login" },
                         )
                     }
                 }

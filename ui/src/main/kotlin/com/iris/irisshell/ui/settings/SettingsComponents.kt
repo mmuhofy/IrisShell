@@ -46,6 +46,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisOutline
@@ -320,7 +321,7 @@ fun BlinkingCursor(visible: Boolean, rateMs: Int) {
     if (visible) {
         var isVisible by remember { mutableStateOf(true) }
         LaunchedEffect(Unit) {
-            while (kotlin.coroutines.coroutineContext.isActive) {
+            while (isActive) {
                 delay(rateMs.toLong())
                 isVisible = !isVisible
             }
