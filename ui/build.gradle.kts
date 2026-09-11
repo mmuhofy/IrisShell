@@ -48,12 +48,11 @@ dependencies {
     // the user; the onboarding wizard is Phase 2). Re-add when needed.
     // implementation(libs.lottie.compose)
 
-    // Lucide icons — via lucide-compose library (io.github.thelacspace:lucide-compose-android)
-    // Exclude Compose Multiplatform (org.jetbrains.compose) — project uses AndroidX Compose BOM.
-    implementation(libs.lucide.compose) {
-        exclude(group = "org.jetbrains.compose")
-        exclude(group = "org.jetbrains.kotlin")
-    }
+    // Lucide icons — via lucide-compose library (io.github.thelacspace:lucide-compose-android:1.16.0)
+    // Using local AAR to bypass Gradle metadata version conflicts (library needs
+    // Kotlin 2.3.21 + Compose 1.10.3, project uses Kotlin 2.2.0 + AndroidX Compose BOM).
+    // The AAR references androidx.compose classes directly, so BOM provides the runtime.
+    implementation(files("libs/lucide-compose-android.aar"))
 
     // coroutines
     implementation(libs.kotlinx.coroutines.android)
