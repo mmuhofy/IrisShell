@@ -1,7 +1,6 @@
 package com.iris.irisshell.ui.settings
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,15 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -122,14 +119,14 @@ fun SettingsToggleRow(
                 .background(IrisPrimary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center,
         ) {
-        if (iconRes != null) {
-            Icon(
-                painter            = painterResource(iconRes),
-                contentDescription = null,
-                tint               = IrisPrimary,
-                modifier           = Modifier.size(16.dp),
-            )
-        }
+            if (iconRes != null) {
+                Icon(
+                    painter            = painterResource(iconRes),
+                    contentDescription = null,
+                    tint               = IrisPrimary,
+                    modifier           = Modifier.size(16.dp),
+                )
+            }
         }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -388,103 +385,6 @@ fun FontSizeSliderRow(
     }
 }
 
-// ── Color picker row (clip + background, NO border / NO Surface) ────────────────
-
-@Composable
-fun ColorPickerRow(
-    iconRes     : Int,
-    label       : String,
-    description : String,
-    options     : List<Color>,
-    selectedHex : String,
-    onSelect    : (String) -> Unit,
-    onHexChange : (String) -> Unit = {},
-    modifier    : Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier         = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(IrisPrimary.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter            = painterResource(iconRes),
-                    contentDescription = null,
-                    tint               = IrisPrimary,
-                    modifier           = Modifier.size(16.dp),
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(text = label,       color = IrisText,          fontSize = 15.sp)
-                Text(text = description, color = IrisTextSecondary, fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 1.dp))
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            options.forEach { color ->
-                val hex        = colorToHex(color)
-                val isSelected = hex.equals(selectedHex, ignoreCase = true)
-
-                val ringColor by animateColorAsState(
-                    targetValue   = if (isSelected) IrisPrimary else Color.Transparent,
-                    animationSpec = tween(180),
-                    label         = "colorRing",
-                )
-
-                val ringSize = if (isSelected) 4.dp else 2.dp
-
-                Box(
-                    modifier = Modifier
-                        .size(32.dp + ringSize)
-                        .clip(CircleShape)
-                        .background(ringColor)
-                        .padding(ringSize)
-                        .clip(CircleShape)
-                        .background(color)
-                        .clickable { onSelect(hex) },
-                ) {}
-            }
-        }
-
-        Spacer(Modifier.height(10.dp))
-
-        val isValid = isValidHex(selectedHex)
-        OutlinedTextField(
-            value              = selectedHex,
-            onValueChange      = onHexChange,
-            isError            = !isValid,
-            singleLine         = true,
-            placeholder        = { Text("#RRGGBB", color = IrisTextSecondary, fontSize = 14.sp) },
-            supportingText     = {
-                if (!isValid) Text("Use #RRGGBB or RRGGBB", color = IrisError, fontSize = 12.sp)
-            },
-            modifier           = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            textStyle          = LocalTextStyle.current.copy(fontSize = 14.sp),
-            colors             = OutlinedTextFieldDefaults.colors(
-                focusedTextColor       = IrisText,
-                unfocusedTextColor     = IrisText,
-                cursorColor            = IrisPrimary,
-                errorBorderColor       = IrisError,
-            ),
-        )
-    }
-}
-
 // ── Info row ────────────────────────────────────────────────────────────────────
 
 @Composable
@@ -503,25 +403,6 @@ fun InfoRow(
         Text(text = label, color = IrisTextSecondary, fontSize = 14.sp)
         Text(text = value, color = IrisText,          fontSize = 14.sp, fontWeight = FontWeight.Medium)
     }
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-fun colorToHex(color: Color): String {
-    val r = (color.red   * 255).toInt()
-    val g = (color.green * 255).toInt()
-    val b = (color.blue  * 255).toInt()
-    return "#%02X%02X%02X".format(r, g, b)
-}
-
-private val HEX_PATTERN = Regex("^#?[0-9A-Fa-f]{6}$")
-
-fun isValidHex(hex: String): Boolean = HEX_PATTERN.matches(hex)
-
-fun normalizeHex(input: String): String? {
-    val s = input.trim()
-        .takeIf { HEX_PATTERN.matches(it) } ?: return null
-    return if (s.startsWith("#")) s else "#$s"
 }
 
 // ── PRoot Start Command (Experimental) ─────────────────────────────────────────────
