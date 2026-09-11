@@ -27,6 +27,7 @@ import com.iris.irisshell.design.system.IrisSuccess
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockState
+import com.iris.irisshell.ui.IrisIcons
 
 @Composable
 fun BlockCard(
