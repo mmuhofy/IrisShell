@@ -64,7 +64,7 @@ fun SettingsSectionLabel(text: String) {
     )
 }
 
-// ── Card container (IrisCode pattern: clip + background, NO border) ──────────────
+// ── Card container ──────────────────────────────────────────────────────────────
 
 @Composable
 fun SettingsCategoryCard(
@@ -147,7 +147,7 @@ fun SettingsToggleRow(
     }
 }
 
-// ── Terminal Mode Card (clip + background, NO border) ───────────────────────────
+// ── Terminal Mode Card ──────────────────────────────────────────────────────────
 
 @Composable
 fun TerminalModeCard(
@@ -214,7 +214,7 @@ fun TerminalModeCard(
     }
 }
 
-// ── Terminal mode option card (clip + background, NO border) ────────────────────
+// ── Terminal mode option card ───────────────────────────────────────────────────
 
 @Composable
 private fun TerminalModeOptionCard(
@@ -479,5 +479,16 @@ fun ProotStartCommandRow(
             color = IrisTextSecondary,
             fontSize = 10.sp,
         )
+    }
+}
+
+// ── Hex Helpers (SettingsViewModel) ──────────────────────────
+
+internal fun normalizeHex(hex: String): String {
+    val clean = hex.removePrefix("#").trim()
+    return when (clean.length) {
+        3 -> clean.map { "$it$it" }.joinToString("")
+        6 -> clean
+        else -> "000000"
     }
 }
