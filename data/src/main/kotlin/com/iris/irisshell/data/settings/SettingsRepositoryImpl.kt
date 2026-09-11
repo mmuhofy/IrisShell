@@ -8,9 +8,11 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.iris.irisshell.data.local.irisShellDataStore
+import com.iris.irisshell.domain.settings.AboutInfo
 import com.iris.irisshell.domain.settings.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -89,6 +91,18 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun setProotStartCommand(command: String) {
         dataStore.edit { prefs -> prefs[KEY_PROOT_START_COMMAND] = command }
+    }
+
+    // ── App Info (about.json in assets) ─
+
+    private fun jsonProp(text: String, key: String): String =
+        Regex("\"$key\"\\s*:\\s*\"([^\"]*)\"").find(text)?.groupValues?.get(1) ?: ""
+
+    override val appInfo: Flow<AboutInfo> = flow {
+        val text = context.assets.open("about.json")
+            .bufferedReader(Charsets.UTF_8)
+            .use { it.readText() }
+        emit(AboutInfo(jsonProp(text, "version"), jsonProp(text, "build"), jsonProp(text, "license")))
     }
 
     // ── Keys & Defaults ───────────────────────────────────────────────────────

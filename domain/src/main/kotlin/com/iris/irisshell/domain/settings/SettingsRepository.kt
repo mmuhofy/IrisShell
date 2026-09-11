@@ -1,6 +1,16 @@
 package com.iris.irisshell.domain.settings
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+
+/**
+ * Static build/app metadata for the About screen.
+ */
+data class AboutInfo(
+    val version: String,
+    val build: String,
+    val license: String,
+)
 
 /**
  * User preferences that live in DataStore.
@@ -63,4 +73,7 @@ interface SettingsRepository {
 
     /** Persists the custom PRoot start command. */
     suspend fun setProotStartCommand(command: String)
+
+    /** Static app info (version / build tag / license) sourced from about.json. */
+    val appInfo: Flow<AboutInfo>
 }

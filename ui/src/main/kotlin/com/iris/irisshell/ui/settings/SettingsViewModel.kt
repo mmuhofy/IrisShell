@@ -2,6 +2,7 @@ package com.iris.irisshell.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.iris.irisshell.domain.settings.AboutInfo
 import com.iris.irisshell.domain.settings.PinLockRepository
 import com.iris.irisshell.domain.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -93,4 +94,9 @@ class SettingsViewModel @Inject constructor(
     fun setProotStartCommand(command: String) {
         viewModelScope.launch { settings.setProotStartCommand(command) }
     }
+
+    // ── App Info ────────────────────────────────────────────────────────────────
+
+    val aboutInfo: StateFlow<AboutInfo?> = settings.appInfo
+        .stateIn(viewModelScope, SharingStarted.Lazily, null)
 }
