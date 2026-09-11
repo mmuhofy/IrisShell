@@ -1,16 +1,17 @@
 # Iris Shell — Memory Bank
 _Last updated: 2026-09-11_
 
-Last commit: `eb280f9` — fix(ui): add missing icons and replace painterResource with IrisIcons in TerminalTopBar
+Last commit: `d5178cf` — feat(ui): rewrite settings screen with iOS-style design
 
 ### Icon System — Final Architecture (2026-09-11)
 - ✅ **Library**: `io.github.ardasoyturk.compose.icons:lucide-android:2.0.7` from Maven Central (replaces local AAR + thelacspace library)
 - ✅ **API**: `compose.icons.LucideIcons` object with extension properties in `compose.icons.lucideicons` package (e.g. `LucideIcons.PanelLeft`)
-- ✅ `IrisIcons.kt` — thin wrapper: 34 `ImageVector` constants delegating to `LucideIcons.*` extension properties
+- ✅ `IrisIcons.kt` — thin wrapper: 37 `ImageVector` constants delegating to `LucideIcons.*` extension properties
 - ✅ Only name difference: thelacspace `XCircle` → ardasoyturk `CircleX` (aliased in `IrisIcons.kt`)
 - ✅ `ui/libs/` deleted (no more local AAR files)
 - ✅ All 50 call sites across `app/` + `ui/` use `IrisIcons.*` properties (no changes needed)
 - ✅ CI build passes — no more crash from missing drawable resources in app module
+- ✅ New icons added: `ArrowRight`, `Gauge`, `Info`, `Timer`, `Type` (for settings screen), `Minus`, `Plus`, `Shield`, `CircleUser`
 
 
 ---
@@ -219,6 +220,17 @@ Closed (Room only, removed from irisSessions)
 - ✅ Top bar redesign: floating pills (no surface/background surface, only subtle 8% press alpha), session name gets own `IrisSurfaceVariant` surface with 12dp rounded corners
 - ✅ Left sidebar button is pill-shaped (CircleShape 36dp), session name NOT clickable — only the pill button opens sidebar
 - ✅ Top bar redesign: pills float directly on terminal (transparent container), no border on pills, larger (38dp), merged pill group with connected corners, divider between sidebar button and session name
+
+### Completed (Settings Screen — 2026-09-11)
+- ✅ Color palette: added `IrisSurfaceLow` (#191C20), `IrisSurfaceHigh` (#272A2E), `IrisSurfaceContainerLowest` (#0B0E12) to IrisColors.kt
+- ✅ Domain enums: `CursorStyle` (Block/Beam/Underline), `AutoLockTimeout` (Immediately/OneMinute/FiveMinutes/FifteenMinutes/ThirtyMinutes/Never) in `domain/settings/TerminalPreferences.kt`
+- ✅ SettingsRepository: added `cursorStyle`, `cursorBlinkRateMs`, `autoLockTimeout` flows + setters
+- ✅ SettingsViewModel: added `cursorStyle`, `cursorBlinkRateMs`, `autoLockTimeout` StateFlows + `setCursorStyle`, `setCursorBlinkRateMs`, `setAutoLockTimeout` functions
+- ✅ SettingsScreen rewritten: iOS-style top bar, grouped section containers, preview terminal card with blinking cursor, segment controls, iOS-style toggle switch
+- ✅ SettingsComponents.kt: all composables for settings rows, toggle, slider, preview card, segmented controls
+- ✅ PinEntryScreen embedded as modal overlay for PIN setup flow
+- ✅ "Made by Muhofy" footer row with `CircleUser` icon
+- ✅ Design reference: `html/irisshell_settings_pure.html` (Tailwind iOS-style design)
 
 ### To Build
 - Same as docs/TODO.md (full feature backlog)
