@@ -1,11 +1,11 @@
 package com.iris.irisshell.ui
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathParser
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 
 object IrisIcons {

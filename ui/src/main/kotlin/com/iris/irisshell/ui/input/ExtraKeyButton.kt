@@ -118,7 +118,7 @@ fun ExtraKeyButton(
 
         if (arrow != null) {
             androidx.compose.foundation.Image(
-                painter = rememberVectorPainter(imageVector = arrow),
+                painter = rememberVectorPainter(image = arrow),
                 contentDescription = key.displayLabel(),
                 modifier = Modifier.size(17.dp),
                 colorFilter = ColorFilter.tint(glyphColor),

@@ -16,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.iris.irisshell.ui.IrisIcons
 import com.iris.irisshell.design.system.IrisBuild
 import com.iris.irisshell.design.system.IrisDropdownMenu
 import com.iris.irisshell.design.system.IrisError
@@ -28,7 +27,6 @@ import com.iris.irisshell.design.system.IrisSuccess
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockState
-import com.iris.irisshell.ui.IrisIcons
 
 @Composable
 fun BlockCard(
