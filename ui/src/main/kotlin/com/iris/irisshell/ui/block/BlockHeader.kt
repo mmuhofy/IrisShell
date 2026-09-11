@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,7 +35,7 @@ import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockState
 import com.iris.irisshell.domain.block.NetworkDelta
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 
 @Composable
 fun BlockHeader(
@@ -150,7 +149,7 @@ private fun CopyButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(R.drawable.lucide_copy),
+            imageVector = IrisIcons.Copy,
             contentDescription = "Copy",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier.size(15.dp),
@@ -172,7 +171,7 @@ private fun CollapseButton(isCollapsed: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(R.drawable.lucide_chevron_down),
+            imageVector = IrisIcons.ChevronDown,
             contentDescription = if (isCollapsed) "Expand" else "Collapse",
             tint = IrisTextSecondary.copy(alpha = 0.7f),
             modifier = Modifier

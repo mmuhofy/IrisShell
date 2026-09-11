@@ -35,7 +35,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -48,7 +48,7 @@ import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 
 private val SEARCH_BAR_SHAPE = RoundedCornerShape(20.dp)
 
@@ -110,7 +110,7 @@ fun DraggableSearchBar(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.lucide_search),
+                    imageVector = IrisIcons.Search,
                     contentDescription = null,
                     tint = IrisTextSecondary,
                     modifier = Modifier.size(16.dp),
@@ -150,21 +150,21 @@ fun DraggableSearchBar(
                 }
 
                 NavigationArrow(
-                    iconRes = R.drawable.lucide_chevron_up,
+                    icon = IrisIcons.ChevronUp,
                     contentDescription = "Previous match",
                     onClick = onPrev,
                     enabled = matchCount > 1 && currentMatch > 1,
                 )
 
                 NavigationArrow(
-                    iconRes = R.drawable.lucide_chevron_down,
+                    icon = IrisIcons.ChevronDown,
                     contentDescription = "Next match",
                     onClick = onNext,
                     enabled = matchCount > 1 && currentMatch < matchCount,
                 )
 
                 NavigationArrow(
-                    iconRes = R.drawable.lucide_x,
+                    icon = IrisIcons.X,
                     contentDescription = "Close search",
                     onClick = onClose,
                     enabled = true,
@@ -226,7 +226,7 @@ private fun SearchTextField(
 
 @Composable
 private fun NavigationArrow(
-    iconRes: Int,
+    icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
     enabled: Boolean,
@@ -246,7 +246,7 @@ private fun NavigationArrow(
         modifier = Modifier.size(24.dp),
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            imageVector = icon,
             contentDescription = contentDescription,
             tint = tint,
             modifier = Modifier.size(14.dp),

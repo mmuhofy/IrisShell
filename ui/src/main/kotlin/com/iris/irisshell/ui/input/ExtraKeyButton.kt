@@ -19,7 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,7 +28,7 @@ import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.domain.input.ExtraKey
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 
 @Composable
 fun ExtraKeyButton(
@@ -101,23 +102,23 @@ fun ExtraKeyButton(
 
         val arrow = when (key) {
             ExtraKey.Navigation.ARROW_UP ->
-                R.drawable.lucide_arrow_big_up
+                IrisIcons.ArrowBigUp
 
             ExtraKey.Navigation.ARROW_DOWN ->
-                R.drawable.lucide_arrow_big_down
+                IrisIcons.ArrowBigDown
 
             ExtraKey.Navigation.ARROW_LEFT ->
-                R.drawable.lucide_arrow_big_left
+                IrisIcons.ArrowBigLeft
 
             ExtraKey.Navigation.ARROW_RIGHT ->
-                R.drawable.lucide_arrow_big_right
+                IrisIcons.ArrowBigRight
 
             else -> null
         }
 
         if (arrow != null) {
             androidx.compose.foundation.Image(
-                painter = painterResource(arrow),
+                painter = rememberVectorPainter(imageVector = arrow),
                 contentDescription = key.displayLabel(),
                 modifier = Modifier.size(17.dp),
                 colorFilter = ColorFilter.tint(glyphColor),

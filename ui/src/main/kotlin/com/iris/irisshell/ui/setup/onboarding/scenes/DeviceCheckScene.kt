@@ -23,9 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,7 +34,7 @@ import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.OutfitFontFamily
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 import com.iris.irisshell.ui.setup.onboarding.components.CheckStatus
 import com.iris.irisshell.ui.setup.onboarding.components.DeviceCheckItem
 import com.iris.irisshell.ui.setup.onboarding.components.SetupButton
@@ -50,11 +49,11 @@ fun DeviceCheckScene(
 ) {
     val context = LocalContext.current
 
-    val archIcon = painterResource(R.drawable.lucide_terminal)
-    val androidIcon = painterResource(R.drawable.lucide_square)
-    val storageIcon = painterResource(R.drawable.lucide_download)
-    val ramIcon = painterResource(R.drawable.lucide_square_terminal)
-    val batteryIcon = painterResource(R.drawable.lucide_square_terminal)
+    val archIcon = IrisIcons.Terminal
+    val androidIcon = IrisIcons.Square
+    val storageIcon = IrisIcons.Download
+    val ramIcon = IrisIcons.SquareTerminal
+    val batteryIcon = IrisIcons.SquareTerminal
 
     val checks = remember { mutableStateListOf<DeviceCheck>() }
     var isScanning by remember { mutableStateOf(true) }
@@ -182,5 +181,5 @@ private data class DeviceCheck(
     val label: String,
     val value: String,
     val status: CheckStatus,
-    val icon: Painter,
+    val icon: ImageVector,
 )

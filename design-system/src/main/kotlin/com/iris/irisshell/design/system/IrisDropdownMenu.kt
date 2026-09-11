@@ -21,7 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 
@@ -32,7 +32,7 @@ private val MAX_MENU_WIDTH = 280.dp
 
 data class IrisMenuItem(
     val label: String,
-    val icon: Painter? = null,
+    val icon: ImageVector? = null,
     val style: IrisMenuItemStyle = IrisMenuItemStyle.Default,
     val dividerBefore: Boolean = false,
     val enabled: Boolean = true,
@@ -94,7 +94,7 @@ fun IrisDropdownMenu(
             ) {
                 if (item.icon != null) {
                     Icon(
-                        painter            = item.icon,
+                        imageVector = item.icon,
                         contentDescription = null,
                         tint               = iconTint,
                         modifier           = Modifier.size(17.dp),

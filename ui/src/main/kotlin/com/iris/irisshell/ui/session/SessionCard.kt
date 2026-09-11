@@ -21,17 +21,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.res.painterResource
-import com.iris.irisshell.design.system.IrisDropdownMenu
-import com.iris.irisshell.design.system.IrisMenuItem
-import com.iris.irisshell.design.system.IrisMenuItemStyle
-import com.iris.irisshell.ui.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,13 +45,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisBorderSubtle
+import com.iris.irisshell.design.system.IrisDropdownMenu
 import com.iris.irisshell.design.system.IrisError
+import com.iris.irisshell.design.system.IrisMenuItem
+import com.iris.irisshell.design.system.IrisMenuItemStyle
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.domain.session.SessionSnapshot
 import com.iris.irisshell.domain.session.SessionState
+import com.iris.irisshell.ui.IrisIcons
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -296,7 +293,7 @@ private fun CardOverflowMenu(
             modifier = Modifier.size(36.dp),
         ) {
             Icon(
-                imageVector        = Icons.Filled.MoreVert,
+                imageVector        = IrisIcons.EllipsisVertical,
                 contentDescription = "Session options",
                 tint               = IrisTextSecondary,
                 modifier           = Modifier.size(18.dp),
@@ -308,11 +305,11 @@ private fun CardOverflowMenu(
             items = listOf(
                 IrisMenuItem(
                     label = "Rename",
-                    icon  = painterResource(R.drawable.lucide_pencil),
+                    icon  = IrisIcons.Pencil,
                 ),
                 IrisMenuItem(
                     label         = "Delete",
-                    icon          = painterResource(R.drawable.lucide_trash_2),
+                    icon          = IrisIcons.Trash2,
                     style         = IrisMenuItemStyle.Destructive,
                     dividerBefore = true,
                 ),

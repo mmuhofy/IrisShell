@@ -15,7 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -53,7 +53,7 @@ enum class CheckStatus {
  */
 @Composable
 fun DeviceCheckItem(
-    icon: Painter,
+    icon: ImageVector,
     label: String,
     value: String,
     status: CheckStatus,
@@ -75,7 +75,7 @@ fun DeviceCheckItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = icon,
+            imageVector = icon,
             contentDescription = null,
             tint = IrisText,
             modifier = Modifier.size(iconSize),

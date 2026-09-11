@@ -17,8 +17,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.ui.res.painterResource
-import com.iris.irisshell.ui.R
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
@@ -40,6 +39,7 @@ import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
+import com.iris.irisshell.ui.IrisIcons
 
 @Composable
 fun BlockInputField(
@@ -139,7 +139,7 @@ fun BlockInputField(
                     modifier = Modifier.size(32.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.lucide_arrow_up),
+                        imageVector = IrisIcons.ArrowUp,
                         contentDescription = "Send",
                         tint = IrisPrimary,
                         modifier = Modifier.size(16.dp),

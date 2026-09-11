@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,7 +44,7 @@ import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +102,7 @@ fun WebViewSheet(
                         .padding(8.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.lucide_x),
+                        imageVector = IrisIcons.X,
                         contentDescription = "Close browser",
                         tint = IrisText,
                         modifier = Modifier.size(18.dp),

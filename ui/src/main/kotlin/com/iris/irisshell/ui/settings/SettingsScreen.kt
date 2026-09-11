@@ -23,17 +23,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 import com.iris.irisshell.ui.pin.PinEntryScreen
 import kotlinx.coroutines.launch
 
@@ -95,7 +92,7 @@ fun SettingsScreen(
             SettingsSectionLabel("Güvenlik")
             SettingsCategoryCard {
                 SettingsToggleRow(
-                    iconRes = R.drawable.lucide_lock,
+                    icon = IrisIcons.Lock,
                     label = "Uygulama Kilidi",
                     description = "4 haneli PIN (güvenli saklama)",
                     checked = isPinLockEnabled,
@@ -153,8 +150,8 @@ fun ModernSettingsTopBar(
         ),
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_arrow_left),
+                     Icon(
+                    imageVector        = IrisIcons.ArrowLeft,
                     contentDescription = "Back",
                     tint = IrisTextSecondary,
                     modifier = Modifier.size(16.dp),

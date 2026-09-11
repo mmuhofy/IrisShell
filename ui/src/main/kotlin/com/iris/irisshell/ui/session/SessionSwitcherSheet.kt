@@ -52,7 +52,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,7 +67,7 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.domain.session.SessionSnapshot
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -335,7 +334,7 @@ private fun SheetTopBar(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon(
-                    painter            = painterResource(R.drawable.lucide_plus),
+                    imageVector        = IrisIcons.Plus,
                     contentDescription = null,
                     tint               = IrisOnPrimary,
                     modifier           = Modifier.size(13.dp),
@@ -361,7 +360,7 @@ private fun SheetTopBar(
                 .border(0.5.dp, IrisBorderSubtle.copy(alpha = 0.3f), CircleShape),
         ) {
             Icon(
-                painter            = painterResource(R.drawable.lucide_x),
+                imageVector        = IrisIcons.X,
                 contentDescription = "Close",
                 tint               = IrisTextSecondary,
                 modifier           = Modifier.size(18.dp),
@@ -382,7 +381,7 @@ private fun SheetTopBar(
         placeholder   = { Text("Search sessions…", color = IrisTextMuted, fontSize = 13.5.sp) },
         leadingIcon   = {
             Icon(
-                painter            = painterResource(R.drawable.lucide_search),
+                imageVector        = IrisIcons.Search,
                 contentDescription = null,
                 tint               = IrisTextMuted,
                 modifier           = Modifier.size(15.dp),

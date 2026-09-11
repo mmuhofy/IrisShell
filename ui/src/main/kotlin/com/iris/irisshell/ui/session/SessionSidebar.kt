@@ -53,8 +53,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -67,7 +67,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.domain.session.SessionSnapshot
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisOnPrimary
@@ -253,7 +253,7 @@ private fun SidebarContent(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.lucide_plus),
+                    imageVector = IrisIcons.Plus,
                     contentDescription = "New session",
                     tint = IrisOnPrimary,
                     modifier = Modifier.size(14.dp),
@@ -288,9 +288,8 @@ private fun SidebarContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // UNTESTED — verify R.drawable.lucide_search exists in the project.
                 Icon(
-                    painter = painterResource(R.drawable.lucide_search),
+                    imageVector = IrisIcons.Search,
                     contentDescription = null,
                     tint = IrisTextSecondary,
                     modifier = Modifier.size(14.dp),
@@ -444,7 +443,7 @@ private fun SidebarContent(
             HoverIconButton(
                 onClick = onOpenSettings,
                 contentDescription = "Settings",
-                iconRes = R.drawable.lucide_settings,
+                 icon = IrisIcons.Settings,
                 tint = IrisTextSecondary,
                 iconSize = 18.dp,
                 buttonSize = 24.dp,
@@ -458,7 +457,7 @@ private fun SidebarContent(
 private fun HoverIconButton(
     onClick: () -> Unit,
     contentDescription: String,
-    iconRes: Int,
+    icon: ImageVector,
     tint: Color = IrisTextSecondary,
     iconSize: Dp = 14.dp,
     buttonSize: Dp = 24.dp,
@@ -486,7 +485,7 @@ private fun HoverIconButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            imageVector = icon,
             contentDescription = contentDescription,
             tint = tint,
             modifier = Modifier
@@ -609,7 +608,7 @@ private fun SessionRow(
             HoverIconButton(
                 onClick = onRenameCommit,
                 contentDescription = "Confirm rename",
-                iconRes = R.drawable.lucide_check,
+                 icon = IrisIcons.Check,
                 tint = IrisPrimary,
                 iconSize = 16.dp,
                 buttonSize = 24.dp,
@@ -630,14 +629,14 @@ private fun SessionRow(
             HoverIconButton(
                 onClick = onStartRename,
                 contentDescription = "Rename",
-                iconRes = R.drawable.lucide_pencil,
+                 icon = IrisIcons.Pencil,
                 iconSize = 14.dp,
                 buttonSize = 24.dp,
             )
             HoverIconButton(
                 onClick = onDelete,
                 contentDescription = "Delete",
-                iconRes = R.drawable.lucide_trash_2,
+                 icon = IrisIcons.Trash2,
                 iconSize = 14.dp,
                 buttonSize = 24.dp,
             )

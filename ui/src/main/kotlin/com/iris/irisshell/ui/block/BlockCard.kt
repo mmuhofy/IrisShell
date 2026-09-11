@@ -15,8 +15,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.iris.irisshell.ui.IrisIcons
 import com.iris.irisshell.design.system.IrisBuild
 import com.iris.irisshell.design.system.IrisDropdownMenu
 import com.iris.irisshell.design.system.IrisError
@@ -28,7 +28,7 @@ import com.iris.irisshell.design.system.IrisSuccess
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockState
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 
 @Composable
 fun BlockCard(
@@ -90,28 +90,28 @@ fun BlockCard(
             items = listOf(
                 IrisMenuItem(
                     label = "Komutu kopyala",
-                    icon = painterResource(R.drawable.lucide_copy),
+                    icon = IrisIcons.Copy,
                 ),
                 IrisMenuItem(
                     label = "Tekrar çalıştır",
-                    icon = painterResource(R.drawable.lucide_play),
+                    icon = IrisIcons.Play,
                 ),
                 IrisMenuItem(
                     label = "Komutu düzenle",
-                    icon = painterResource(R.drawable.lucide_pencil),
+                    icon = IrisIcons.Pencil,
                 ),
                 IrisMenuItem(
                     label = "Output'u kopyala",
-                    icon = painterResource(R.drawable.lucide_copy),
+                    icon = IrisIcons.Copy,
                     dividerBefore = true,
                 ),
                 IrisMenuItem(
                     label = "Dışa aktar",
-                    icon = painterResource(R.drawable.lucide_download),
+                    icon = IrisIcons.Download,
                 ),
                 IrisMenuItem(
                     label = "Block'u sil",
-                    icon = painterResource(R.drawable.lucide_trash_2),
+                    icon = IrisIcons.Trash2,
                     style = IrisMenuItemStyle.Destructive,
                     dividerBefore = true,
                 ),

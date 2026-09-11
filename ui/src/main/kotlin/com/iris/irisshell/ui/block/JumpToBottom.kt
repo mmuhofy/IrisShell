@@ -15,14 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.iris.irisshell.ui.IrisIcons
 import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisBuild
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.ui.R
 import kotlinx.coroutines.launch
 
 @Composable
@@ -49,7 +48,7 @@ internal fun JumpToBottom(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(R.drawable.lucide_arrow_down),
+                imageVector = IrisIcons.ArrowDown,
                 contentDescription = "Jump to bottom",
                 tint = IrisText,
                 modifier = Modifier.size(18.dp),

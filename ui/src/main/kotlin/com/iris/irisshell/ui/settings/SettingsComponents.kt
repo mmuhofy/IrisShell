@@ -34,7 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,7 +48,7 @@ import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
 import com.iris.irisshell.design.system.IrisTextSecondary
-import com.iris.irisshell.ui.R
+import com.iris.irisshell.ui.IrisIcons
 
 // ── Section label ───────────────────────────────────────────────────────────────
 
@@ -97,7 +97,7 @@ fun SettingsDivider() {
 
 @Composable
 fun SettingsToggleRow(
-    iconRes         : Int? = null,
+    icon           : ImageVector? = null,
     label           : String,
     description     : String,
     checked         : Boolean,
@@ -119,9 +119,9 @@ fun SettingsToggleRow(
                 .background(IrisPrimary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center,
         ) {
-            if (iconRes != null) {
+            if (icon != null) {
                 Icon(
-                    painter            = painterResource(iconRes),
+                    imageVector        = icon,
                     contentDescription = null,
                     tint               = IrisPrimary,
                     modifier           = Modifier.size(16.dp),
@@ -170,7 +170,7 @@ fun TerminalModeCard(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter            = painterResource(R.drawable.lucide_terminal),
+                    imageVector        = IrisIcons.Terminal,
                     contentDescription = null,
                     tint               = IrisPrimary,
                     modifier           = Modifier.size(16.dp),
@@ -348,7 +348,7 @@ fun FontSizeSliderRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter            = painterResource(R.drawable.lucide_a_large_small),
+                    imageVector        = IrisIcons.ALargeSmall,
                     contentDescription = null,
                     tint               = IrisPrimary,
                     modifier           = Modifier.size(16.dp),
@@ -430,7 +430,7 @@ fun ProotStartCommandRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.lucide_terminal),
+                    imageVector = IrisIcons.Terminal,
                     contentDescription = null,
                     tint = IrisError,
                     modifier = Modifier.size(16.dp),
