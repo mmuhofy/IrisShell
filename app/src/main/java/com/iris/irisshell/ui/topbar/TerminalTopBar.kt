@@ -35,22 +35,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.iris.irisshell.IrisIcons
 import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisError
-import com.iris.irisshell.design.system.IrisPrimary
-import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceVariant
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.design.system.OutfitFontFamily
-import com.iris.irisshell.ui.R
 import com.iris.irisshell.ui.session.SessionSwitcherViewModel
 
 /**
@@ -70,6 +68,7 @@ import com.iris.irisshell.ui.session.SessionSwitcherViewModel
  *    gerekir — ayrı bir adım olarak ele alınmalı.
  *  - MoreActionsDropdown: hardcoded offset kaldırıldı (anchor'a göre
  *    otomatik konumlanıyor), Divider → HorizontalDivider.
+ *  - Icons now use IrisIcons ImageVector instead of painterResource XML drawables.
  *
  * Public API değişmedi: TerminalTopBar(...) imzası aynı.
  */
@@ -113,7 +112,7 @@ fun TerminalTopBar(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 GlassPillButton(
-                    iconRes = R.drawable.lucide_panel_left,
+                    icon = IrisIcons.PanelLeft,
                     contentDescription = "Open sessions",
                     onClick = onOpenSidebar,
                 )
@@ -152,13 +151,13 @@ fun TerminalTopBar(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 GlassPillButton(
-                    iconRes = if (keyboardFocused) R.drawable.lucide_keyboard_off else R.drawable.lucide_keyboard,
+                    icon = if (keyboardFocused) IrisIcons.KeyboardOff else IrisIcons.Keyboard,
                     contentDescription = if (keyboardFocused) "Hide keyboard" else "Show keyboard",
                     onClick = onToggleKeyboard,
                 )
 
                 GlassPillButton(
-                    iconRes = R.drawable.lucide_ellipsis_vertical,
+                    icon = IrisIcons.EllipsisVertical,
                     contentDescription = "More actions",
                     onClick = { moreExpanded = true },
                 )
@@ -213,7 +212,7 @@ private fun MoreActionsDropdown(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.lucide_rotate_cw),
+                        imageVector = IrisIcons.RotateCw,
                         contentDescription = null,
                         tint = IrisTextSecondary,
                         modifier = Modifier.size(16.dp),
@@ -236,7 +235,7 @@ private fun MoreActionsDropdown(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.lucide_plus),
+                        imageVector = IrisIcons.Plus,
                         contentDescription = null,
                         tint = IrisTextSecondary,
                         modifier = Modifier.size(16.dp),
@@ -259,9 +258,7 @@ private fun MoreActionsDropdown(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Icon(
-                        painter = painterResource(
-                            if (isFullscreen) R.drawable.lucide_minimize else R.drawable.lucide_maximize
-                        ),
+                        imageVector = if (isFullscreen) IrisIcons.Minimize else IrisIcons.Maximize,
                         contentDescription = null,
                         tint = IrisTextSecondary,
                         modifier = Modifier.size(16.dp),
@@ -284,7 +281,7 @@ private fun MoreActionsDropdown(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.lucide_search),
+                        imageVector = IrisIcons.Search,
                         contentDescription = null,
                         tint = IrisTextSecondary,
                         modifier = Modifier.size(16.dp),
@@ -312,7 +309,7 @@ private fun MoreActionsDropdown(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.lucide_settings),
+                        imageVector = IrisIcons.Settings,
                         contentDescription = null,
                         tint = IrisTextSecondary,
                         modifier = Modifier.size(16.dp),
@@ -335,7 +332,7 @@ private fun MoreActionsDropdown(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.lucide_x_circle),
+                        imageVector = IrisIcons.XCircle,
                         contentDescription = null,
                         tint = IrisError,
                         modifier = Modifier.size(16.dp),
@@ -363,7 +360,7 @@ private fun MoreActionsDropdown(
  */
 @Composable
 private fun GlassPillButton(
-    iconRes: Int,
+    icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
     size: Dp = 44.dp,
@@ -411,7 +408,7 @@ private fun GlassPillButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            imageVector = icon,
             contentDescription = contentDescription,
             tint = IrisText,
             modifier = Modifier
