@@ -49,7 +49,11 @@ dependencies {
     // implementation(libs.lottie.compose)
 
     // Lucide icons — via lucide-compose library (io.github.thelacspace:lucide-compose-android)
-    implementation(libs.lucide.compose)
+    // Exclude Compose Multiplatform (org.jetbrains.compose) — project uses AndroidX Compose BOM.
+    implementation(libs.lucide.compose) {
+        exclude(group = "org.jetbrains.compose")
+        exclude(group = "org.jetbrains.kotlin")
+    }
 
     // coroutines
     implementation(libs.kotlinx.coroutines.android)
