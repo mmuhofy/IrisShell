@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillWidth
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -171,7 +171,7 @@ fun SettingsScreen(
 
             SettingsSectionContainer(
                 modifier = Modifier
-                    .fillWidth()
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(top = 24.dp),
             ) {
@@ -207,7 +207,7 @@ fun SettingsTopBar(onBack: () -> Unit) {
 
     Box(
         modifier = Modifier
-            .fillWidth()
+            .fillMaxWidth()
             .padding(top = statusBarH, start = 16.dp, end = 16.dp, bottom = 8.dp),
     ) {
         val interactionSource = remember { MutableInteractionSource() }
