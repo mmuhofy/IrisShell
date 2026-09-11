@@ -93,6 +93,27 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_PROOT_START_COMMAND] = command }
     }
 
+    override val cursorStyle: Flow<String> =
+        dataStore.data.map { prefs -> prefs[KEY_CURSOR_STYLE] ?: DEFAULT_CURSOR_STYLE }
+
+    override suspend fun setCursorStyle(style: String) {
+        dataStore.edit { prefs -> prefs[KEY_CURSOR_STYLE] = style }
+    }
+
+    override val cursorBlinkRateMs: Flow<Int> =
+        dataStore.data.map { prefs -> prefs[KEY_CURSOR_BLINK_RATE_MS] ?: DEFAULT_CURSOR_BLINK_RATE_MS }
+
+    override suspend fun setCursorBlinkRateMs(rate: Int) {
+        dataStore.edit { prefs -> prefs[KEY_CURSOR_BLINK_RATE_MS] = rate }
+    }
+
+    override val autoLockTimeout: Flow<String> =
+        dataStore.data.map { prefs -> prefs[KEY_AUTO_LOCK_TIMEOUT] ?: DEFAULT_AUTO_LOCK_TIMEOUT }
+
+    override suspend fun setAutoLockTimeout(timeout: String) {
+        dataStore.edit { prefs -> prefs[KEY_AUTO_LOCK_TIMEOUT] = timeout }
+    }
+
     // ── App Info (about.json in assets) ─
 
     private fun jsonProp(text: String, key: String): String =
@@ -115,6 +136,9 @@ class SettingsRepositoryImpl @Inject constructor(
         val KEY_ACCENT_COLOR            = stringPreferencesKey("accent_color")
         val KEY_TERMINAL_TEXT_COLOR     = stringPreferencesKey("terminal_text_color")
         val KEY_PROOT_START_COMMAND     = stringPreferencesKey("proot_start_command")
+        val KEY_CURSOR_STYLE            = stringPreferencesKey("cursor_style")
+        val KEY_CURSOR_BLINK_RATE_MS    = intPreferencesKey("cursor_blink_rate_ms")
+        val KEY_AUTO_LOCK_TIMEOUT       = stringPreferencesKey("auto_lock_timeout")
 
         const val DEFAULT_USE_BLOCK_ENGINE       = false
         const val DEFAULT_EXTRA_KEYS_BAR_VISIBLE = false
@@ -123,5 +147,8 @@ class SettingsRepositoryImpl @Inject constructor(
         const val DEFAULT_ACCENT_COLOR           = "#3B82F6"
         const val DEFAULT_TERMINAL_TEXT_COLOR    = "#E8E8E8"
         const val DEFAULT_PROOT_START_COMMAND    = ""
+        const val DEFAULT_CURSOR_STYLE           = "Block"
+        const val DEFAULT_CURSOR_BLINK_RATE_MS   = 500
+        const val DEFAULT_AUTO_LOCK_TIMEOUT      = "Immediately"
     }
 }

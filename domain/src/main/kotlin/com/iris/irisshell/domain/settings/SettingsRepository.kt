@@ -57,12 +57,29 @@ interface SettingsRepository {
      * Custom PRoot start command (e.g. `/bin/bash --login --norc`).
      * Empty string = use default (shell + `--login`).
      *
-     * WARNING: Experimental. Changing this can break terminal sessions.
-     */
+    /** WARNING: Experimental. Changing this can break terminal sessions. */
     val prootStartCommand: Flow<String>
 
     /** Persists the custom PRoot start command. */
     suspend fun setProotStartCommand(command: String)
+
+    /** Hot stream of the cursor style preference. Emits Block on first launch. */
+    val cursorStyle: Flow<String>
+
+    /** Persists the cursor style. */
+    suspend fun setCursorStyle(style: String)
+
+    /** Hot stream of the cursor blink rate in ms. Emits 500 on first launch. */
+    val cursorBlinkRateMs: Flow<Int>
+
+    /** Persists the cursor blink rate in ms. */
+    suspend fun setCursorBlinkRateMs(rate: Int)
+
+    /** Hot stream of the auto-lock timeout preference. Emits Immediately on first launch. */
+    val autoLockTimeout: Flow<String>
+
+    /** Persists the auto-lock timeout. */
+    suspend fun setAutoLockTimeout(timeout: String)
 
     /** Static app info (version / build tag / license) sourced from about.json. */
     val appInfo: Flow<AboutInfo>

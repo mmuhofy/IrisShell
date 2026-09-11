@@ -2,6 +2,8 @@ package com.iris.irisshell.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.iris.irisshell.domain.settings.AutoLockTimeout
+import com.iris.irisshell.domain.settings.CursorStyle
 import com.iris.irisshell.domain.settings.AboutInfo
 import com.iris.irisshell.domain.settings.PinLockRepository
 import com.iris.irisshell.domain.settings.SettingsRepository
@@ -65,6 +67,15 @@ class SettingsViewModel @Inject constructor(
     val prootStartCommand: StateFlow<String> = settings.prootStartCommand
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
+    val cursorStyle: StateFlow<String> = settings.cursorStyle
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "Block")
+
+    val cursorBlinkRateMs: StateFlow<Int> = settings.cursorBlinkRateMs
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 500)
+
+    val autoLockTimeout: StateFlow<String> = settings.autoLockTimeout
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "Immediately")
+
     // ── Setters ───────────────────────────────────────────────────────────────
 
     fun setUseBlockEngine(enabled: Boolean) {
@@ -93,6 +104,18 @@ class SettingsViewModel @Inject constructor(
 
     fun setProotStartCommand(command: String) {
         viewModelScope.launch { settings.setProotStartCommand(command) }
+    }
+
+    fun setCursorStyle(style: CursorStyle) {
+        viewModelScope.launch { settings.setCursorStyle(style.name) }
+    }
+
+    fun setCursorBlinkRateMs(rate: Int) {
+        viewModelScope.launch { settings.setCursorBlinkRateMs(rate) }
+    }
+
+    fun setAutoLockTimeout(timeout: AutoLockTimeout) {
+        viewModelScope.launch { settings.setAutoLockTimeout(timeout.name) }
     }
 
     // ── App Info ────────────────────────────────────────────────────────────────

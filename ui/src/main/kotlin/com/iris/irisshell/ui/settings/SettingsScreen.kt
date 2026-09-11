@@ -1,127 +1,192 @@
 package com.iris.irisshell.ui.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBackground
-import com.iris.irisshell.design.system.IrisSurface
+import com.iris.irisshell.design.system.IrisError
+import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextSecondary
+import com.iris.irisshell.design.system.OutfitFontFamily
+import com.iris.irisshell.domain.settings.CursorStyle
 import com.iris.irisshell.ui.IrisIcons
-import com.iris.irisshell.ui.pin.PinEntryScreen
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
-    val useBlockEngine    by viewModel.useBlockEngine.collectAsStateWithLifecycle(initialValue = false)
-    val fontSizeSp        by viewModel.fontSizeSp.collectAsStateWithLifecycle(initialValue = 14)
-    val prootStartCommand by viewModel.prootStartCommand.collectAsStateWithLifecycle(initialValue = "")
-    val isPinLockEnabled  by viewModel.isPinLockEnabled.collectAsStateWithLifecycle(initialValue = false)
-    val aboutInfo         by viewModel.aboutInfo.collectAsStateWithLifecycle(initialValue = null)
+    val useBlockEngine    by viewModel.useBlockEngine.collectAsStateWithLifecycle(false)
+    val fontSizeSp        by viewModel.fontSizeSp.collectAsStateWithLifecycle(14)
+    val prootStartCommand by viewModel.prootStartCommand.collectAsStateWithLifecycle("")
+    val isPinLockEnabled  by viewModel.isPinLockEnabled.collectAsStateWithLifecycle(false)
+    val cursorStyle       by viewModel.cursorStyle.collectAsStateWithLifecycle("Block")
+    val cursorBlinkRateMs by viewModel.cursorBlinkRateMs.collectAsStateWithLifecycle(500)
+    val autoLockTimeout   by viewModel.autoLockTimeout.collectAsStateWithLifecycle("Immediately")
+    val aboutInfo         by viewModel.aboutInfo.collectAsStateWithLifecycle(null)
 
     var showPinEntry by rememberSaveable { mutableStateOf(false) }
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        state = androidx.compose.material3.rememberTopAppBarState(),
-    )
-
-    Scaffold(
-        containerColor = IrisBackground,
-        topBar = {
-            ModernSettingsTopBar(title = "Settings", onBack = onBack, scrollBehavior = scrollBehavior)
-        },
-    ) { innerPadding: PaddingValues ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(IrisBackground),
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .padding(innerPadding),
+                .navigationBarsPadding()
+                .testTag("settings_content"),
         ) {
-            SettingsSectionLabel("Terminal")
-            TerminalModeCard(
-                useBlockEngine = useBlockEngine,
-                onSelect = { viewModel.setUseBlockEngine(it) },
-            )
-            Spacer(Modifier.height(16.dp))
+            SettingsTopBar(onBack = onBack)
 
-            SettingsCategoryCard {
-                FontSizeSliderRow(
-                    fontSizeSp = fontSizeSp,
-                    onSizeChange = { viewModel.setFontSize(it) },
-                )
+            SettingsSection(label = "Terminal") {
+                SettingsSectionContainer {
+                    TerminalModeRow(
+                        useBlockEngine = useBlockEngine,
+                        onSelect = { viewModel.setUseBlockEngine(it) },
+                    )
+                    TerminalPreviewCard()
+                    SettingsSubRow(
+                        icon = IrisIcons.Type,
+                        label = "Cursor Style",
+                    ) {
+                        CursorSegmentedControl(
+                            selected = cursorStyle,
+                            options = listOf("Block", "Beam", "Underline"),
+                            onSelect = { viewModel.setCursorStyle(CursorStyle.fromString(it)) },
+                        )
+                    }
+                    SettingsSubRow(
+                        icon = IrisIcons.Gauge,
+                        label = "Cursor Blink Rate",
+                        description = "Pulse interval",
+                    ) {
+                        BlinkRateSlider(
+                            value = cursorBlinkRateMs,
+                            onValueChange = { viewModel.setCursorBlinkRateMs(it) },
+                        )
+                    }
+                    SettingsSubRow(
+                        icon = IrisIcons.ALargeSmall,
+                        label = "Font Size",
+                    ) {
+                        FontSizeStepper(
+                            value = fontSizeSp,
+                            onValueChange = { viewModel.setFontSize(it) },
+                        )
+                    }
+                    SettingsSubRow(
+                        icon = IrisIcons.Terminal,
+                        label = "PRoot Start Command",
+                        description = "Experimental — changing this can break sessions",
+                    ) {
+                        ProotCommandDisplay(
+                            command = prootStartCommand.ifEmpty { "${"$"}shell --login" },
+                        )
+                    }
+                }
             }
-            SettingsDivider()
 
-            SettingsCategoryCard {
-                ProotStartCommandRow(
-                    value = prootStartCommand,
-                    onValueChange = { viewModel.setProotStartCommand(it) },
-                )
+            SettingsSection(label = "Security") {
+                SettingsSectionContainer {
+                    SettingsSubRow(
+                        icon = IrisIcons.Lock,
+                        iconTint = IrisError,
+                        label = "App Lock (PIN)",
+                        description = "Require PIN on launch",
+                    ) {
+                        SettingsToggleSwitch(
+                            checked = isPinLockEnabled,
+                            onCheckedChange = {
+                                if (it) showPinEntry = true else scope.launch { viewModel.clearPin() }
+                            },
+                        )
+                    }
+                    SettingsNavigationRow(
+                        icon = IrisIcons.Timer,
+                        label = "Auto-Lock Timeout",
+                        trailingText = autoLockTimeout,
+                        onClick = {},
+                    )
+                }
             }
-            Spacer(Modifier.height(24.dp))
 
-            SettingsSectionLabel("Güvenlik")
-            SettingsCategoryCard {
-                SettingsToggleRow(
-                    icon = IrisIcons.Lock,
-                    label = "Uygulama Kilidi",
-                    description = "4 haneli PIN (güvenli saklama)",
-                    checked = isPinLockEnabled,
-                    onCheckedChange = { enabled ->
-                        if (enabled) {
-                            showPinEntry = true
-                        } else {
-                            scope.launch { viewModel.clearPin() }
-                        }
-                    },
-                )
+            SettingsSection(label = "About") {
+                SettingsSectionContainer {
+                    SettingsNavigationRow(
+                        icon = IrisIcons.Info,
+                        label = "Version",
+                        trailingText = aboutInfo?.version ?: "—",
+                        onClick = {},
+                    )
+                    SettingsNavigationRow(
+                        icon = IrisIcons.Terminal,
+                        label = "Description",
+                        trailingText = aboutInfo?.build ?: "Advanced terminal",
+                        onClick = {},
+                    )
+                    SettingsNavigationRow(
+                        icon = IrisIcons.Shield,
+                        label = "License",
+                        trailingBadge = aboutInfo?.license ?: "MIT",
+                        showTrailingIcon = true,
+                        onClick = {},
+                    )
+                }
             }
-            Spacer(Modifier.height(24.dp))
 
-            SettingsSectionLabel("Hakkında")
-            SettingsCategoryCard {
-                InfoRow(label = "Versiyon", value = aboutInfo?.version ?: "—")
-                SettingsDivider()
-                InfoRow(label = "Açıklama", value = aboutInfo?.build ?: "Advanced terminal, but not the best.")
-                SettingsDivider()
-                InfoRow(label = "Lisans", value = aboutInfo?.license ?: "MIT")
+            SettingsSectionContainer(
+                modifier = Modifier
+                    .fillWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 24.dp),
+            ) {
+                SettingsNavigationRow(
+                    icon = IrisIcons.CircleUser,
+                    label = "Made by Muhofy",
+                    trailingText = null,
+                    onClick = {},
+                )
             }
         }
     }
 
     if (showPinEntry) {
-        PinEntryScreen(
+        com.iris.irisshell.ui.pin.PinEntryScreen(
             title = "Set PIN",
             subtitle = "Enter a new 4-digit PIN",
             onPinReady = { pin ->
@@ -136,37 +201,40 @@ fun SettingsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModernSettingsTopBar(
-    title: String,
-    onBack: () -> Unit,
-    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
-) {
-    MediumTopAppBar(
-        windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
-        scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.mediumTopAppBarColors(
-            containerColor = IrisSurface,
-            scrolledContainerColor = IrisSurface,
-        ),
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                     Icon(
-                    imageVector        = IrisIcons.ArrowLeft,
-                    contentDescription = "Back",
-                    tint = IrisTextSecondary,
-                    modifier = Modifier.size(16.dp),
+fun SettingsTopBar(onBack: () -> Unit) {
+    val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    Box(
+        modifier = Modifier
+            .fillWidth()
+            .padding(top = statusBarH, start = 16.dp, end = 16.dp, bottom = 8.dp),
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .clickable(
+                    onClick = onBack,
+                    indication = rememberRipple(color = IrisPrimary.copy(alpha = 0.15f), radius = 20.dp),
+                    interactionSource = interactionSource,
                 )
-            }
-        },
-        title = {
-            Text(
-                text = title,
-                color = IrisText,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
+                .padding(vertical = 6.dp),
+        ) {
+            Icon(
+                imageVector = IrisIcons.ArrowLeft,
+                contentDescription = "Back",
+                tint = IrisPrimary,
+                modifier = Modifier.size(22.dp),
             )
-        },
-    )
+            Text(
+                text = "Settings",
+                color = IrisText,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = OutfitFontFamily,
+            )
+        }
+    }
 }

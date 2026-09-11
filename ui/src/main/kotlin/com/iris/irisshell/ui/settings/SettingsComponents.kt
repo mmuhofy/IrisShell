@@ -1,9 +1,13 @@
 package com.iris.irisshell.ui.settings
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,484 +15,573 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple.rememberRipple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisOutline
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
-import com.iris.irisshell.design.system.IrisSurfaceVariant
+import com.iris.irisshell.design.system.IrisSurfaceContainerLowest
+import com.iris.irisshell.design.system.IrisSurfaceHigh
 import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextMuted
+import com.iris.irisshell.design.system.IrisTextDisabled
 import com.iris.irisshell.design.system.IrisTextSecondary
+import com.iris.irisshell.design.system.IrisWarning
+import com.iris.irisshell.design.system.OutfitFontFamily
+import androidx.compose.ui.graphics.Color
 import com.iris.irisshell.ui.IrisIcons
 
-// ── Section label ───────────────────────────────────────────────────────────────
-
 @Composable
-fun SettingsSectionLabel(text: String) {
-    Text(
-        text          = text.uppercase(),
-        color         = IrisPrimary,
-        fontSize      = 11.sp,
-        fontWeight    = FontWeight.SemiBold,
-        letterSpacing = 1.2.sp,
-        modifier      = Modifier.padding(start = 4.dp, bottom = 8.dp),
-    )
+fun SettingsSection(
+    label: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label.uppercase(),
+            color = IrisTextSecondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.2.sp,
+            fontFamily = OutfitFontFamily,
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        content()
+    }
 }
 
-// ── Card container ──────────────────────────────────────────────────────────────
-
 @Composable
-fun SettingsCategoryCard(
+fun SettingsSectionContainer(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .widthIn(min = 1.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(IrisSurface)
-            .padding(vertical = 4.dp),
-    ) { content() }
+            .background(IrisSurface),
+    ) {
+        content()
+    }
 }
 
-// ── Divider ─────────────────────────────────────────────────────────────────────
-
 @Composable
-fun SettingsDivider() {
-    Box(
+fun SettingsSubRow(
+    icon: ImageVector,
+    label: String,
+    description: String? = null,
+    iconTint: Color = IrisPrimary,
+    trailing: @Composable () -> Unit,
+) {
+    val bgTint = if (iconTint == IrisError) IrisError.copy(alpha = 0.12f) else IrisPrimary.copy(alpha = 0.12f)
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(1.dp)
-            .background(IrisOutline.copy(alpha = 0.35f)),
-    )
-}
-
-// ── Toggle row ───────────────────────────────────────────────────────────────────
-
-@Composable
-fun SettingsToggleRow(
-    icon           : ImageVector? = null,
-    label           : String,
-    description     : String,
-    checked         : Boolean,
-    onCheckedChange : (Boolean) -> Unit,
-    modifier        : Modifier = Modifier,
-) {
-    Row(
-        modifier          = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .clickable(onClick = { onCheckedChange(!checked) })
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier         = Modifier
-                .size(34.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(IrisPrimary.copy(alpha = 0.12f)),
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(100))
+                .background(bgTint),
             contentAlignment = Alignment.Center,
         ) {
-            if (icon != null) {
-                Icon(
-                    imageVector        = icon,
-                    contentDescription = null,
-                    tint               = IrisPrimary,
-                    modifier           = Modifier.size(16.dp),
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(16.dp),
+            )
         }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = label,       color = IrisText,          fontSize = 15.sp)
-            Text(text = description, color = IrisTextSecondary, fontSize = 12.sp,
-                modifier = Modifier.padding(top = 1.dp))
+            Text(
+                text = label,
+                color = IrisText,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = OutfitFontFamily,
+            )
+            if (description != null) {
+                Text(
+                    text = description,
+                    color = IrisTextSecondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 1.dp),
+                    fontFamily = OutfitFontFamily,
+                )
+            }
         }
-        Switch(
-            checked         = checked,
-            onCheckedChange = onCheckedChange,
-            colors          = SwitchDefaults.colors(
-                checkedThumbColor    = IrisBackground,
-                checkedTrackColor    = IrisPrimary,
-                uncheckedThumbColor  = IrisTextMuted,
-                uncheckedTrackColor  = IrisSurfaceVariant,
-            ),
+        trailing()
+    }
+}
+
+@Composable
+fun TerminalModeRow(
+    useBlockEngine: Boolean,
+    onSelect: (Boolean) -> Unit,
+) {
+    SettingsSubRow(
+        icon = IrisIcons.Terminal,
+        label = "Terminal Mode",
+    ) {
+        SegmentControl(
+            options = listOf("Classic", "Block"),
+            selectedIndex = if (useBlockEngine) 1 else 0,
+            onSelect = { onSelect(it == 1) },
         )
     }
 }
 
-// ── Terminal Mode Card ──────────────────────────────────────────────────────────
-
 @Composable
-fun TerminalModeCard(
-    useBlockEngine : Boolean,
-    onSelect       : (Boolean) -> Unit,
-    modifier       : Modifier = Modifier,
+private fun SegmentControl(
+    options: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    SettingsCategoryCard(modifier = modifier) {
-        Row(
-            modifier          = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    val trackHeight = 32.dp
+    Row(
+        modifier = modifier
+            .height(trackHeight)
+            .background(IrisSurfaceHigh, RoundedCornerShape(16.dp))
+            .padding(horizontal = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        options.forEachIndexed { index, opt ->
+            val isSelected = index == selectedIndex
+            val animColor by animateColorAsState(
+                targetValue = if (isSelected) IrisPrimary else Color.Transparent,
+                animationSpec = tween(200),
+                label = "segment_color_$index",
+            )
+            val animTextColor by animateColorAsState(
+                targetValue = if (isSelected) Color(0xFF14171B) else IrisTextSecondary,
+                animationSpec = tween(200),
+                label = "segment_text_$index",
+            )
             Box(
-                modifier         = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(IrisPrimary.copy(alpha = 0.12f)),
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(100))
+                    .background(animColor)
+                    .clickable(
+                        onClick = { onSelect(index) },
+                        indication = rememberRipple(color = IrisPrimary.copy(alpha = 0.3f), radius = 12.dp),
+                        interactionSource = remember { MutableInteractionSource() },
+                    )
+                    .padding(vertical = 6.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector        = IrisIcons.Terminal,
-                    contentDescription = null,
-                    tint               = IrisPrimary,
-                    modifier           = Modifier.size(16.dp),
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Terminal Modu", color = IrisText, fontSize = 15.sp)
                 Text(
-                    text     = if (useBlockEngine) "Block Engine" else "Classic",
-                    color    = IrisPrimary,
+                    text = opt,
+                    color = animTextColor,
                     fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 1.dp),
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                    fontFamily = OutfitFontFamily,
                 )
             }
         }
+    }
+}
 
-        SettingsDivider()
+@Composable
+fun CursorSegmentedControl(
+    selected: String,
+    options: List<String>,
+    onSelect: (String) -> Unit,
+) {
+    val selectedIndex = options.indexOf(selected).coerceAtLeast(0)
+    SegmentControl(
+        options = options,
+        selectedIndex = selectedIndex,
+        onSelect = { onSelect(options[it]) },
+    )
+}
+
+@Composable
+fun TerminalPreviewCard() {
+    val lines = listOf(
+        Triple("user@irisshell ~ %", "neofetch", true),
+        Triple("OS:", " Iris Linux aarch64 (POSIX)", false),
+        Triple("Shell:", " zsh 5.9", false),
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(IrisSurfaceContainerLowest)
+            .border(1.dp, IrisOutline.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+            .padding(14.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            listOf(IrisError, IrisWarning, IrisPrimary).forEach { color ->
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(RoundedCornerShape(100)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Canvas(modifier = Modifier.size(10.dp)) {
+                        drawCircle(color = color, radius = 5f)
+                    }
+                }
+            }
+        }
+
+        lines.forEach { (prompt, output, _) ->
+            val text = buildAnnotatedString {
+                withStyle(SpanStyle(color = IrisPrimary, fontWeight = FontWeight.Medium)) {
+                    append(prompt)
+                }
+                withStyle(SpanStyle(color = IrisText)) {
+                    append(output)
+                }
+            }
+            Text(
+                text = text,
+                fontSize = 12.sp,
+                fontFamily = OutfitFontFamily,
+                color = Color.Unspecified,
+                lineHeight = 16.sp,
+                modifier = Modifier.padding(vertical = 2.dp),
+            )
+        }
 
         Row(
-            modifier            = Modifier
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(top = 12.dp),
         ) {
-            TerminalModeOptionCard(
-                label      = "Classic",
-                isSelected = !useBlockEngine,
-                onClick    = { onSelect(false) },
-                modifier   = Modifier.weight(1f),
-                preview    = { ClassicPreview() },
+            Text(
+                text = "user@irisshell ~ %",
+                color = IrisPrimary,
+                fontSize = 12.sp,
+                fontFamily = OutfitFontFamily,
             )
-            TerminalModeOptionCard(
-                label      = "Block",
-                isSelected = useBlockEngine,
-                onClick    = { onSelect(true) },
-                modifier   = Modifier.weight(1f),
-                preview    = { BlockPreview() },
+            var cmdText by rememberSaveable { mutableStateOf("") }
+            Text(
+                text = cmdText,
+                color = IrisText,
+                fontSize = 12.sp,
+                fontFamily = OutfitFontFamily,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 4.dp),
+            )
+            BlinkingCursor(visible = true, rateMs = 500)
+        }
+    }
+}
+
+@Composable
+fun BlinkingCursor(visible: Boolean, rateMs: Int) {
+    if (visible) {
+        var isVisible by remember { mutableStateOf(true) }
+        LaunchedEffect(Unit) {
+            while (kotlin.coroutines.coroutineContext.isActive) {
+                delay(rateMs.toLong())
+                isVisible = !isVisible
+            }
+        }
+        val color = if (isVisible) IrisPrimary else Color.Transparent
+        Canvas(modifier = Modifier.size(8.dp, 14.dp)) {
+            drawRoundRect(
+                color = color,
+                size = Size(8f, 14f),
+                cornerRadius = CornerRadius(2f),
             )
         }
     }
 }
 
-// ── Terminal mode option card ───────────────────────────────────────────────────
+@Composable
+fun BlinkRateSlider(
+    value: Int,
+    onValueChange: (Int) -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = "Slow",
+            color = IrisTextSecondary,
+            fontSize = 12.sp,
+            fontFamily = OutfitFontFamily,
+        )
+        Slider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.toInt()) },
+            valueRange = 150f..1000f,
+            steps = 16,
+            colors = SliderDefaults.colors(
+                thumbColor = IrisBackground,
+                activeTrackColor = IrisPrimary,
+                inactiveTrackColor = IrisSurfaceHigh,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .height(20.dp),
+        )
+        Text(
+            text = "Fast",
+            color = IrisTextSecondary,
+            fontSize = 12.sp,
+            fontFamily = OutfitFontFamily,
+        )
+        Text(
+            text = "${value} ms",
+            color = IrisPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            fontFamily = OutfitFontFamily,
+            modifier = Modifier
+                .background(IrisSurfaceHigh, RoundedCornerShape(6.dp))
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+        )
+    }
+}
 
 @Composable
-private fun TerminalModeOptionCard(
-    label      : String,
-    isSelected : Boolean,
-    onClick    : () -> Unit,
-    preview    : @Composable () -> Unit,
-    modifier   : Modifier = Modifier,
+fun FontSizeStepper(
+    value: Int,
+    onValueChange: (Int) -> Unit,
 ) {
-    val backgroundColor by animateColorAsState(
-        targetValue   = if (isSelected) IrisPrimary.copy(alpha = 0.15f) else IrisSurfaceVariant,
-        animationSpec = tween(200),
-        label         = "modeBg",
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        IconButton(
+            onClick = { if (value > 10) onValueChange(value - 1) },
+            modifier = Modifier
+                .size(28.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(IrisSurfaceHigh),
+        ) {
+            Icon(
+                imageVector = IrisIcons.Minus,
+                contentDescription = "Decrease font size",
+                tint = IrisTextSecondary,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+        Text(
+            text = "${value}sp",
+            color = IrisPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = OutfitFontFamily,
+            modifier = Modifier
+                .background(IrisSurfaceHigh, RoundedCornerShape(6.dp))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+        IconButton(
+            onClick = { if (value < 24) onValueChange(value + 1) },
+            modifier = Modifier
+                .size(28.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(IrisSurfaceHigh),
+        ) {
+            Icon(
+                imageVector = IrisIcons.Plus,
+                contentDescription = "Increase font size",
+                tint = IrisTextSecondary,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+    }
+}
+
+@Composable
+fun ProotCommandDisplay(
+    command: String,
+) {
+    Text(
+        text = command,
+        color = IrisPrimary,
+        fontSize = 12.sp,
+        fontFamily = OutfitFontFamily,
+        modifier = Modifier
+            .background(IrisSurfaceContainerLowest, RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
     )
-    val labelColor by animateColorAsState(
-        targetValue   = if (isSelected) IrisPrimary else IrisTextSecondary,
+}
+
+@Composable
+fun SettingsToggleSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) IrisPrimary else IrisSurfaceHigh,
         animationSpec = tween(200),
-        label         = "modeLabel",
+        label = "toggle_track",
+    )
+    val thumbOffset by animateFloatAsState(
+        targetValue = if (checked) 18f else 2f,
+        animationSpec = tween(200),
+        label = "toggle_thumb_offset",
     )
 
-    Column(
-        modifier            = modifier
-            .widthIn(min = 1.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(backgroundColor)
-            .clickable { onClick() }
-            .padding(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    val interactionSource = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier
+            .size(44.dp, 26.dp)
+            .clip(RoundedCornerShape(13.dp))
+            .background(trackColor)
+            .clickable(
+                onClick = { onCheckedChange(!checked) },
+                indication = rememberRipple(color = Color.Transparent, radius = 10.dp),
+                interactionSource = interactionSource,
+            )
+            .padding(2.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(IrisBackground)
-                .padding(8.dp),
+                .size(22.dp)
+                .offset(x = thumbOffset.dp)
+                .clip(RoundedCornerShape(100)),
+            contentAlignment = Alignment.Center,
         ) {
-            preview()
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text       = label,
-            color      = labelColor,
-            fontSize   = 12.sp,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-        )
-    }
-}
-
-// ── Previews ────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun ClassicPreview() {
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        TerminalPreviewLine("$ ls -la",          IrisPrimary)
-        TerminalPreviewLine("drwxr-xr-x  usr",   IrisTextSecondary)
-        TerminalPreviewLine("-rw-r--r--  file",  IrisTextSecondary)
-        TerminalPreviewLine("$ git status",      IrisPrimary)
-        TerminalPreviewLine("On branch main",    IrisTextSecondary)
-    }
-}
-
-@Composable
-private fun BlockPreview() {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(min = 1.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(IrisSurfaceVariant)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
-        ) {
-            TerminalPreviewLine("$ git status", IrisPrimary)
-            TerminalPreviewLine("On branch main", IrisTextSecondary)
-            Row(
-                modifier              = Modifier.padding(top = 3.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment     = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color(0xFF22C55E).copy(alpha = 0.2f))
-                        .padding(horizontal = 4.dp, vertical = 1.dp),
-                ) {
-                    Text("✓ 0", color = Color(0xFF22C55E), fontSize = 8.sp)
-                }
-                Text("12ms", color = IrisTextMuted, fontSize = 8.sp)
+            Canvas(modifier = Modifier.size(22.dp)) {
+                drawCircle(color = Color.White, radius = 10f)
             }
         }
     }
 }
 
 @Composable
-private fun TerminalPreviewLine(text: String, color: Color) {
-    Text(
-        text       = text,
-        color      = color,
-        fontSize   = 8.sp,
-        fontFamily = FontFamily.Monospace,
-        maxLines   = 1,
-    )
-}
-
-// ── Font size slider row ────────────────────────────────────────────────────────
-
-@Composable
-fun FontSizeSliderRow(
-    fontSizeSp   : Int,
-    onSizeChange : (Int) -> Unit,
-    modifier     : Modifier = Modifier,
+fun SettingsNavigationRow(
+    icon: ImageVector,
+    label: String,
+    trailingText: String? = null,
+    trailingBadge: String? = null,
+    showTrailingIcon: Boolean = false,
+    onClick: () -> Unit,
 ) {
-    Column(
-        modifier = modifier
+    val interactionSource = remember { MutableInteractionSource() }
+    Row(
+        modifier = Modifier
             .fillMaxWidth()
-            .widthIn(min = 1.dp)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .clickable(
+                onClick = onClick,
+                indication = rememberRipple(color = IrisPrimary.copy(alpha = 0.15f), radius = 20.dp),
+                interactionSource = interactionSource,
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier          = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(100))
+                .background(IrisSurfaceHigh),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier         = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(IrisPrimary.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector        = IrisIcons.ALargeSmall,
-                    contentDescription = null,
-                    tint               = IrisPrimary,
-                    modifier           = Modifier.size(16.dp),
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Font Boyutu", color = IrisText, fontSize = 15.sp)
-                Text("Terminal metin büyüklüğü", color = IrisTextSecondary,
-                    fontSize = 12.sp, modifier = Modifier.padding(top = 1.dp))
-            }
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text       = "${fontSizeSp}sp",
-                color      = IrisPrimary,
-                fontSize   = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = IrisTextSecondary,
+                modifier = Modifier.size(16.dp),
             )
         }
-        Spacer(Modifier.height(4.dp))
-        Slider(
-            value         = fontSizeSp.toFloat(),
-            onValueChange = { onSizeChange(it.toInt()) },
-            valueRange    = 10f..24f,
-            steps         = 13,
-            colors        = SliderDefaults.colors(
-                thumbColor          = IrisPrimary,
-                activeTrackColor    = IrisPrimary,
-                inactiveTrackColor  = IrisOutline,
-                activeTickColor     = Color.Transparent,
-                inactiveTickColor   = Color.Transparent,
-            ),
-        )
-    }
-}
-
-// ── Info row ────────────────────────────────────────────────────────────────────
-
-@Composable
-fun InfoRow(
-    label    : String,
-    value    : String,
-    modifier : Modifier = Modifier,
-) {
-    Row(
-        modifier          = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = label, color = IrisTextSecondary, fontSize = 14.sp)
-        Text(text = value, color = IrisText,          fontSize = 14.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-// ── PRoot Start Command (Experimental) ─────────────────────────────────────────────
-
-@Composable
-fun ProotStartCommandRow(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
+        Spacer(Modifier.width(12.dp))
+        if (label.isNotBlank()) {
+            Text(
+                text = label,
+                color = IrisText,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = OutfitFontFamily,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        if (trailingBadge != null) {
+            Text(
+                text = trailingBadge,
+                color = IrisPrimary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = OutfitFontFamily,
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(IrisError.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center,
-            ) {
+                    .background(IrisPrimary.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Icon(
+                imageVector = IrisIcons.ArrowRight,
+                contentDescription = null,
+                tint = IrisTextDisabled,
+                modifier = Modifier.size(16.dp),
+            )
+        } else if (trailingText != null) {
+            Text(
+                text = trailingText,
+                color = IrisTextSecondary,
+                fontSize = 15.sp,
+                fontFamily = OutfitFontFamily,
+            )
+            if (showTrailingIcon) {
+                Spacer(Modifier.width(8.dp))
                 Icon(
-                    imageVector = IrisIcons.Terminal,
+                    imageVector = IrisIcons.ArrowRight,
                     contentDescription = null,
-                    tint = IrisError,
+                    tint = IrisTextDisabled,
                     modifier = Modifier.size(16.dp),
                 )
             }
-            Spacer(Modifier.width(12.dp))
-            Text("PRoot Start Komutu", color = IrisText, fontSize = 15.sp)
+        } else if (showTrailingIcon) {
+            Icon(
+                imageVector = IrisIcons.ArrowRight,
+                contentDescription = null,
+                tint = IrisTextDisabled,
+                modifier = Modifier.size(16.dp),
+            )
         }
-
-        Spacer(Modifier.height(6.dp))
-
-        Text(
-            text = "Deneysel — sadece PRoot komutunu bilmeyecek kadar değiştirmeyin.",
-            color = IrisError,
-            fontSize = 11.sp,
-            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-
-        var text by remember(value) { mutableStateOf(value) }
-        OutlinedTextField(
-            value = text,
-            onValueChange = {
-                text = it
-                onValueChange(it)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("örn: /bin/bash --login --norc", color = IrisTextMuted, fontSize = 12.sp) },
-            textStyle = LocalTextStyle.current.copy(
-                fontFamily = FontFamily.Monospace,
-                fontSize = 13.sp,
-                color = IrisText,
-            ),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = IrisError,
-                unfocusedBorderColor = IrisOutline.copy(alpha = 0.5f),
-                cursorColor = IrisError,
-            ),
-        )
-
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            text = "Boş bırakıldığında varsayılan: \$shell --login (örn: /bin/zsh --login)",
-            color = IrisTextSecondary,
-            fontSize = 10.sp,
-        )
-    }
-}
-
-// ── Hex Helpers (SettingsViewModel) ──────────────────────────
-
-internal fun normalizeHex(hex: String): String {
-    val clean = hex.removePrefix("#").trim()
-    return when (clean.length) {
-        3 -> clean.map { "$it$it" }.joinToString("")
-        6 -> clean
-        else -> "000000"
     }
 }

@@ -25,6 +25,9 @@ import androidx.compose.ui.graphics.Color
 val IrisBackground: Color = Color(0xFF14171B)
 val IrisSurface: Color = Color(0xFF1C2025)
 val IrisSurfaceVariant: Color = Color(0xFF252A30)
+val IrisSurfaceLow: Color = Color(0xFF191C20)
+val IrisSurfaceHigh: Color = Color(0xFF272A2E)
+val IrisSurfaceContainerLowest: Color = Color(0xFF0B0E12)
 val IrisOutline: Color = Color(0xFF343A43)
 val IrisBorderSubtle: Color = Color(0xFF343A43)
 
