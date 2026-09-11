@@ -205,6 +205,7 @@ fun ModernSettingsTopBar(
                     painter = painterResource(R.drawable.lucide_arrow_left),
                     contentDescription = "Back",
                     tint = IrisTextSecondary,
+                    modifier = Modifier.size(16.dp),
                 )
             }
         },
