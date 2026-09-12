@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisPrimary
+import com.iris.irisshell.design.system.IrisSurfaceHigh
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.domain.settings.CursorStyle
@@ -96,35 +97,58 @@ fun SettingsScreen(
                             },
                         )
                     }
-                    SettingsSubRow(
+                    SettingsSliderRow(
                         icon = IrisIcons.Gauge,
                         label = "Cursor Blink Rate",
                         description = "Pulse interval",
-                    ) {
-                        BlinkRateSlider(
-                            value = cursorBlinkRateMs,
-                            onValueChange = { viewModel.setCursorBlinkRateMs(it) },
-                        )
-                    }
-                    SettingsSubRow(
+                        trailing = {
+                            Text(
+                                text = "${cursorBlinkRateMs} ms",
+                                color = IrisPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                fontFamily = OutfitFontFamily,
+                                modifier = Modifier
+                                    .background(IrisSurfaceHigh, RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                            )
+                        },
+                        sliderContent = {
+                            BlinkRateSlider(
+                                value = cursorBlinkRateMs,
+                                onValueChange = { viewModel.setCursorBlinkRateMs(it) },
+                            )
+                        },
+                    )
+                    SettingsSliderRow(
                         icon = IrisIcons.Type,
                         label = "Font Size",
-                    ) {
-                        FontSizeSlider(
-                            value = fontSizeSp,
-                            onValueChange = { viewModel.setFontSize(it) },
-                        )
-                    }
-                    SettingsSubRow(
+                        trailing = {
+                            Text(
+                                text = "${fontSizeSp} sp",
+                                color = IrisPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                fontFamily = OutfitFontFamily,
+                                modifier = Modifier
+                                    .background(IrisSurfaceHigh, RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                            )
+                        },
+                        sliderContent = {
+                            FontSizeSlider(
+                                value = fontSizeSp,
+                                onValueChange = { viewModel.setFontSize(it) },
+                            )
+                        },
+                    )
+                    SettingsCommandFieldRow(
                         icon = IrisIcons.Terminal,
                         label = "PRoot Start Command",
                         description = "Experimental — changing this can break sessions",
-                    ) {
-                        ProotCommandField(
-                            command = prootStartCommand.ifEmpty { "\$shell --login" },
-                            onCommandChange = { viewModel.setProotStartCommand(it) },
-                        )
-                    }
+                        command = prootStartCommand.ifEmpty { "\$shell --login" },
+                        onCommandChange = { viewModel.setProotStartCommand(it) },
+                    )
                 }
             }
 

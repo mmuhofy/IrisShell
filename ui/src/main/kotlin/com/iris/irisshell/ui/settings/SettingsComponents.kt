@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -152,6 +153,141 @@ fun SettingsSubRow(
 }
 
 @Composable
+fun SettingsSliderRow(
+    icon: ImageVector,
+    label: String,
+    description: String? = null,
+    iconTint: Color = IrisPrimary,
+    trailing: @Composable () -> Unit = {},
+    sliderContent: @Composable () -> Unit,
+) {
+    val bgTint = if (iconTint == IrisError) IrisError.copy(alpha = 0.12f) else IrisPrimary.copy(alpha = 0.12f)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(100))
+                    .background(bgTint),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    color = IrisText,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = OutfitFontFamily,
+                )
+                if (description != null) {
+                    Text(
+                        text = description,
+                        color = IrisTextSecondary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 1.dp),
+                        fontFamily = OutfitFontFamily,
+                    )
+                }
+            }
+            trailing()
+        }
+        Spacer(Modifier.height(8.dp))
+        sliderContent()
+    }
+}
+
+@Composable
+fun SettingsCommandFieldRow(
+    icon: ImageVector,
+    label: String,
+    description: String? = null,
+    iconTint: Color = IrisPrimary,
+    command: String,
+    onCommandChange: (String) -> Unit,
+) {
+    val bgTint = if (iconTint == IrisError) IrisError.copy(alpha = 0.12f) else IrisPrimary.copy(alpha = 0.12f)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(100))
+                    .background(bgTint),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    color = IrisText,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = OutfitFontFamily,
+                )
+                if (description != null) {
+                    Text(
+                        text = description,
+                        color = IrisTextSecondary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 1.dp),
+                        fontFamily = OutfitFontFamily,
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        var text by rememberSaveable { mutableStateOf(command) }
+        OutlinedTextField(
+            value = text,
+            onValueChange = {
+                text = it
+                onCommandChange(it)
+            },
+            textStyle = TextStyle(
+                color = IrisPrimary,
+                fontSize = 12.sp,
+                fontFamily = OutfitFontFamily,
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(6.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = Color.Transparent,
+                focusedBorderColor = IrisPrimary.copy(alpha = 0.3f),
+                cursorColor = IrisPrimary,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
 fun TerminalModeRow(
     useBlockEngine: Boolean,
     onSelect: (Boolean) -> Unit,
@@ -242,8 +378,7 @@ fun TerminalPreviewCard(
     val lines = listOf(
         Triple("user@irisshell ~ %", "neofetch", true),
         Triple("OS:", " Iris Linux aarch64 (POSIX)", false),
-        Triple("Shell:", " zsh 5.9", false),
-        Triple("Term:", " xterm-256color", false),
+        Triple("Shell:", " zsh 5.9 \u2022 Term: xterm-256color", false),
     )
 
     Column(
@@ -273,7 +408,7 @@ fun TerminalPreviewCard(
             }
         }
 
-        lines.forEachIndexed { index, (prompt, output, isCommand) ->
+        lines.forEachIndexed { index, (prompt, output, _) ->
             if (useBlockEngine && index > 0) {
                 Divider(
                     modifier = Modifier.padding(vertical = 4.dp),
@@ -292,7 +427,7 @@ fun TerminalPreviewCard(
             Text(
                 text = text,
                 fontSize = fontSizeSp.sp,
-                fontFamily = OutfitFontFamily,
+                fontFamily = FontFamily.Monospace,
                 color = Color.Unspecified,
                 lineHeight = (fontSizeSp * 1.42).sp,
                 modifier = Modifier.padding(vertical = 2.dp),
@@ -309,14 +444,14 @@ fun TerminalPreviewCard(
                 text = "user@irisshell ~ %",
                 color = IrisPrimary,
                 fontSize = fontSizeSp.sp,
-                fontFamily = OutfitFontFamily,
+                fontFamily = FontFamily.Monospace,
             )
             var cmdText by rememberSaveable { mutableStateOf("") }
             Text(
                 text = cmdText,
                 color = IrisText,
                 fontSize = fontSizeSp.sp,
-                fontFamily = OutfitFontFamily,
+                fontFamily = FontFamily.Monospace,
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 4.dp),
@@ -342,29 +477,29 @@ fun BlinkingCursor(visible: Boolean, rateMs: Int, style: String, fontSizeSp: Int
             }
         }
         val color = if (isVisible) IrisPrimary else Color.Transparent
-        val cursorHeightPx = fontSizeSp * 4.6f
+        val cursorHeightDp = fontSizeSp * 1.15f
 
-        val widthPx: Float
-        val heightPx: Float
+        val widthDp: Float
+        val heightDp: Float
         when (style.lowercase()) {
             "beam" -> {
-                widthPx = 2f
-                heightPx = cursorHeightPx
+                widthDp = 2f
+                heightDp = cursorHeightDp
             }
             "underline" -> {
-                widthPx = 9f
-                heightPx = 2.5f
+                widthDp = 9f
+                heightDp = 2.5f
             }
             else -> {
-                widthPx = 8f
-                heightPx = cursorHeightPx
+                widthDp = 8f
+                heightDp = cursorHeightDp
             }
         }
 
-        Canvas(modifier = Modifier.size(widthPx.dp, heightPx.dp)) {
+        Canvas(modifier = Modifier.size(widthDp.dp, heightDp.dp)) {
             drawRoundRect(
                 color = color,
-                size = Size(widthPx, heightPx),
+                size = Size(widthDp, heightDp),
                 cornerRadius = CornerRadius(2f),
             )
         }
@@ -399,16 +534,6 @@ fun BlinkRateSlider(
             fontSize = 12.sp,
             fontFamily = OutfitFontFamily,
         )
-        Text(
-            text = "${value} ms",
-            color = IrisPrimary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = OutfitFontFamily,
-            modifier = Modifier
-                .background(IrisSurfaceHigh, RoundedCornerShape(6.dp))
-                .padding(horizontal = 8.dp, vertical = 2.dp),
-        )
     }
 }
 
@@ -432,7 +557,7 @@ fun FontSizeSlider(
                 modifier = Modifier.size(14.dp),
             )
         }
-        ThinSlider(
+         ThinSlider(
             value = value.toFloat(),
             onValueChange = { onValueChange(it.toInt()) },
             valueRange = 10f..24f,
@@ -450,16 +575,6 @@ fun FontSizeSlider(
                 modifier = Modifier.size(14.dp),
             )
         }
-        Text(
-            text = "${value} sp",
-            color = IrisPrimary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = OutfitFontFamily,
-            modifier = Modifier
-                .background(IrisSurfaceHigh, RoundedCornerShape(6.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-        )
     }
 }
 
@@ -484,39 +599,6 @@ fun ThinSlider(
             inactiveTickColor = Color.Transparent,
         ),
         modifier = modifier.height(20.dp),
-    )
-}
-
-@Composable
-fun ProotCommandField(
-    command: String,
-    onCommandChange: (String) -> Unit,
-) {
-    var text by rememberSaveable { mutableStateOf(command) }
-    OutlinedTextField(
-        value = text,
-        onValueChange = {
-            text = it
-            onCommandChange(it)
-        },
-        textStyle = TextStyle(
-            color = IrisPrimary,
-            fontSize = 12.sp,
-            fontFamily = OutfitFontFamily,
-        ),
-        singleLine = true,
-        shape = RoundedCornerShape(6.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = Color.Transparent,
-            focusedBorderColor = IrisPrimary.copy(alpha = 0.3f),
-            cursorColor = IrisPrimary,
-            focusedLabelColor = IrisPrimary,
-            unfocusedLabelColor = IrisTextSecondary,
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(IrisSurfaceContainerLowest, RoundedCornerShape(6.dp))
-            .padding(horizontal = 4.dp),
     )
 }
 
