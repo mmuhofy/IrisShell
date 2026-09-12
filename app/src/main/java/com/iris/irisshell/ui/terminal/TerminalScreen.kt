@@ -47,7 +47,6 @@ import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
 import com.iris.irisshell.ui.block.BlockEngineViewModel
-import com.iris.irisshell.ui.block.BlockTerminalView
 import com.iris.irisshell.ui.browser.WebViewSheet
 import com.iris.irisshell.ui.input.InputBarHost
 import com.iris.irisshell.ui.input.InputBarViewModel
@@ -375,123 +374,36 @@ private fun ReadyScreen(
                     .fillMaxWidth()
                     .weight(1f),
             ) {
-                if (useBlockEngine) {
-                    val clipboard =
-                        androidx.compose.ui.platform.LocalClipboardManager.current
-
-                    val hiddenIds by blockEngineViewModel.hiddenIds.collectAsState()
-                    val exportRequest by blockEngineViewModel.exportRequest.collectAsState()
-                    val clipboardEvent by blockEngineViewModel.clipboardRequest.collectAsState()
-                    val pendingEdit by blockEngineViewModel.pendingEdit.collectAsState()
-
-                    LaunchedEffect(exportRequest) {
-                        if (exportRequest != null) {
-                            blockEngineViewModel.consumeExportRequest()
-                        }
-                    }
-
-                    LaunchedEffect(clipboardEvent) {
-                        val event = clipboardEvent ?: return@LaunchedEffect
-
-                        val text = when (event) {
-                            is BlockEngineViewModel.ClipboardEvent.Command ->
-                                "${event.prompt} ${event.command}"
-
-                            is BlockEngineViewModel.ClipboardEvent.Output ->
-                                event.text
-                        }
-
-                        clipboard.setText(
-                            androidx.compose.ui.text.AnnotatedString(text),
+                /*
+                 * TERMINAL VIEW — renders the classic TerminalView surface with
+                 * separator lines overlaid when blockEngine mode is active.
+                 * terminalViewRef is shared with InputBarHost so the
+                 * Liquid Glass surface can sample this exact TerminalView.
+                 */
+                TerminalViewHost(
+                    terminalManager = terminalManager,
+                    fontSizeSp = fontSizeSp,
+                    colorProps = colorProps,
+                    terminalViewModel = terminalViewModel,
+                    terminalViewRef = terminalViewRef,
+                    extraKeyState = extraKeyState,
+                    onUrlClick = { browserUrl = it },
+                    searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
+                    searchOverlayRef = searchOverlayRef,
+                    useBlockEngine = useBlockEngine,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            top = WindowInsets.statusBars
+                                .asPaddingValues()
+                                .calculateTopPadding()
                         )
-
-                        blockEngineViewModel.consumeClipboardRequest()
-                    }
-
-                    val visibleBlocks = remember {
-                        MutableStateFlow(
-                            emptyList<com.iris.irisshell.domain.block.Block>(),
-                        )
-                    }
-
-                    val blocksRaw by blockEngineViewModel.blocks.collectAsState()
-
-                    LaunchedEffect(
-                        blocksRaw,
-                        hiddenIds,
-                    ) {
-                        visibleBlocks.value =
-                            blocksRaw.filterNot {
-                                it.id in hiddenIds
-                            }
-                    }
-
-                    val lastDir by blockEngineViewModel.lastDir.collectAsState()
-
-                BlockTerminalView(
-                    blocks = visibleBlocks,
-                        onToggleCollapsed =
-                            blockEngineViewModel::onToggleCollapsed,
-                        onCommandSubmitted =
-                            blockEngineViewModel::onCommandSubmitted,
-                        onCopyCommand =
-                            blockEngineViewModel::onCopyCommand,
-                        onCopyOutput =
-                            blockEngineViewModel::onCopyOutput,
-                        onRerunCommand =
-                            blockEngineViewModel::onRerunCommand,
-                        onEditCommand = { cmd ->
-                            blockEngineViewModel.onEditCommand(cmd)
-                            blockEngineViewModel.consumePendingEdit()
+                        .graphicsLayer {
+                            scaleX = appearScale
+                            scaleY = appearScale
+                            alpha = appearAlpha
                         },
-                        onExportOutput =
-                            blockEngineViewModel::onExportOutput,
-                        onDeleteBlock =
-                            blockEngineViewModel::onDeleteBlock,
-                        promptLabel = lastDir,
-                         onUrlClick = { browserUrl = it },
-                         searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
-                         currentMatchBlockId = currentMatchBlockId,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                scaleX = appearScale
-                                scaleY = appearScale
-                                alpha = appearAlpha
-                            },
-                    )
-                } else {
-                    /*
-                     * CLASSIC TERMINAL PATH
-                     *
-                     * terminalViewRef is shared with InputBarHost so the
-                     * Liquid Glass surface can sample this exact TerminalView.
-                     */
-                       TerminalViewHost(
-                           terminalManager = terminalManager,
-                           fontSizeSp = fontSizeSp,
-                           colorProps = colorProps,
-                           terminalViewModel = terminalViewModel,
-                          terminalViewRef = terminalViewRef,
-                          extraKeyState = extraKeyState,
-                          onUrlClick = { browserUrl = it },
-                          searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
-                          searchOverlayRef = searchOverlayRef,
-                          useBlockEngine = useBlockEngine,
-                          modifier = Modifier
-                            .fillMaxSize()
-                            .padding(
-                                top = WindowInsets.statusBars
-                                    .asPaddingValues()
-                                    .calculateTopPadding()
-                            )
-                            .graphicsLayer {
-                                scaleX = appearScale
-                                scaleY = appearScale
-                                alpha = appearAlpha
-                            },
-                    )
-                }
+                )
 
                 if (fullscreen) {
                     Box(
