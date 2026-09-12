@@ -91,15 +91,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setTerminalBgColor(hex: String) {
-        normalizeHex(hex)?.let { viewModelScope.launch { settings.setTerminalBgColor(it) } }
+        viewModelScope.launch { settings.setTerminalBgColor(hex) }
     }
 
     fun setAccentColor(hex: String) {
-        normalizeHex(hex)?.let { viewModelScope.launch { settings.setAccentColor(it) } }
+        viewModelScope.launch { settings.setAccentColor(hex) }
     }
 
     fun setTerminalTextColor(hex: String) {
-        normalizeHex(hex)?.let { viewModelScope.launch { settings.setTerminalTextColor(it) } }
+        viewModelScope.launch { settings.setTerminalTextColor(hex) }
     }
 
     fun setProotStartCommand(command: String) {

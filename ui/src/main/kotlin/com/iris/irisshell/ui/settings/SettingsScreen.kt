@@ -2,7 +2,6 @@ package com.iris.irisshell.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,12 +12,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +40,7 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.domain.settings.CursorStyle
 import com.iris.irisshell.ui.IrisIcons
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -210,15 +210,12 @@ fun SettingsTopBar(onBack: () -> Unit) {
             .fillMaxWidth()
             .padding(top = statusBarH, start = 16.dp, end = 16.dp, bottom = 8.dp),
     ) {
-        val interactionSource = remember { MutableInteractionSource() }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .clickable(
                     onClick = onBack,
-                    indication = rememberRipple(color = IrisPrimary.copy(alpha = 0.15f), radius = 20.dp),
-                    interactionSource = interactionSource,
                 )
                 .padding(vertical = 6.dp),
         ) {

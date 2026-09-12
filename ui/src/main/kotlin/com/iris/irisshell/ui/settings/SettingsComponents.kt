@@ -7,7 +7,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -201,8 +199,6 @@ private fun SegmentControl(
                     .background(animColor)
                     .clickable(
                         onClick = { onSelect(index) },
-                        indication = rememberRipple(color = IrisPrimary.copy(alpha = 0.3f), radius = 12.dp),
-                        interactionSource = remember { MutableInteractionSource() },
                     )
                     .padding(vertical = 6.dp),
                 contentAlignment = Alignment.Center,
@@ -468,7 +464,6 @@ fun SettingsToggleSwitch(
         label = "toggle_thumb_offset",
     )
 
-    val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
             .size(44.dp, 26.dp)
@@ -476,8 +471,6 @@ fun SettingsToggleSwitch(
             .background(trackColor)
             .clickable(
                 onClick = { onCheckedChange(!checked) },
-                indication = rememberRipple(color = Color.Transparent, radius = 10.dp),
-                interactionSource = interactionSource,
             )
             .padding(2.dp),
         contentAlignment = Alignment.CenterStart,
@@ -505,14 +498,11 @@ fun SettingsNavigationRow(
     showTrailingIcon: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
                 onClick = onClick,
-                indication = rememberRipple(color = IrisPrimary.copy(alpha = 0.15f), radius = 20.dp),
-                interactionSource = interactionSource,
             )
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
