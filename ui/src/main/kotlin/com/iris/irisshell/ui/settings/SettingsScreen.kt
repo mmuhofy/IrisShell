@@ -120,8 +120,9 @@ fun SettingsScreen(
                         label = "PRoot Start Command",
                         description = "Experimental — changing this can break sessions",
                     ) {
-                        ProotCommandDisplay(
+                        ProotCommandField(
                             command = prootStartCommand.ifEmpty { "\$shell --login" },
+                            onCommandChange = { viewModel.setProotStartCommand(it) },
                         )
                     }
                 }
@@ -234,7 +235,7 @@ fun SettingsTopBar(onBack: () -> Unit) {
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
             fontFamily = OutfitFontFamily,
-            modifier = Modifier.weight(1f, fill = false),
+            modifier = Modifier.weight(1f),
         )
         Box(modifier = Modifier.size(40.dp))
     }

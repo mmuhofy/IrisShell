@@ -19,8 +19,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -38,6 +41,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
@@ -46,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import com.iris.irisshell.design.system.IrisError
+import com.iris.irisshell.design.system.IrisOutline
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceContainerLowest
@@ -124,7 +129,7 @@ fun SettingsSubRow(
             )
         }
         Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f, fill = false)) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
                 color = IrisText,
@@ -238,6 +243,7 @@ fun TerminalPreviewCard(
         Triple("user@irisshell ~ %", "neofetch", true),
         Triple("OS:", " Iris Linux aarch64 (POSIX)", false),
         Triple("Shell:", " zsh 5.9", false),
+        Triple("Term:", " xterm-256color", false),
     )
 
     Column(
@@ -245,14 +251,6 @@ fun TerminalPreviewCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(IrisSurfaceContainerLowest)
-            .then(
-                if (useBlockEngine) {
-                    Modifier
-                        .border(1.dp, IrisPrimary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-                } else {
-                    Modifier
-                }
-            )
             .padding(14.dp),
     ) {
         Row(
@@ -275,7 +273,14 @@ fun TerminalPreviewCard(
             }
         }
 
-        lines.forEach { (prompt, output, _) ->
+        lines.forEachIndexed { index, (prompt, output, isCommand) ->
+            if (useBlockEngine && index > 0) {
+                Divider(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    color = IrisOutline.copy(alpha = 0.3f),
+                    thickness = 1.dp,
+                )
+            }
             val text = buildAnnotatedString {
                 withStyle(SpanStyle(color = IrisPrimary, fontWeight = FontWeight.Medium)) {
                     append(prompt)
@@ -337,22 +342,22 @@ fun BlinkingCursor(visible: Boolean, rateMs: Int, style: String, fontSizeSp: Int
             }
         }
         val color = if (isVisible) IrisPrimary else Color.Transparent
-        val cursorSizePx = fontSizeSp * 4f
+        val cursorHeightPx = fontSizeSp * 4.6f
 
         val widthPx: Float
         val heightPx: Float
         when (style.lowercase()) {
             "beam" -> {
                 widthPx = 2f
-                heightPx = cursorSizePx
+                heightPx = cursorHeightPx
             }
             "underline" -> {
-                widthPx = cursorSizePx
+                widthPx = 9f
                 heightPx = 2.5f
             }
             else -> {
-                widthPx = cursorSizePx
-                heightPx = cursorSizePx
+                widthPx = 8f
+                heightPx = cursorHeightPx
             }
         }
 
@@ -418,10 +423,7 @@ fun FontSizeSlider(
     ) {
         IconButton(
             onClick = { if (value > 10) onValueChange(value - 1) },
-            modifier = Modifier
-                .size(28.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(IrisSurfaceHigh),
+            modifier = Modifier.size(28.dp),
         ) {
             Icon(
                 imageVector = IrisIcons.Minus,
@@ -439,10 +441,7 @@ fun FontSizeSlider(
         )
         IconButton(
             onClick = { if (value < 24) onValueChange(value + 1) },
-            modifier = Modifier
-                .size(28.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(IrisSurfaceHigh),
+            modifier = Modifier.size(28.dp),
         ) {
             Icon(
                 imageVector = IrisIcons.Plus,
@@ -489,17 +488,35 @@ fun ThinSlider(
 }
 
 @Composable
-fun ProotCommandDisplay(
+fun ProotCommandField(
     command: String,
+    onCommandChange: (String) -> Unit,
 ) {
-    Text(
-        text = command,
-        color = IrisPrimary,
-        fontSize = 12.sp,
-        fontFamily = OutfitFontFamily,
+    var text by rememberSaveable { mutableStateOf(command) }
+    OutlinedTextField(
+        value = text,
+        onValueChange = {
+            text = it
+            onCommandChange(it)
+        },
+        textStyle = TextStyle(
+            color = IrisPrimary,
+            fontSize = 12.sp,
+            fontFamily = OutfitFontFamily,
+        ),
+        singleLine = true,
+        shape = RoundedCornerShape(6.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = Color.Transparent,
+            focusedBorderColor = IrisPrimary.copy(alpha = 0.3f),
+            cursorColor = IrisPrimary,
+            focusedLabelColor = IrisPrimary,
+            unfocusedLabelColor = IrisTextSecondary,
+        ),
         modifier = Modifier
+            .fillMaxWidth()
             .background(IrisSurfaceContainerLowest, RoundedCornerShape(6.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 4.dp),
     )
 }
 
@@ -584,7 +601,7 @@ fun SettingsNavigationRow(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = OutfitFontFamily,
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.weight(1f),
             )
         }
         if (trailingBadge != null) {
