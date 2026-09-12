@@ -1,7 +1,7 @@
 # Iris Shell — Memory Bank
 _Last updated: 2026-09-12_
 
-Last commit: `0531796` — feat(terminal): wire cursor style selection to actual terminal emulator
+Last commit: `7f9195a` — fix(app): add missing CommandSeparatorOverlay import
 
 ### Icon System — Final Architecture (2026-09-11)
 - ✅ **Library**: `io.github.ardasoyturk.compose.icons:lucide-android:2.0.7` from Maven Central (replaces local AAR + thelacspace library)
@@ -352,4 +352,15 @@ Closed (Room only, removed from irisSessions)
 - PIN toggle in SettingsScreen: enable shows inline PinEntryScreen overlay, disable clears PIN
 - MainActivity PIN gate: when `pinLock.isEnabled == true`, shows PinEntryScreen at `terminal` route; correct PIN navigates to `terminalHome`
 - GitHub Release creation fails with 403 (token lacks `generate_release_notes` permission) — non-blocking, APK available as CI artifact
+
+---
+
+## Block Mode — Separator Lines (2026-09-12)
+
+- Block mode now renders **classic terminal + separator lines** instead of card-based blocks
+- `CommandSeparatorOverlay.kt` in `terminal/` module — custom `View` overlay (mirrors `SearchHighlightOverlay`)
+- Iterates visible rows, detects prompt lines (suffix regex `[#$❯➜]\s*$` + shell context check for `@`/`~`/`/`), draws thin horizontal line at row top
+- Non-interactive overlay (`isClickable=false`, `isLongClickable=false`, `isFocusable=false`) — TerminalView below handles long-press context menu + text selection
+- Wired in `TerminalViewHost` via `useBlockEngine` flag — only active in block mode
+- `onDrawListener` invalidates separator alongside search overlay
 - Runtime fix: `FOREGROUND_SERVICE_DATA_SYNC` permission added to `AndroidManifest.xml` — required since `targetSdk=36` for `dataSync` foreground service type
