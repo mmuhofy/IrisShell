@@ -466,17 +466,18 @@ private fun ReadyScreen(
                      * terminalViewRef is shared with InputBarHost so the
                      * Liquid Glass surface can sample this exact TerminalView.
                      */
-                      TerminalViewHost(
-                          terminalManager = terminalManager,
-                          fontSizeSp = fontSizeSp,
-                          colorProps = colorProps,
-                          terminalViewModel = terminalViewModel,
-                         terminalViewRef = terminalViewRef,
-                         extraKeyState = extraKeyState,
-                         onUrlClick = { browserUrl = it },
-                         searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
-                         searchOverlayRef = searchOverlayRef,
-                         modifier = Modifier
+                       TerminalViewHost(
+                           terminalManager = terminalManager,
+                           fontSizeSp = fontSizeSp,
+                           colorProps = colorProps,
+                           terminalViewModel = terminalViewModel,
+                          terminalViewRef = terminalViewRef,
+                          extraKeyState = extraKeyState,
+                          onUrlClick = { browserUrl = it },
+                          searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
+                          searchOverlayRef = searchOverlayRef,
+                          useBlockEngine = useBlockEngine,
+                          modifier = Modifier
                             .fillMaxSize()
                             .padding(
                                 top = WindowInsets.statusBars
@@ -764,6 +765,7 @@ private fun TerminalViewHost(
     onUrlClick: (String) -> Unit,
     searchQuery: String?,
     searchOverlayRef: MutableState<SearchHighlightOverlay?>,
+    useBlockEngine: Boolean = false,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
@@ -847,16 +849,30 @@ private fun TerminalViewHost(
                 isFocusableInTouchMode = false
             }
 
+            val separatorOverlay = if (useBlockEngine) {
+                CommandSeparatorOverlay(ctx).apply {
+                    terminalView = tv
+                    isFocusable = false
+                    isFocusableInTouchMode = false
+                    isClickable = false
+                    isLongClickable = false
+                }
+            } else null
+
             tv.viewTreeObserver.addOnDrawListener(
                 object : ViewTreeObserver.OnDrawListener {
                     override fun onDraw() {
                         overlay.invalidate()
+                        separatorOverlay?.invalidate()
                     }
                 }
             )
 
             frameLayout.addView(tv)
             frameLayout.addView(overlay)
+            if (separatorOverlay != null) {
+                frameLayout.addView(separatorOverlay)
+            }
             searchOverlayRef.value = overlay
 
             frameLayout
