@@ -198,9 +198,10 @@ class BlockEngineViewModel @Inject constructor(
 
     private companion object {
         const val NETWORK_TICK_MS = 500L
-        val PROMPT_SUFFIX_REGEX = Regex("""[#$❯➜]\s*$""")
     }
 }
+
+private val PROMPT_SUFFIX_REGEX = Regex("""[#$❯➜]\s*$""")
 
 private fun String.extractSuffix(): String {
     val match = PROMPT_SUFFIX_REGEX.find(this.trim())
