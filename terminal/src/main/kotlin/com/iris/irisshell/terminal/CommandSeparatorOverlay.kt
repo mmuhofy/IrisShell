@@ -64,7 +64,7 @@ class CommandSeparatorOverlay(
             if (!hasPromptSuffix || !hasShellContext) continue
 
             // Draw a thin line at the top of this prompt row.
-            val y = visRow * fontLineSpacing
+            val y = (visRow * fontLineSpacing).toFloat()
 
             canvas.drawLine(0f, y, width, y, linePaint)
         }
