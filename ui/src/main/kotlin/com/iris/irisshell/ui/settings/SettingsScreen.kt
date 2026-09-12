@@ -38,6 +38,7 @@ import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.domain.settings.CursorStyle
 import com.iris.irisshell.ui.IrisIcons
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
