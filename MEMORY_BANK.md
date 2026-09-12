@@ -251,6 +251,17 @@ Closed (Room only, removed from irisSessions)
 - ✅ Terminal mode toggle: segment control updates preview appearance (divider lines in block mode, none in classic)
 - ✅ CI build passes
 
+### Fixes (Settings Screen — 2026-09-12, afternoon)
+- ✅ Two-row layout for sliders: `SettingsSliderRow` (label row + slider row) replaces `SettingsSubRow` for Blink Rate and Font Size
+- ✅ Two-row layout for PRoot command: `SettingsCommandFieldRow` (label row + editable field) replaces `SettingsSubRow`
+- ✅ Text stretching fixed: removed `fill = false` from `weight(1f)` on Column/Text in SettingsSubRow and SettingsNavigationRow
+- ✅ TerminalPreviewCard uses `FontFamily.Monospace` (terminal-like) instead of `OutfitFontFamily`
+- ✅ TerminalPreviewCard updated to match HTML: "Shell: zsh 5.9 • Term: xterm-256color" (combined line)
+- ✅ BlinkingCursor height fixed: `fontSizeSp * 1.15` (was incorrectly `fontSizeSp * 4.6` which made cursor huge)
+- ✅ Font size +/- buttons: transparent background (removed IrisSurfaceHigh), icon-only
+- ✅ Block mode: thin 1dp Divider between commands (not glow/border)
+- ✅ Terminal mode segment control updates preview (dividers appear/disappear)
+
 ### To Build
 - Same as docs/TODO.md (full feature backlog)
 
