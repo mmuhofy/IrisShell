@@ -1,7 +1,7 @@
 # Iris Shell — Memory Bank
-_Last updated: 2026-09-11_
+_Last updated: 2026-09-12_
 
-Last commit: `d5178cf` — feat(ui): rewrite settings screen with iOS-style design
+Last commit: `0088521` — style(ui): clean up IrisIcons duplicate imports, remove unused Text icon
 
 ### Icon System — Final Architecture (2026-09-11)
 - ✅ **Library**: `io.github.ardasoyturk.compose.icons:lucide-android:2.0.7` from Maven Central (replaces local AAR + thelacspace library)
@@ -229,8 +229,12 @@ Closed (Room only, removed from irisSessions)
 - ✅ SettingsScreen rewritten: iOS-style top bar, grouped section containers, preview terminal card with blinking cursor, segment controls, iOS-style toggle switch
 - ✅ SettingsComponents.kt: all composables for settings rows, toggle, slider, preview card, segmented controls
 - ✅ PinEntryScreen embedded as modal overlay for PIN setup flow
-- ✅ "Made by Muhofy" footer row with `CircleUser` icon
-- ✅ Design reference: `html/irisshell_settings_pure.html` (Tailwind iOS-style design)
+  - ✅ "Made by Muhofy" footer row with `CircleUser` icon
+  - ✅ Design reference: `html/irisshell_settings_pure.html` (Tailwind iOS-style design)
+  - ✅ CI build passes — no more `rememberRipple`, `MutableInteractionSource`, `normalizeHex`, `statusBars`, or `launch` compilation errors
+  - ✅ Removed all custom ripple usage (plain `Modifier.clickable { }` with default Material 3 ripple)
+  - ✅ Fixed pre-existing `normalizeHex` undefined reference (simplified color setters)
+  - ✅ Cleaned up duplicate imports in IrisIcons.kt (Copy, SquareTerminal, Terminal, Trash2, Undo appeared twice)
 
 ### To Build
 - Same as docs/TODO.md (full feature backlog)

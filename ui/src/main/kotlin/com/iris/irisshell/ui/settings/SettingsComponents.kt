@@ -45,9 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisError
-import com.iris.irisshell.design.system.IrisOutline
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisSurface
 import com.iris.irisshell.design.system.IrisSurfaceContainerLowest
@@ -89,7 +87,7 @@ fun SettingsSectionContainer(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(IrisSurface),
     ) {
         content()
@@ -126,7 +124,7 @@ fun SettingsSubRow(
             )
         }
         Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.weight(1f, fill = false)) {
             Text(
                 text = label,
                 color = IrisText,
@@ -230,7 +228,12 @@ fun CursorSegmentedControl(
 }
 
 @Composable
-fun TerminalPreviewCard() {
+fun TerminalPreviewCard(
+    cursorStyle: String = "Block",
+    cursorBlinkRateMs: Int = 500,
+    fontSizeSp: Int = 14,
+    useBlockEngine: Boolean = true,
+) {
     val lines = listOf(
         Triple("user@irisshell ~ %", "neofetch", true),
         Triple("OS:", " Iris Linux aarch64 (POSIX)", false),
@@ -240,10 +243,16 @@ fun TerminalPreviewCard() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(IrisSurfaceContainerLowest)
-            .border(1.dp, IrisOutline.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+            .then(
+                if (useBlockEngine) {
+                    Modifier
+                        .border(1.dp, IrisPrimary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                } else {
+                    Modifier
+                }
+            )
             .padding(14.dp),
     ) {
         Row(
@@ -277,10 +286,10 @@ fun TerminalPreviewCard() {
             }
             Text(
                 text = text,
-                fontSize = 12.sp,
+                fontSize = fontSizeSp.sp,
                 fontFamily = OutfitFontFamily,
                 color = Color.Unspecified,
-                lineHeight = 16.sp,
+                lineHeight = (fontSizeSp * 1.42).sp,
                 modifier = Modifier.padding(vertical = 2.dp),
             )
         }
@@ -294,39 +303,63 @@ fun TerminalPreviewCard() {
             Text(
                 text = "user@irisshell ~ %",
                 color = IrisPrimary,
-                fontSize = 12.sp,
+                fontSize = fontSizeSp.sp,
                 fontFamily = OutfitFontFamily,
             )
             var cmdText by rememberSaveable { mutableStateOf("") }
             Text(
                 text = cmdText,
                 color = IrisText,
-                fontSize = 12.sp,
+                fontSize = fontSizeSp.sp,
                 fontFamily = OutfitFontFamily,
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 4.dp),
             )
-            BlinkingCursor(visible = true, rateMs = 500)
+            BlinkingCursor(
+                visible = true,
+                rateMs = cursorBlinkRateMs,
+                style = cursorStyle,
+                fontSizeSp = fontSizeSp,
+            )
         }
     }
 }
 
 @Composable
-fun BlinkingCursor(visible: Boolean, rateMs: Int) {
+fun BlinkingCursor(visible: Boolean, rateMs: Int, style: String, fontSizeSp: Int) {
     if (visible) {
         var isVisible by remember { mutableStateOf(true) }
-        LaunchedEffect(Unit) {
+        LaunchedEffect(rateMs, style) {
             while (isActive) {
                 delay(rateMs.toLong())
                 isVisible = !isVisible
             }
         }
         val color = if (isVisible) IrisPrimary else Color.Transparent
-        Canvas(modifier = Modifier.size(8.dp, 14.dp)) {
+        val cursorSizePx = fontSizeSp * 4f
+
+        val widthPx: Float
+        val heightPx: Float
+        when (style.lowercase()) {
+            "beam" -> {
+                widthPx = 2f
+                heightPx = cursorSizePx
+            }
+            "underline" -> {
+                widthPx = cursorSizePx
+                heightPx = 2.5f
+            }
+            else -> {
+                widthPx = cursorSizePx
+                heightPx = cursorSizePx
+            }
+        }
+
+        Canvas(modifier = Modifier.size(widthPx.dp, heightPx.dp)) {
             drawRoundRect(
                 color = color,
-                size = Size(8f, 14f),
+                size = Size(widthPx, heightPx),
                 cornerRadius = CornerRadius(2f),
             )
         }
@@ -348,21 +381,12 @@ fun BlinkRateSlider(
             fontSize = 12.sp,
             fontFamily = OutfitFontFamily,
         )
-        Slider(
+        ThinSlider(
             value = value.toFloat(),
             onValueChange = { onValueChange(it.toInt()) },
             valueRange = 150f..1000f,
             steps = 16,
-            colors = SliderDefaults.colors(
-                thumbColor = IrisBackground,
-                activeTrackColor = IrisPrimary,
-                inactiveTrackColor = IrisSurfaceHigh,
-                activeTickColor = Color.Transparent,
-                inactiveTickColor = Color.Transparent,
-            ),
-            modifier = Modifier
-                .weight(1f)
-                .height(20.dp),
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = "Fast",
@@ -384,13 +408,13 @@ fun BlinkRateSlider(
 }
 
 @Composable
-fun FontSizeStepper(
+fun FontSizeSlider(
     value: Int,
     onValueChange: (Int) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         IconButton(
             onClick = { if (value > 10) onValueChange(value - 1) },
@@ -406,15 +430,12 @@ fun FontSizeStepper(
                 modifier = Modifier.size(14.dp),
             )
         }
-        Text(
-            text = "${value}sp",
-            color = IrisPrimary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = OutfitFontFamily,
-            modifier = Modifier
-                .background(IrisSurfaceHigh, RoundedCornerShape(6.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+        ThinSlider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.toInt()) },
+            valueRange = 10f..24f,
+            steps = 13,
+            modifier = Modifier.weight(1f),
         )
         IconButton(
             onClick = { if (value < 24) onValueChange(value + 1) },
@@ -430,7 +451,44 @@ fun FontSizeStepper(
                 modifier = Modifier.size(14.dp),
             )
         }
+        Text(
+            text = "${value} sp",
+            color = IrisPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = OutfitFontFamily,
+            modifier = Modifier
+                .background(IrisSurfaceHigh, RoundedCornerShape(6.dp))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        )
     }
+}
+
+@Composable
+fun ThinSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    modifier: Modifier = Modifier,
+) {
+    Slider(
+        value = value,
+        onValueChange = onValueChange,
+        valueRange = valueRange,
+        steps = steps,
+        colors = SliderDefaults.colors(
+            thumbColor = Color.White,
+            activeTrackColor = IrisPrimary,
+            inactiveTrackColor = IrisSurfaceHigh,
+            activeTickColor = Color.Transparent,
+            inactiveTickColor = Color.Transparent,
+            focusedThumbColor = Color.White,
+            draggingThumbColor = Color.White,
+            pressedThumbColor = Color.White,
+        ),
+        modifier = modifier.height(20.dp),
+    )
 }
 
 @Composable
@@ -529,7 +587,7 @@ fun SettingsNavigationRow(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = OutfitFontFamily,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f, fill = false),
             )
         }
         if (trailingBadge != null) {

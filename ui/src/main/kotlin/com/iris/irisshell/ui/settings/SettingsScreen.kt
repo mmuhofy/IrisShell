@@ -1,30 +1,29 @@
 package com.iris.irisshell.ui.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -37,10 +36,10 @@ import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
+import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.domain.settings.CursorStyle
 import com.iris.irisshell.ui.IrisIcons
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -57,7 +56,6 @@ fun SettingsScreen(
     val aboutInfo         by viewModel.aboutInfo.collectAsStateWithLifecycle(null)
 
     var showPinEntry by rememberSaveable { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -69,6 +67,7 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
+                .padding(horizontal = 16.dp)
                 .testTag("settings_content"),
         ) {
             SettingsTopBar(onBack = onBack)
@@ -79,15 +78,22 @@ fun SettingsScreen(
                         useBlockEngine = useBlockEngine,
                         onSelect = { viewModel.setUseBlockEngine(it) },
                     )
-                    TerminalPreviewCard()
+                    TerminalPreviewCard(
+                        cursorStyle = cursorStyle,
+                        cursorBlinkRateMs = cursorBlinkRateMs,
+                        fontSizeSp = fontSizeSp,
+                        useBlockEngine = useBlockEngine,
+                    )
                     SettingsSubRow(
-                        icon = IrisIcons.Type,
+                        icon = IrisIcons.ALargeSmall,
                         label = "Cursor Style",
                     ) {
                         CursorSegmentedControl(
                             selected = cursorStyle,
                             options = listOf("Block", "Beam", "Underline"),
-                            onSelect = { viewModel.setCursorStyle(CursorStyle.fromString(it)) },
+                            onSelect = {
+                                viewModel.setCursorStyle(CursorStyle.fromString(it))
+                            },
                         )
                     }
                     SettingsSubRow(
@@ -101,10 +107,10 @@ fun SettingsScreen(
                         )
                     }
                     SettingsSubRow(
-                        icon = IrisIcons.ALargeSmall,
+                        icon = IrisIcons.Type,
                         label = "Font Size",
                     ) {
-                        FontSizeStepper(
+                        FontSizeSlider(
                             value = fontSizeSp,
                             onValueChange = { viewModel.setFontSize(it) },
                         )
@@ -132,7 +138,10 @@ fun SettingsScreen(
                         SettingsToggleSwitch(
                             checked = isPinLockEnabled,
                             onCheckedChange = {
-                                if (it) showPinEntry = true else scope.launch { viewModel.clearPin() }
+                                if (it) showPinEntry = true
+                                else {
+                                    viewModel.clearPin()
+                                }
                             },
                         )
                     }
@@ -170,10 +179,7 @@ fun SettingsScreen(
             }
 
             SettingsSectionContainer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 24.dp),
+                modifier = Modifier.padding(top = 24.dp),
             ) {
                 SettingsNavigationRow(
                     icon = IrisIcons.CircleUser,
@@ -190,11 +196,9 @@ fun SettingsScreen(
             title = "Set PIN",
             subtitle = "Enter a new 4-digit PIN",
             onPinReady = { pin ->
-                scope.launch {
-                    viewModel.setPin(pin)
-                    viewModel.setPinLockEnabled(true)
-                    showPinEntry = false
-                }
+                viewModel.setPin(pin)
+                viewModel.setPinLockEnabled(true)
+                showPinEntry = false
             },
             onCancel = { showPinEntry = false },
         )
@@ -205,19 +209,15 @@ fun SettingsScreen(
 fun SettingsTopBar(onBack: () -> Unit) {
     val statusBarH = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    Box(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = statusBarH, start = 16.dp, end = 16.dp, bottom = 8.dp),
+            .padding(top = statusBarH, start = 8.dp, end = 8.dp, bottom = 8.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .clickable(
-                    onClick = onBack,
-                )
-                .padding(vertical = 6.dp),
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.size(40.dp),
         ) {
             Icon(
                 imageVector = IrisIcons.ArrowLeft,
@@ -225,13 +225,15 @@ fun SettingsTopBar(onBack: () -> Unit) {
                 tint = IrisPrimary,
                 modifier = Modifier.size(22.dp),
             )
-            Text(
-                text = "Settings",
-                color = IrisText,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = OutfitFontFamily,
-            )
         }
+        Text(
+            text = "Settings",
+            color = IrisText,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = OutfitFontFamily,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        Box(modifier = Modifier.size(40.dp))
     }
 }
