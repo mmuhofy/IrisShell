@@ -9,14 +9,18 @@ import compose.icons.lucideicons.ArrowBigRight
 import compose.icons.lucideicons.ArrowBigUp
 import compose.icons.lucideicons.ArrowDown
 import compose.icons.lucideicons.ArrowLeft
+import compose.icons.lucideicons.ArrowRight
 import compose.icons.lucideicons.ArrowUp
 import compose.icons.lucideicons.Check
 import compose.icons.lucideicons.ChevronDown
 import compose.icons.lucideicons.ChevronUp
-import compose.icons.lucideicons.Copy
 import compose.icons.lucideicons.CircleUser
+import compose.icons.lucideicons.CircleX
+import compose.icons.lucideicons.Copy
 import compose.icons.lucideicons.Download
 import compose.icons.lucideicons.EllipsisVertical
+import compose.icons.lucideicons.Gauge
+import compose.icons.lucideicons.Info
 import compose.icons.lucideicons.Keyboard
 import compose.icons.lucideicons.KeyboardOff
 import compose.icons.lucideicons.Lock
@@ -35,20 +39,11 @@ import compose.icons.lucideicons.Square
 import compose.icons.lucideicons.SquarePlus
 import compose.icons.lucideicons.SquareTerminal
 import compose.icons.lucideicons.Terminal
-import compose.icons.lucideicons.Trash2
-import compose.icons.lucideicons.Undo
-import compose.icons.lucideicons.ArrowRight
-import compose.icons.lucideicons.Copy
-import compose.icons.lucideicons.Gauge
-import compose.icons.lucideicons.Info
-import compose.icons.lucideicons.SquareTerminal
-import compose.icons.lucideicons.Terminal
 import compose.icons.lucideicons.Timer
 import compose.icons.lucideicons.Trash2
 import compose.icons.lucideicons.Type
 import compose.icons.lucideicons.Undo
 import compose.icons.lucideicons.X
-import compose.icons.lucideicons.CircleX
 
 object IrisIcons {
     val ALargeSmall: ImageVector get() = LucideIcons.ALargeSmall
