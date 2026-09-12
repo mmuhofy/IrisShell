@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import com.iris.irisshell.domain.agent.ToolResult
 import com.iris.irisshell.domain.settings.SettingsRepository
+import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.view.TerminalView
 import kotlinx.coroutines.Dispatchers
@@ -111,6 +112,27 @@ class TerminalManager(
 
         settingsRepository.prootStartCommand
             .onEach { cmd -> prootStartCommand = cmd }
+            .launchIn(managerScope)
+
+        settingsRepository.cursorStyle
+            .onEach { style ->
+                sessionClient.cursorStyle = when (style) {
+                    "Block"     -> TerminalEmulator.TERMINAL_CURSOR_STYLE_BLOCK
+                    "Beam"      -> TerminalEmulator.TERMINAL_CURSOR_STYLE_BAR
+                    "Underline" -> TerminalEmulator.TERMINAL_CURSOR_STYLE_UNDERLINE
+                    else      -> null
+                }
+                terminalViewRef?.mEmulator?.let { emulator ->
+                    emulator.setCursorStyle()
+                    terminalViewRef?.invalidate()
+                }
+            }
+            .launchIn(managerScope)
+
+        settingsRepository.cursorBlinkRateMs
+            .onEach { rate ->
+                terminalViewRef?.setTerminalCursorBlinkerRate(rate)
+            }
             .launchIn(managerScope)
     }
 

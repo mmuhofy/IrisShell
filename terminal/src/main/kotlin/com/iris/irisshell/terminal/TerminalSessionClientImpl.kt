@@ -9,6 +9,8 @@ import com.termux.terminal.TerminalSessionClient
 
 class TerminalSessionClientImpl : TerminalSessionClient {
 
+    var cursorStyle: Int? = null
+
     var onTextChanged: ((TerminalSession) -> Unit)? = null
     var onTitleChanged: ((TerminalSession) -> Unit)? = null
     var onSessionFinished: ((TerminalSession) -> Unit)? = null
@@ -57,7 +59,7 @@ class TerminalSessionClientImpl : TerminalSessionClient {
         onPidChanged?.invoke(session, pid)
     }
 
-    override fun getTerminalCursorStyle(): Int? = null
+    override fun getTerminalCursorStyle(): Int? = cursorStyle
 
     override fun logError(tag: String?, message: String?) {
         if (tag != null && message != null) Log.e(tag, message)
