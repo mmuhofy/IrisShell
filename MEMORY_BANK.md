@@ -1,7 +1,7 @@
 # Iris Shell — Memory Bank
 _Last updated: 2026-09-12_
 
-Last commit: `0088521` — style(ui): clean up IrisIcons duplicate imports, remove unused Text icon
+Last commit: `a4e3c0b` — fix(settings): text stretching, top bar, editable proot cmd, cursor shapes, block mode dividers, icon-only font buttons
 
 ### Icon System — Final Architecture (2026-09-11)
 - ✅ **Library**: `io.github.ardasoyturk.compose.icons:lucide-android:2.0.7` from Maven Central (replaces local AAR + thelacspace library)
@@ -226,8 +226,8 @@ Closed (Room only, removed from irisSessions)
 - ✅ Domain enums: `CursorStyle` (Block/Beam/Underline), `AutoLockTimeout` (Immediately/OneMinute/FiveMinutes/FifteenMinutes/ThirtyMinutes/Never) in `domain/settings/TerminalPreferences.kt`
 - ✅ SettingsRepository: added `cursorStyle`, `cursorBlinkRateMs`, `autoLockTimeout` flows + setters
 - ✅ SettingsViewModel: added `cursorStyle`, `cursorBlinkRateMs`, `autoLockTimeout` StateFlows + `setCursorStyle`, `setCursorBlinkRateMs`, `setAutoLockTimeout` functions
-- ✅ SettingsScreen rewritten: iOS-style top bar, grouped section containers, preview terminal card with blinking cursor, segment controls, iOS-style toggle switch
-- ✅ SettingsComponents.kt: all composables for settings rows, toggle, slider, preview card, segmented controls
+- ✅ SettingsScreen rewritten: iOS-style top bar (icon-only back button, centered title), grouped section containers with 16dp horizontal padding, preview terminal card with blinking cursor, segment controls, iOS-style toggle switch
+- ✅ SettingsComponents.kt: all composables for settings rows, toggle, custom thin slider, preview card, segmented controls, editable PRoot command field
 - ✅ PinEntryScreen embedded as modal overlay for PIN setup flow
   - ✅ "Made by Muhofy" footer row with `CircleUser` icon
   - ✅ Design reference: `html/irisshell_settings_pure.html` (Tailwind iOS-style design)
@@ -235,6 +235,21 @@ Closed (Room only, removed from irisSessions)
   - ✅ Removed all custom ripple usage (plain `Modifier.clickable { }` with default Material 3 ripple)
   - ✅ Fixed pre-existing `normalizeHex` undefined reference (simplified color setters)
   - ✅ Cleaned up duplicate imports in IrisIcons.kt (Copy, SquareTerminal, Terminal, Trash2, Undo appeared twice)
+
+### Fixes (Settings Screen — 2026-09-12)
+- ✅ Cards now have 16dp horizontal padding (Column padding, not full-bleed containers)
+- ✅ SettingsTopBar: back button is icon-only IconButton, title centered with weight(1f), empty 40dp spacer balances layout
+- ✅ Text stretching fixed: removed `fill = false` from `weight(1f)` on Column/Text in SettingsSubRow and SettingsNavigationRow
+- ✅ Custom ThinSlider: Material 3 Slider with white thumb, IrisPrimary active track, IrisSurfaceHigh inactive track, 20dp height
+- ✅ FontSizeStepper → FontSizeSlider: stepper buttons (icon-only, transparent) + thin slider + value badge
+- ✅ TerminalPreviewCard: accepts cursorStyle, cursorBlinkRateMs, fontSizeSp, useBlockEngine params — cursor shape changes in real-time
+- ✅ BlinkingCursor: matches HTML — Block (8x1.15em), Beam (2x1.15em), Underline (9x2.5px), positioned at prompt end
+- ✅ Block mode: thin 1dp Divider lines between commands (not glow/border), matching HTML's block separation
+- ✅ Font size applied to all preview text + cursor sizing dynamically
+- ✅ PRoot Start Command made editable (OutlinedTextField with IrisPrimary text, IrisPrimary focus border)
+- ✅ Font size +/- buttons: transparent background, icon-only (removed IrisSurfaceHigh background)
+- ✅ Terminal mode toggle: segment control updates preview appearance (divider lines in block mode, none in classic)
+- ✅ CI build passes
 
 ### To Build
 - Same as docs/TODO.md (full feature backlog)
