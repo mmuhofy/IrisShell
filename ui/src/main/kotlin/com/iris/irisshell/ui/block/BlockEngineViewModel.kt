@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -64,6 +67,18 @@ class BlockEngineViewModel @Inject constructor(
         viewModelScope.launch {
             while (true) {
                 sf.value = blockEngineState.lastDir
+                delay(500L)
+            }
+        }
+    }.asStateFlow()
+
+    /** Prompt suffix character extracted from the latest prompt (e.g. "$", "#", "❯"). */
+    val promptSuffix: StateFlow<String> = MutableStateFlow(
+        blockEngineState.lastPrompt.extractSuffix()
+    ).also { sf ->
+        viewModelScope.launch {
+            while (true) {
+                sf.value = blockEngineState.lastPrompt.extractSuffix()
                 delay(500L)
             }
         }
@@ -183,5 +198,11 @@ class BlockEngineViewModel @Inject constructor(
 
     private companion object {
         const val NETWORK_TICK_MS = 500L
+        val PROMPT_SUFFIX_REGEX = Regex("""[#$❯➜]\s*$""")
     }
+}
+
+private fun String.extractSuffix(): String {
+    val match = PROMPT_SUFFIX_REGEX.find(this.trim())
+    return if (match != null) match.value.trim() else "$"
 }

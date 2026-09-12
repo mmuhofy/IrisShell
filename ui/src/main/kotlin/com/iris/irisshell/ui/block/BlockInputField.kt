@@ -36,6 +36,7 @@ fun BlockInputField(
     onSubmit: (String) -> Unit,
     enabled: Boolean = true,
     promptLabel: String = "iris",
+    promptSuffix: String = "$",
     modifier: Modifier = Modifier,
 ) {
     var text by remember { mutableStateOf("") }
@@ -53,7 +54,7 @@ fun BlockInputField(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = if (focused) "$promptLabel ▸" else "$promptLabel$",
+                text = if (focused) "$promptLabel$ ▸" else "$promptLabel$promptSuffix",
                 color = IrisPrimary,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,

@@ -19,19 +19,32 @@ import com.iris.irisshell.design.system.IrisBorderSubtle
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
 import com.iris.irisshell.design.system.IrisTextMuted
+import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.domain.block.Block
 import com.iris.irisshell.domain.block.BlockState
 
 @Composable
 fun PromptBlock(
     block: Block,
+    promptDir: String? = null,
+    promptSuffix: String = "$",
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
+        if (!promptDir.isNullOrEmpty()) {
+            Text(
+                text = promptDir,
+                color = IrisTextSecondary,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 0.dp),
+            )
+        }
+
         Text(
             text = buildAnnotatedString {
                 withStyle(SpanStyle(color = IrisPrimary, fontFamily = FontFamily.Monospace, fontSize = 13.sp)) {
-                    append("${block.prompt}$ ")
+                    append("$promptSuffix ")
                 }
                 withStyle(SpanStyle(color = IrisPrimary, fontFamily = FontFamily.Monospace, fontSize = 13.sp)) {
                     append(block.command)

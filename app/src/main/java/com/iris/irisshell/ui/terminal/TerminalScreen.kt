@@ -382,14 +382,26 @@ private fun ReadyScreen(
             ) {
                 if (useBlockEngine) {
                     val blocks by blockEngineViewModel.blocks.collectAsState()
-                    val promptLabel by blockEngineViewModel.lastDir.collectAsState()
+                    val promptDir by blockEngineViewModel.lastDir.collectAsState()
+                    val promptSuffix by blockEngineViewModel.promptSuffix.collectAsState()
 
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                top = WindowInsets.statusBars
+                                    .asPaddingValues()
+                                    .calculateTopPadding()
+                            ),
                         state = rememberLazyListState(),
                     ) {
                         items(blocks, key = { it.id }) { block ->
-                            PromptBlock(block = block, modifier = Modifier.padding(vertical = 2.dp))
+                            PromptBlock(
+                                block = block,
+                                promptDir = promptDir,
+                                promptSuffix = promptSuffix,
+                                modifier = Modifier.padding(vertical = 2.dp),
+                            )
                             if (block.id != blocks.lastOrNull()?.id) {
                                 PromptDivider()
                             }
@@ -400,7 +412,8 @@ private fun ReadyScreen(
                         onSubmit = { cmd ->
                             blockEngineViewModel.onCommandSubmitted("", cmd)
                         },
-                        promptLabel = promptLabel,
+                        promptLabel = promptDir,
+                        promptSuffix = promptSuffix,
                         modifier = Modifier.align(Alignment.BottomCenter),
                     )
                 } else {

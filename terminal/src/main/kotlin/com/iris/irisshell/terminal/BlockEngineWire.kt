@@ -90,6 +90,9 @@ class BlockEngineWire(
         val lastLineOfAppended = linesAfterEcho.last()
         val promptSuffix = PROMPT_SUFFIX_REGEX.find(lastLineOfAppended)
         val completeAppended = promptSuffix != null
+        val fullPromptLine = if (completeAppended) {
+            lastLineOfAppended.trimEnd('\r').trimEnd()
+        } else ""
         val promptText = if (completeAppended) {
             lastLineOfAppended.substring(0, promptSuffix!!.range.first).trimEnd()
         } else ""
@@ -101,8 +104,8 @@ class BlockEngineWire(
             if (outputLines.isNotEmpty()) {
                 blockRepository.onOutputChunk(outputLines.joinToString("\n"))
             }
-            lastPrompt = promptText.ifBlank { DEFAULT_PROMPT }
-            updateDirFromPrompt(lastPrompt)
+            lastPrompt = fullPromptLine.ifBlank { DEFAULT_PROMPT }
+            updateDirFromPrompt(promptText.ifBlank { DEFAULT_PROMPT })
             pendingEcho = null
             blockRepository.onCommandCompleted(exitCode = 0)
             return
@@ -115,8 +118,9 @@ class BlockEngineWire(
             val visibleSuffix = PROMPT_SUFFIX_REGEX.find(lastVisibleLine)
             if (visibleSuffix != null) {
                 val visiblePromptText = lastVisibleLine.substring(0, visibleSuffix.range.first).trimEnd()
-                lastPrompt = visiblePromptText.ifBlank { DEFAULT_PROMPT }
-                updateDirFromPrompt(lastPrompt)
+                val visibleFullPrompt = lastVisibleLine.trimEnd()
+                lastPrompt = visibleFullPrompt.ifBlank { DEFAULT_PROMPT }
+                updateDirFromPrompt(visiblePromptText.ifBlank { DEFAULT_PROMPT })
                 pendingEcho = null
                 blockRepository.onCommandCompleted(exitCode = 0)
             }
