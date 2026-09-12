@@ -47,7 +47,6 @@ fun BlockTerminalView(
 ) {
     val list by blocks.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
-    val clipboard = LocalClipboardManager.current
 
     val shouldAutoScroll by remember(list.size) {
         derivedStateOf {
