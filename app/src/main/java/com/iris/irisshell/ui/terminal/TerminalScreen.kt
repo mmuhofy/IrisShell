@@ -26,6 +26,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,12 +45,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.design.system.IrisBackground
-import com.iris.irisshell.terminal.CommandSeparatorOverlay
 import com.iris.irisshell.terminal.SearchHighlightOverlay
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
 import com.iris.irisshell.terminal.UbuntuSetupState
 import com.iris.irisshell.ui.block.BlockEngineViewModel
+import com.iris.irisshell.ui.block.BlockInputField
+import com.iris.irisshell.ui.block.PromptBlock
+import com.iris.irisshell.ui.block.PromptDivider
 import com.iris.irisshell.ui.browser.WebViewSheet
 import com.iris.irisshell.ui.input.InputBarHost
 import com.iris.irisshell.ui.input.InputBarViewModel
@@ -374,36 +380,60 @@ private fun ReadyScreen(
                     .fillMaxWidth()
                     .weight(1f),
             ) {
-                /*
-                 * TERMINAL VIEW — renders the classic TerminalView surface with
-                 * separator lines overlaid when blockEngine mode is active.
-                 * terminalViewRef is shared with InputBarHost so the
-                 * Liquid Glass surface can sample this exact TerminalView.
-                 */
-                TerminalViewHost(
-                    terminalManager = terminalManager,
-                    fontSizeSp = fontSizeSp,
-                    colorProps = colorProps,
-                    terminalViewModel = terminalViewModel,
-                    terminalViewRef = terminalViewRef,
-                    extraKeyState = extraKeyState,
-                    onUrlClick = { browserUrl = it },
-                    searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
-                    searchOverlayRef = searchOverlayRef,
-                    useBlockEngine = useBlockEngine,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            top = WindowInsets.statusBars
-                                .asPaddingValues()
-                                .calculateTopPadding()
-                        )
-                        .graphicsLayer {
-                            scaleX = appearScale
-                            scaleY = appearScale
-                            alpha = appearAlpha
+                if (useBlockEngine) {
+                    val blocks by blockEngineViewModel.blocks.collectAsState()
+                    val promptLabel by blockEngineViewModel.lastDir.collectAsState()
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = rememberLazyListState(),
+                    ) {
+                        items(blocks, key = { it.id }) { block ->
+                            PromptBlock(block = block, modifier = Modifier.padding(vertical = 2.dp))
+                            if (block.id != blocks.lastOrNull()?.id) {
+                                PromptDivider()
+                            }
+                        }
+                    }
+
+                    BlockInputField(
+                        onSubmit = { cmd ->
+                            blockEngineViewModel.onCommandSubmitted("", cmd)
                         },
-                )
+                        promptLabel = promptLabel,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                } else {
+                    /*
+                     * CLASSIC TERMINAL PATH
+                     *
+                     * terminalViewRef is shared with InputBarHost so the
+                     * Liquid Glass surface can sample this exact TerminalView.
+                     */
+                    TerminalViewHost(
+                        terminalManager = terminalManager,
+                        fontSizeSp = fontSizeSp,
+                        colorProps = colorProps,
+                        terminalViewModel = terminalViewModel,
+                        terminalViewRef = terminalViewRef,
+                        extraKeyState = extraKeyState,
+                        onUrlClick = { browserUrl = it },
+                        searchQuery = if (searchActive && searchQuery.isNotBlank()) searchQuery else null,
+                        searchOverlayRef = searchOverlayRef,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                top = WindowInsets.statusBars
+                                    .asPaddingValues()
+                                    .calculateTopPadding()
+                            )
+                            .graphicsLayer {
+                                scaleX = appearScale
+                                scaleY = appearScale
+                                alpha = appearAlpha
+                            },
+                    )
+                }
 
                 if (fullscreen) {
                     Box(
@@ -678,7 +708,6 @@ private fun TerminalViewHost(
     onUrlClick: (String) -> Unit,
     searchQuery: String?,
     searchOverlayRef: MutableState<SearchHighlightOverlay?>,
-    useBlockEngine: Boolean = false,
     modifier: Modifier = Modifier,
     extraKeyState: com.iris.irisshell.terminal.ExtraKeyState? = null,
 ) {
@@ -762,30 +791,16 @@ private fun TerminalViewHost(
                 isFocusableInTouchMode = false
             }
 
-            val separatorOverlay = if (useBlockEngine) {
-                CommandSeparatorOverlay(ctx).apply {
-                    terminalView = tv
-                    isFocusable = false
-                    isFocusableInTouchMode = false
-                    isClickable = false
-                    isLongClickable = false
-                }
-            } else null
-
             tv.viewTreeObserver.addOnDrawListener(
                 object : ViewTreeObserver.OnDrawListener {
                     override fun onDraw() {
                         overlay.invalidate()
-                        separatorOverlay?.invalidate()
                     }
                 }
             )
 
             frameLayout.addView(tv)
             frameLayout.addView(overlay)
-            if (separatorOverlay != null) {
-                frameLayout.addView(separatorOverlay)
-            }
             searchOverlayRef.value = overlay
 
             frameLayout
