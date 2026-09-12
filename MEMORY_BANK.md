@@ -1,7 +1,7 @@
 # Iris Shell — Memory Bank
 _Last updated: 2026-09-12_
 
-Last commit: `7f9195a` — fix(app): add missing CommandSeparatorOverlay import
+Last commit: `f03df82` — feat(terminal): block mode uses PromptBlock rendering with styled command/output blocks
 
 ### Icon System — Final Architecture (2026-09-11)
 - ✅ **Library**: `io.github.ardasoyturk.compose.icons:lucide-android:2.0.7` from Maven Central (replaces local AAR + thelacspace library)
@@ -355,12 +355,15 @@ Closed (Room only, removed from irisSessions)
 
 ---
 
-## Block Mode — Separator Lines (2026-09-12)
+## Block Mode — PromptBlock Rendering (2026-09-12)
 
-- Block mode now renders **classic terminal + separator lines** instead of card-based blocks
-- `CommandSeparatorOverlay.kt` in `terminal/` module — custom `View` overlay (mirrors `SearchHighlightOverlay`)
-- Iterates visible rows, detects prompt lines (suffix regex `[#$❯➜]\s*$` + shell context check for `@`/`~`/`/`), draws thin horizontal line at row top
-- Non-interactive overlay (`isClickable=false`, `isLongClickable=false`, `isFocusable=false`) — TerminalView below handles long-press context menu + text selection
-- Wired in `TerminalViewHost` via `useBlockEngine` flag — only active in block mode
+- Block mode renders **styled text blocks** (not card-based) — matches `html/block_mode_reference-1.html`
+- `PromptBlock.kt` in `ui/block/` — renders prompt symbol + command (IrisPrimary blue), then output (IrisText / IrisTextMuted for errors)
+- `PromptDivider.kt` — thin 1dp horizontal line (IrisBorderSubtle) between blocks
+- `BlockTerminalView.kt` — uses `PromptBlock` + `PromptDivider` instead of `BlockCard` (card rendering removed)
+- `BlockInputField.kt` — simplified to match HTML `input-row` (plain row, no bordered box, no vertical bar)
+- `TerminalScreen.kt` — block mode uses `LazyColumn<PromptBlock>` + `BlockInputField`; classic mode uses `TerminalViewHost` + `InputBarHost`
+- Switching modes changes rendering: block mode shows styled blocks, classic mode shows raw terminal
+- `CommandSeparatorOverlay.kt` removed from TerminalViewHost (no longer needed — block mode uses PromptBlock rendering)
 - `onDrawListener` invalidates separator alongside search overlay
 - Runtime fix: `FOREGROUND_SERVICE_DATA_SYNC` permission added to `AndroidManifest.xml` — required since `targetSdk=36` for `dataSync` foreground service type
