@@ -41,6 +41,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleEventObserver
 import com.iris.irisshell.design.system.IrisBackground
+import com.iris.irisshell.terminal.CommandSeparatorOverlay
 import com.iris.irisshell.terminal.SearchHighlightOverlay
 import com.iris.irisshell.terminal.TerminalManager
 import com.iris.irisshell.terminal.TerminalViewClientImpl
