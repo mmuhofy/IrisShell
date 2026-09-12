@@ -300,6 +300,7 @@ fun TerminalModeRow(
             options = listOf("Classic", "Block"),
             selectedIndex = if (useBlockEngine) 1 else 0,
             onSelect = { onSelect(it == 1) },
+            modifier = Modifier.widthIn(max = 160.dp),
         )
     }
 }
@@ -365,6 +366,7 @@ fun CursorSegmentedControl(
         options = options,
         selectedIndex = selectedIndex,
         onSelect = { onSelect(options[it]) },
+        modifier = Modifier.widthIn(max = 220.dp),
     )
 }
 

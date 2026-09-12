@@ -53,7 +53,6 @@ fun SettingsScreen(
     val isPinLockEnabled  by viewModel.isPinLockEnabled.collectAsStateWithLifecycle(false)
     val cursorStyle       by viewModel.cursorStyle.collectAsStateWithLifecycle("Block")
     val cursorBlinkRateMs by viewModel.cursorBlinkRateMs.collectAsStateWithLifecycle(500)
-    val autoLockTimeout   by viewModel.autoLockTimeout.collectAsStateWithLifecycle("Immediately")
     val aboutInfo         by viewModel.aboutInfo.collectAsStateWithLifecycle(null)
 
     var showPinEntry by rememberSaveable { mutableStateOf(false) }
@@ -171,12 +170,6 @@ fun SettingsScreen(
                             },
                         )
                     }
-                    SettingsNavigationRow(
-                        icon = IrisIcons.Timer,
-                        label = "Auto-Lock Timeout",
-                        trailingText = autoLockTimeout,
-                        onClick = {},
-                    )
                 }
             }
 
