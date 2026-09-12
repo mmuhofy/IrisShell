@@ -1,7 +1,6 @@
 package com.iris.irisshell.ui.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,7 +35,6 @@ import com.iris.irisshell.design.system.IrisBackground
 import com.iris.irisshell.design.system.IrisError
 import com.iris.irisshell.design.system.IrisPrimary
 import com.iris.irisshell.design.system.IrisText
-import com.iris.irisshell.design.system.IrisTextSecondary
 import com.iris.irisshell.design.system.OutfitFontFamily
 import com.iris.irisshell.domain.settings.CursorStyle
 import com.iris.irisshell.ui.IrisIcons
@@ -56,6 +54,7 @@ fun SettingsScreen(
     val aboutInfo         by viewModel.aboutInfo.collectAsStateWithLifecycle(null)
 
     var showPinEntry by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -140,7 +139,7 @@ fun SettingsScreen(
                             onCheckedChange = {
                                 if (it) showPinEntry = true
                                 else {
-                                    viewModel.clearPin()
+                                    scope.launch { viewModel.clearPin() }
                                 }
                             },
                         )
@@ -196,9 +195,11 @@ fun SettingsScreen(
             title = "Set PIN",
             subtitle = "Enter a new 4-digit PIN",
             onPinReady = { pin ->
-                viewModel.setPin(pin)
-                viewModel.setPinLockEnabled(true)
-                showPinEntry = false
+                scope.launch {
+                    viewModel.setPin(pin)
+                    viewModel.setPinLockEnabled(true)
+                    showPinEntry = false
+                }
             },
             onCancel = { showPinEntry = false },
         )

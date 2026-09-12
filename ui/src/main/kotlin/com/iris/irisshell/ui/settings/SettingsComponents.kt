@@ -483,9 +483,6 @@ fun ThinSlider(
             inactiveTrackColor = IrisSurfaceHigh,
             activeTickColor = Color.Transparent,
             inactiveTickColor = Color.Transparent,
-            focusedThumbColor = Color.White,
-            draggingThumbColor = Color.White,
-            pressedThumbColor = Color.White,
         ),
         modifier = modifier.height(20.dp),
     )
