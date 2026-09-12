@@ -1,7 +1,7 @@
 # Iris Shell — Memory Bank
 _Last updated: 2026-09-12_
 
-Last commit: `a4e3c0b` — fix(settings): text stretching, top bar, editable proot cmd, cursor shapes, block mode dividers, icon-only font buttons
+Last commit: `0531796` — feat(terminal): wire cursor style selection to actual terminal emulator
 
 ### Icon System — Final Architecture (2026-09-11)
 - ✅ **Library**: `io.github.ardasoyturk.compose.icons:lucide-android:2.0.7` from Maven Central (replaces local AAR + thelacspace library)
@@ -263,6 +263,10 @@ Closed (Room only, removed from irisSessions)
 - ✅ Terminal mode segment control updates preview (dividers appear/disappear)
 - ✅ SegmentControl width capped (`widthIn(max=160dp)`, `widthIn(max=220dp)`) to prevent label text wrapping
 - ✅ Auto-Lock Timeout row removed from Settings screen
+- ✅ Cursor style setting wired to actual terminal emulator (`TerminalSessionClientImpl.cursorStyle` → `TerminalEmulator.setCursorStyle()` → `TerminalRenderer` renders Block/Underline/Beam)
+- ✅ Cursor blink rate wired to `TerminalView.setTerminalCursorBlinkerRate()` from settings
+- ✅ Cursor style setting wired to actual terminal emulator (`TerminalSessionClientImpl.cursorStyle` → `TerminalEmulator.setCursorStyle()` → `TerminalRenderer` renders Block/Underline/Beam)
+- ✅ Cursor blink rate wired to `TerminalView.setTerminalCursorBlinkerRate()` from settings
 
 ### To Build
 - Same as docs/TODO.md (full feature backlog)
