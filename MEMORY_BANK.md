@@ -1,7 +1,7 @@
 # Iris Shell — Memory Bank
 _Last updated: 2026-09-12_
 
-Last commit: `f03df82` — feat(terminal): block mode uses PromptBlock rendering with styled command/output blocks
+Last commit: `94ce9e7` — chore: remove unused CommandSeparatorOverlay.kt
 
 ### Icon System — Final Architecture (2026-09-11)
 - ✅ **Library**: `io.github.ardasoyturk.compose.icons:lucide-android:2.0.7` from Maven Central (replaces local AAR + thelacspace library)
@@ -361,9 +361,13 @@ Closed (Room only, removed from irisSessions)
 - `PromptBlock.kt` in `ui/block/` — renders prompt symbol + command (IrisPrimary blue), then output (IrisText / IrisTextMuted for errors)
 - `PromptDivider.kt` — thin 1dp horizontal line (IrisBorderSubtle) between blocks
 - `BlockTerminalView.kt` — uses `PromptBlock` + `PromptDivider` instead of `BlockCard` (card rendering removed)
-- `BlockInputField.kt` — simplified to match HTML `input-row` (plain row, no bordered box, no vertical bar)
+- `BlockInputField.kt` — simplified to match HTML `input-row` (plain row, no bordered box, no vertical bar), accepts `promptSuffix` param
 - `TerminalScreen.kt` — block mode uses `LazyColumn<PromptBlock>` + `BlockInputField`; classic mode uses `TerminalViewHost` + `InputBarHost`
 - Switching modes changes rendering: block mode shows styled blocks, classic mode shows raw terminal
-- `CommandSeparatorOverlay.kt` removed from TerminalViewHost (no longer needed — block mode uses PromptBlock rendering)
-- `onDrawListener` invalidates separator alongside search overlay
+- Prompt rendering: two-line layout — directory path (IrisTextSecondary, 12sp) on top, prompt suffix + command (IrisPrimary, 13sp) below
+- `BlockEngineWire.lastPrompt` now stores full prompt including suffix character (`$`, `#`, `❯`, `➜`)
+- `BlockEngineViewModel.promptSuffix` StateFlow derives suffix from `lastPrompt` via regex extraction
+- `TerminalScreen` passes `promptDir` and `promptSuffix` to both `PromptBlock` and `BlockInputField`
+- Block mode LazyColumn has `statusBars` top padding to avoid drawing under status bar
+- `CommandSeparatorOverlay.kt` removed (PromptBlock rendering replaces overlay approach)
 - Runtime fix: `FOREGROUND_SERVICE_DATA_SYNC` permission added to `AndroidManifest.xml` — required since `targetSdk=36` for `dataSync` foreground service type
