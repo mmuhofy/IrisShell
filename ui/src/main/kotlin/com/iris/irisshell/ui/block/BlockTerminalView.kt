@@ -3,7 +3,6 @@ package com.iris.irisshell.ui.block
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,8 +19,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iris.irisshell.design.system.IrisBackground
@@ -68,34 +65,12 @@ fun BlockTerminalView(
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 state = listState,
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
             ) {
                 items(list, key = { it.id }) { block ->
-                    BlockCard(
-                        block = block,
-                        isActive = block.id == list.lastOrNull()?.id,
-                        onCopy = {
-                            val text = buildString {
-                                append(block.prompt)
-                                append(" ")
-                                append(block.command)
-                                append("\n")
-                                append(block.outputLines.joinToString("\n"))
-                            }
-                            clipboard.setText(AnnotatedString(text))
-                        },
-                        onCopyCommand = { onCopyCommand(block) },
-                        onCopyOutput = { onCopyOutput(block) },
-                        onRerun = { onRerunCommand(block.command) },
-                        onEdit = { onEditCommand(block.command) },
-                        onExport = { onExportOutput(block) },
-                        onDelete = { onDeleteBlock(block.id) },
-                        onToggleCollapse = { onToggleCollapsed(block.id) },
-                        onUrlClick = onUrlClick,
-                        searchQuery = searchQuery,
-                        isCurrentMatchBlock = currentMatchBlockId == block.id,
-                        modifier = Modifier.padding(vertical = 2.dp),
-                    )
+                    PromptBlock(block = block, modifier = Modifier.padding(vertical = 2.dp))
+                    if (block.id != list.lastOrNull()?.id) {
+                        PromptDivider()
+                    }
                 }
             }
             val isScrolling = listState.isScrollInProgress
