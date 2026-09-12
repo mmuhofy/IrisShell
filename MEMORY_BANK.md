@@ -261,6 +261,8 @@ Closed (Room only, removed from irisSessions)
 - ✅ Font size +/- buttons: transparent background (removed IrisSurfaceHigh), icon-only
 - ✅ Block mode: thin 1dp Divider between commands (not glow/border)
 - ✅ Terminal mode segment control updates preview (dividers appear/disappear)
+- ✅ SegmentControl width capped (`widthIn(max=160dp)`, `widthIn(max=220dp)`) to prevent label text wrapping
+- ✅ Auto-Lock Timeout row removed from Settings screen
 
 ### To Build
 - Same as docs/TODO.md (full feature backlog)
